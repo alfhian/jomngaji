@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "641787608759",
+    "project_id": "jomngaji-ae1ad",
+    "storage_bucket": "jomngaji-ae1ad.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:641787608759:android:eac1a338f664fbfd6bd732",
+        "android_client_info": {
+          "package_name": "com.webiti.jomngaji"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDxj7B2vROXZ8QVTv2lz5kLnAdQhOcbMDw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
