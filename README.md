@@ -1,16 +1,18 @@
-# jomngaji_app
+# JomNgaji Monorepo
 
-A new Flutter project.
+This repository contains the mobile application, backend services, and AI tooling that power the JomNgaji platform.
 
-## Getting Started
+## Structure
 
-This project is a starting point for a Flutter application.
+- `apps/mobile` – Flutter client application.
+- `services/backend` – NestJS API with Prisma/PostgreSQL integration.
+- `services/ai` – FastAPI service for speech scoring.
+- `docker-compose.yml` – Local orchestration for all services and supporting infrastructure.
 
-A few resources to get you started if this is your first Flutter project:
+## Tooling
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+- Node.js workspaces are configured via the root `package.json` for the backend service.
+- Python packaging uses a `pyproject.toml` inside each Python service.
+- Flutter tooling remains encapsulated in the `apps/mobile` project directory.
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+Refer to each subdirectory for component-specific instructions.
