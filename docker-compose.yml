@@ -1,0 +1,57 @@
+version: '3.9'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: jomngaji
+      POSTGRES_PASSWORD: jomngaji
+      POSTGRES_DB: jomngaji
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - '6379:6379'
+
+  minio:
+    image: minio/minio:RELEASE.2024-09-22T00-33-43Z
+    command: server /data --console-address :9001
+    environment:
+      MINIO_ROOT_USER: jomngaji
+      MINIO_ROOT_PASSWORD: supersecret
+    ports:
+      - '9000:9000'
+      - '9001:9001'
+    volumes:
+      - minio_data:/data
+
+  backend:
+    build:
+      context: ./services/backend
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      DATABASE_URL: postgres://jomngaji:jomngaji@postgres:5432/jomngaji
+      REDIS_URL: redis://redis:6379
+      PORT: 3000
+    ports:
+      - '3000:3000'
+
+  ai:
+    build:
+      context: ./services/ai
+    environment:
+      PORT: 8000
+    ports:
+      - '8000:8000'
+
+volumes:
+  postgres_data:
+  minio_data:

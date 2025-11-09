@@ -43,3 +43,10 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Node / Python build artifacts
+node_modules/
+services/backend/dist/
+services/backend/coverage/
+services/ai/.ruff_cache/
+services/ai/.pytest_cache/

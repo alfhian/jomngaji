@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:get_it/get_it.dart';
+
 import '../../models/surah.dart';
 import '../../services/audio_service.dart';
-import 'hafalan_screen.dart';
 
 class DetailSurahScreen extends StatefulWidget {
   final Surah surah;
@@ -13,7 +14,7 @@ class DetailSurahScreen extends StatefulWidget {
 }
 
 class _DetailSurahScreenState extends State<DetailSurahScreen> {
-  final AudioService _audioService = AudioService();
+  late final AudioService _audioService;
   bool _isPlaying = false;
   int _currentAyat = -1;
 
@@ -26,6 +27,12 @@ class _DetailSurahScreenState extends State<DetailSurahScreen> {
     'اهْدِنَا الصِّرَاطَ الْمُسْتَقِيمَ',
     'صِرَاطَ الَّذِينَ أَنْعَمْتَ عَلَيْهِمْ غَيْرِ الْمَغْضُوبِ عَلَيْهِمْ وَلَا الضَّالِّينَ',
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _audioService = GetIt.I<AudioService>();
+  }
 
   void _playNextAyat(int index) async {
     if (index >= _dummyAyat.length) {
@@ -58,6 +65,12 @@ class _DetailSurahScreenState extends State<DetailSurahScreen> {
       });
       _playNextAyat(0);
     }
+  }
+
+  @override
+  void dispose() {
+    _audioService.stop();
+    super.dispose();
   }
 
   @override
