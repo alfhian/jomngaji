@@ -1,13 +1,4 @@
-import {
-  IsEmail,
-  IsEnum,
-  IsOptional,
-  IsString,
-  MaxLength,
-  MinLength,
-} from 'class-validator';
-
-import { UserRole } from '../../users/user-role.enum';
+import { IsEmail, IsOptional, IsString, MinLength } from 'class-validator';
 
 export class SignUpDto {
   @IsEmail()
@@ -20,25 +11,4 @@ export class SignUpDto {
   @IsOptional()
   @IsString()
   displayName?: string;
-
-  @IsOptional()
-  @IsEnum(UserRole)
-  role?: UserRole;
-
-  @IsOptional()
-  @IsString()
-  intakeLevel?: string;
-
-  @IsOptional()
-  @IsString()
-  @MaxLength(180)
-  primaryGoal?: string;
-
-  @IsOptional()
-  @IsString()
-  timezone?: string;
-
-  @IsOptional()
-  @IsString()
-  motivationNote?: string;
 }

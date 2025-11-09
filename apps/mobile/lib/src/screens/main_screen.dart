@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-
 import 'home/home_screen.dart';
 import 'belajar/belajar_screen.dart';
 import 'profile/profile_screen.dart';
@@ -22,23 +21,22 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return Scaffold(
       extendBody: true,
-      backgroundColor: theme.scaffoldBackgroundColor,
+      backgroundColor: const Color(0xFFF0FDF4), // lembut & tenang
       body: AnimatedSwitcher(
-        duration: const Duration(milliseconds: 300),
+        duration: const Duration(milliseconds: 400),
         child: _pages[_selectedIndex],
       ),
       bottomNavigationBar: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(28),
+          borderRadius: BorderRadius.circular(30),
           child: NavigationBar(
-            height: 68,
-            backgroundColor: Colors.white,
-            indicatorColor: theme.colorScheme.primaryContainer.withOpacity(0.6),
-            animationDuration: const Duration(milliseconds: 250),
+            height: 65,
+            backgroundColor: const Color(0xFFECFDF5),
+            indicatorColor: const Color(0xFFBBF7D0),
+            animationDuration: const Duration(milliseconds: 300),
             labelBehavior: NavigationDestinationLabelBehavior.alwaysHide,
             selectedIndex: _selectedIndex,
             onDestinationSelected: (index) {
@@ -48,11 +46,11 @@ class _MainScreenState extends State<MainScreen> {
               NavigationDestination(
                 icon: Icon(Icons.home_outlined),
                 selectedIcon: Icon(Icons.home_rounded),
-                label: 'Beranda',
+                label: 'Home',
               ),
               NavigationDestination(
-                icon: Icon(Icons.layers_outlined),
-                selectedIcon: Icon(Icons.layers_rounded),
+                icon: Icon(Icons.menu_book_outlined),
+                selectedIcon: Icon(Icons.menu_book_rounded),
                 label: 'Belajar',
               ),
               NavigationDestination(

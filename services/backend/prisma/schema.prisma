@@ -7,184 +7,36 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum UserRole {
-  STUDENT
-  COACH
-  ADMIN
-}
-
-enum JourneyStatus {
-  ONBOARDING
-  ACTIVE
-  COMPLETED
-  PAUSED
-}
-
-enum MissionType {
-  AI_PRACTICE
-  LIVE_SESSION
-  REFLECTION
-}
-
-enum MissionStatus {
-  UPCOMING
-  IN_PROGRESS
-  COMPLETE
-  MISSED
-}
-
-enum AssessmentType {
-  ONBOARDING
-  WEEKLY
-  CHECKPOINT
-}
-
-enum CoachSessionStatus {
-  SCHEDULED
-  COMPLETED
-  CANCELLED
-}
-
 model User {
-  id             String            @id @default(uuid())
-  email          String            @unique
-  passwordHash   String
-  displayName    String?
-  role           UserRole          @default(STUDENT)
-  createdAt      DateTime          @default(now())
-  updatedAt      DateTime          @updatedAt
-  studentProfile StudentProfile?
-  coachProfile   CoachProfile?
-  journeys       LearningJourney[] @relation("StudentJourneys")
-  coachSessions  CoachSession[]    @relation("CoachAssignments")
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  displayName  String?
+  lessons      Lesson[]     @relation("TeacherLessons")
+  recordings   Recording[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
 
-model StudentProfile {
-  id             String   @id @default(uuid())
-  userId         String   @unique
-  intakeLevel    String
-  primaryGoal    String?
-  timezone       String?
-  motivationNote String?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-
-  user User @relation(fields: [userId], references: [id])
+model Lesson {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  teacherId   String
+  teacher     User     @relation("TeacherLessons", fields: [teacherId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  recordings  Recording[]
 }
 
-model CoachProfile {
+model Recording {
   id        String   @id @default(uuid())
-  userId    String   @unique
-  bio       String?
-  expertise String[]
-  rating    Float?
+  lessonId  String
+  userId    String
+  score     Float?
+  audioUrl  String?
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 
-  user User @relation(fields: [userId], references: [id])
-}
-
-model LearningProgram {
-  id                     String          @id @default(uuid())
-  slug                   String          @unique
-  title                  String
-  subtitle               String?
-  focusArea              String
-  difficultyLevel        String
-  estimatedDurationWeeks Int
-  heroImageUrl           String?
-  sellingPoints          String[]
-  createdAt              DateTime        @default(now())
-  updatedAt              DateTime        @updatedAt
-
-  modules  ProgramModule[]
-  journeys LearningJourney[]
-}
-
-model ProgramModule {
-  id             String           @id @default(uuid())
-  programId      String
-  order          Int
-  title          String
-  description    String?
-  focusSurah     String?
-  focusAyahRange String?
-  outcomes       String[]
-  estimatedHours Float
-
-  program LearningProgram @relation(fields: [programId], references: [id])
-  missions PracticeMission[]
-}
-
-model LearningJourney {
-  id                String            @id @default(uuid())
-  studentId         String
-  programId         String
-  status            JourneyStatus     @default(ONBOARDING)
-  progressPercent   Float             @default(0)
-  startedAt         DateTime          @default(now())
-  completedAt       DateTime?
-  focusStatement    String?
-  activeModuleId    String?
-  upcomingAssessment DateTime?
-
-  student      User           @relation("StudentJourneys", fields: [studentId], references: [id])
-  program      LearningProgram @relation(fields: [programId], references: [id])
-  activeModule ProgramModule?  @relation(fields: [activeModuleId], references: [id])
-
-  missions     PracticeMission[]
-  assessments  VoiceAssessment[]
-  coachSessions CoachSession[]
-}
-
-model PracticeMission {
-  id              String        @id @default(uuid())
-  journeyId       String
-  moduleId        String?
-  title           String
-  missionType     MissionType
-  status          MissionStatus @default(UPCOMING)
-  scheduledFor    DateTime
-  durationMinutes Int
-  surah           String?
-  ayahRange       String?
-  repetitionGoal  Int?
-  resources       String[]
-  notes           String?
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
-
-  journey LearningJourney @relation(fields: [journeyId], references: [id])
-  module  ProgramModule?  @relation(fields: [moduleId], references: [id])
-}
-
-model VoiceAssessment {
-  id            String         @id @default(uuid())
-  journeyId     String
-  assessmentType AssessmentType
-  recordedAt    DateTime       @default(now())
-  overallScore  Float
-  tajwidScore   Float
-  fluencyScore  Float
-  makhrajScore  Float
-  pacingScore   Float
-  transcriptRef String?
-  summary       String?
-  focusAreas    String[]
-  audioUrl      String?
-
-  journey LearningJourney @relation(fields: [journeyId], references: [id])
-}
-
-model CoachSession {
-  id          String             @id @default(uuid())
-  journeyId   String
-  coachId     String
-  scheduledAt DateTime
-  status      CoachSessionStatus @default(SCHEDULED)
-  meetingUrl  String?
-  agenda      String?
-
-  journey LearningJourney @relation(fields: [journeyId], references: [id])
-  coach   User            @relation("CoachAssignments", fields: [coachId], references: [id])
+  lesson Lesson @relation(fields: [lessonId], references: [id])
+  user   User   @relation(fields: [userId], references: [id])
 }
