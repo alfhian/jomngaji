@@ -2,9 +2,20 @@ from datetime import datetime, timedelta
 from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
 
-# Import package JWT tunggal untuk backend ini.
-# Catatan: nama import = `jose`, nama package pip = `python-jose`.
-from jose import JWTError, jwt
+# Catatan dependency:
+# - import `jose` berasal dari package pip `python-jose`
+# - fallback ke package pip `PyJWT` jika `python-jose` tidak tersedia
+try:
+    from jose import JWTError, jwt
+except ModuleNotFoundError:
+    try:
+        import jwt
+        from jwt import PyJWTError as JWTError
+    except ModuleNotFoundError as exc:
+        raise ModuleNotFoundError(
+            "JWT dependency belum terpasang. "
+            "Install salah satu: `python-jose[cryptography]` atau `PyJWT`."
+        ) from exc
 
 SECRET_KEY = "supersecretkey123"  # ganti di production
 ALGORITHM = "HS256"

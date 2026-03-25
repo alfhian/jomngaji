@@ -13,6 +13,7 @@ IMPORT_TO_REQ = {
     "faster_whisper": "faster-whisper",
     "google": "google-auth",
     "jose": "python-jose",
+    "jwt": "pyjwt",
     "mysql": "mysql-connector-python",
     "numpy": "numpy",
     "pydantic": "pydantic",
