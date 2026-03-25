@@ -57,7 +57,7 @@ class TajwidQuizPayload {
 }
 
 class TajwidQuizService {
-  static const String _baseUrl = AuthService.baseUrl;
+  static String get _baseUrl => AuthService.baseUrl;
 
   static Future<TajwidQuizPayload> fetchQuestions(String quizCode) async {
     final res = await http.get(Uri.parse('$_baseUrl/quizzes/$quizCode/questions'));
