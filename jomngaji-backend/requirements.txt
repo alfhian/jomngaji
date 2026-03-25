@@ -1,0 +1,26 @@
+# Core API
+fastapi==0.122.0
+uvicorn[standard]==0.38.0
+python-multipart==0.0.20
+python-dotenv==1.2.1
+pydantic==2.12.5
+
+# Auth & Database
+bcrypt==5.0.0
+python-jose[cryptography]==3.5.0
+google-auth==2.41.1
+mysql-connector-python==9.5.0
+sqlalchemy==2.0.44
+
+# AI / Speech
+faster-whisper==1.2.1
+torch==2.10.0
+torchaudio==2.10.0
+transformers==4.57.3
+numpy>=1.22,<2.4
+# Keep <2.4 to avoid numba conflict in environments that include librosa/numba
+pydub==0.25.1
+
+# Utilities
+requests==2.32.5
+lxml==6.0.2
