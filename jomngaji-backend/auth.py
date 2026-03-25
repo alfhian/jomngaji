@@ -1,7 +1,12 @@
-from jose import JWTError, jwt
 from datetime import datetime, timedelta
 from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
+
+try:
+    from jose import JWTError, jwt
+except ModuleNotFoundError:  # fallback jika python-jose belum terpasang
+    import jwt  # PyJWT
+    from jwt import PyJWTError as JWTError
 
 SECRET_KEY = "supersecretkey123"  # ganti di production
 ALGORITHM = "HS256"
