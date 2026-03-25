@@ -11,6 +11,7 @@ import 'package:jomngaji/services/evaluation_api.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 
+import '../../../core/config/api_config.dart';
 import '../../../core/widgets/custom_gradient_appbar.dart';
 import '../../../features/auth/services/auth_service.dart';
 import '../../../services/progress_service.dart';
@@ -50,7 +51,7 @@ class _ExamQuestion {
 }
 
 class _ExamIqraPageState extends State<ExamIqraPage> {
-  static const String _baseUrl = 'http://10.179.249.20:4000';
+  static String get _baseUrl => ApiConfig.baseUrl;
 
   final List<_ExamQuestion> _questions = const [
     _ExamQuestion.mcq(

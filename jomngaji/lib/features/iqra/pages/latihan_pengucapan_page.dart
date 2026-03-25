@@ -9,6 +9,7 @@ import 'package:jomngaji/services/evaluation_api.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 
+import '../../../core/config/api_config.dart';
 import '../data/hijaiyah_data.dart';
 import '../../../core/widgets/custom_gradient_appbar.dart';
 import '../../../services/hijaiyah_service.dart';
@@ -47,7 +48,7 @@ class _LatihanPengucapanPageState extends State<LatihanPengucapanPage> {
   @override
   void initState() {
     super.initState();
-    _api = EvaluationApi('http://10.179.249.20:4000');
+    _api = EvaluationApi(ApiConfig.baseUrl);
     _recordedPaths = List<String?>.filled(widget.hurufList.length, null);
     _initRecorder();
   }

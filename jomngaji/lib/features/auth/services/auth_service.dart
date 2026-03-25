@@ -1,12 +1,12 @@
 import 'dart:convert';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../../core/config/api_config.dart';
 
 class AuthService {
-  static const baseUrl = String.fromEnvironment(
-    'API_BASE_URL',
-    defaultValue: "http://10.179.249.20:4000",
-  );
+  static String get baseUrl => ApiConfig.baseUrl;
+  static const _secureStorage = FlutterSecureStorage();
 
   static const _keyIsLoggedIn = 'isLoggedIn';
   static const _keyAccessToken = 'access_token';
@@ -16,7 +16,8 @@ class AuthService {
 
   static Future<bool> isLoggedIn() async {
     final prefs = await SharedPreferences.getInstance();
-    final hasToken = (prefs.getString(_keyAccessToken) ?? '').isNotEmpty;
+    final hasToken = (await _secureStorage.read(key: _keyAccessToken) ?? '')
+        .isNotEmpty;
     return (prefs.getBool(_keyIsLoggedIn) ?? false) && hasToken;
   }
 
@@ -37,8 +38,7 @@ class AuthService {
   }
 
   static Future<String?> getAccessToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_keyAccessToken);
+    return _secureStorage.read(key: _keyAccessToken);
   }
 
   static Future<Map<String, String>> authHeaders({
@@ -57,13 +57,13 @@ class AuthService {
 
   static Future<void> login(String email, String password) async {
     final res = await http.post(
-      Uri.parse('$baseUrl/login'),
+      Uri.parse(ApiConfig.endpoint('/login')),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({'email': email, 'password': password}),
     );
 
     if (res.statusCode != 200) {
-      throw Exception('Login gagal: ${res.body}');
+      throw Exception('Login gagal. Periksa email/password Anda.');
     }
 
     final data = jsonDecode(res.body) as Map<String, dynamic>;
@@ -81,12 +81,12 @@ class AuthService {
     };
 
     final res = await http.post(
-      Uri.parse('$baseUrl/auth/google'),
+      Uri.parse(ApiConfig.endpoint('/auth/google')),
       body: body,
     );
 
     if (res.statusCode != 200) {
-      throw Exception('Login Google gagal: ${res.body}');
+      throw Exception('Login Google gagal. Silakan coba lagi.');
     }
 
     final data = jsonDecode(res.body) as Map<String, dynamic>;
@@ -106,7 +106,7 @@ class AuthService {
 
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_keyIsLoggedIn, true);
-    await prefs.setString(_keyAccessToken, accessToken);
+    await _secureStorage.write(key: _keyAccessToken, value: accessToken);
 
     if (userIdRaw != null) {
       final parsed = int.tryParse(userIdRaw.toString());
@@ -128,20 +128,20 @@ class AuthService {
 
   static Future<void> register(String email, String password, String name) async {
     final res = await http.post(
-      Uri.parse('$baseUrl/register'),
+      Uri.parse(ApiConfig.endpoint('/register')),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({'email': email, 'password': password, 'name': name}),
     );
 
     if (res.statusCode != 200) {
-      throw Exception('Registrasi gagal: ${res.body}');
+      throw Exception('Registrasi gagal. Silakan cek data Anda.');
     }
   }
 
   static Future<void> logout() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_keyIsLoggedIn, false);
-    await prefs.remove(_keyAccessToken);
+    await _secureStorage.delete(key: _keyAccessToken);
     await prefs.remove(_keyUserId);
     await prefs.remove(_keyName);
     await prefs.remove(_keyIsPremium);
@@ -156,7 +156,7 @@ class AuthService {
     );
 
     final res = await http.post(
-      Uri.parse('$baseUrl/reset-password'),
+      Uri.parse(ApiConfig.endpoint('/reset-password')),
       headers: headers,
       body: {
         'old_password': oldPassword,
@@ -165,7 +165,7 @@ class AuthService {
     );
 
     if (res.statusCode != 200) {
-      throw Exception('Reset password gagal: ${res.body}');
+      throw Exception('Reset password gagal. Silakan coba lagi.');
     }
   }
 }
