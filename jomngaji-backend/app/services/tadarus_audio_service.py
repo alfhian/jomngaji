@@ -1,3 +1,6 @@
+import os
+from pathlib import Path
+
 import numpy as np
 from fastapi import UploadFile
 from difflib import SequenceMatcher
@@ -33,6 +36,20 @@ def _load_audio_dependencies():
     return _torch, _torchaudio
 
 
+
+
+def _resolve_hf_cache_dir() -> Path:
+    configured_home = os.getenv("HF_HOME")
+    if configured_home:
+        cache_home = Path(configured_home)
+    else:
+        backend_root = Path(__file__).resolve().parents[2]
+        cache_home = backend_root / ".cache" / "huggingface"
+
+    cache_home.mkdir(parents=True, exist_ok=True)
+    return cache_home
+
+
 def _load_wav2vec_stack():
     global _processor, _model, _device
     torch, _ = _load_audio_dependencies()
@@ -44,9 +61,25 @@ def _load_wav2vec_stack():
                 "Dependency `transformers` belum terpasang."
             ) from exc
         _device = "cuda" if torch.cuda.is_available() else "cpu"
-        _processor = Wav2Vec2Processor.from_pretrained("facebook/wav2vec2-base-960h")
-        _model = Wav2Vec2Model.from_pretrained("facebook/wav2vec2-base-960h").to(_device)
-        _model.eval()
+        cache_dir = _resolve_hf_cache_dir()
+        model_id = "facebook/wav2vec2-base-960h"
+
+        try:
+            _processor = Wav2Vec2Processor.from_pretrained(
+                model_id,
+                cache_dir=str(cache_dir),
+            )
+            _model = Wav2Vec2Model.from_pretrained(
+                model_id,
+                cache_dir=str(cache_dir),
+            ).to(_device)
+            _model.eval()
+        except OSError as exc:
+            raise RuntimeError(
+                "Gagal memuat model wav2vec. Pastikan directory cache dapat ditulis "
+                "oleh user service (HF_HOME) dan koneksi internet server tersedia. "
+                f"Detail: {exc}"
+            ) from exc
     return _processor, _model, _device, torch
 
 # =========================================================

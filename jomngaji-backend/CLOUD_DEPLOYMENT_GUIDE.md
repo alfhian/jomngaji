@@ -56,6 +56,10 @@ python3 -m venv .venv
 source .venv/bin/activate
 pip install --upgrade pip
 pip install -r requirements.txt
+
+# siapkan cache HuggingFace agar writable oleh service user
+sudo mkdir -p /opt/jomngaji/jomngaji-backend/.cache/huggingface
+sudo chown -R www-data:www-data /opt/jomngaji/jomngaji-backend/.cache
 ```
 
 ## 3) Set environment variable
@@ -124,6 +128,7 @@ Group=www-data
 WorkingDirectory=/opt/jomngaji/jomngaji-backend
 Environment="PATH=/opt/jomngaji/jomngaji-backend/.venv/bin"
 EnvironmentFile=/opt/jomngaji/jomngaji-backend/.env
+Environment="HF_HOME=/opt/jomngaji/jomngaji-backend/.cache/huggingface"
 ExecStart=/opt/jomngaji/jomngaji-backend/.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 4000 --workers 4
 Restart=always
 RestartSec=3
@@ -240,6 +245,18 @@ sudo journalctl -u jomngaji-backend -n 200 --no-pager
 ```
 - Periksa env penting (`SECRET_KEY`, koneksi DB, dependency opsional).
 
+
+### `PermissionError` saat download model (`/var/www/.cache` atau lock file)
+- Ini biasanya terjadi karena service user (`www-data`) tidak punya izin tulis ke cache model.
+- Jalankan:
+```bash
+sudo mkdir -p /opt/jomngaji/jomngaji-backend/.cache/huggingface
+sudo chown -R www-data:www-data /opt/jomngaji/jomngaji-backend/.cache
+sudo systemctl restart jomngaji-backend
+```
+- Pastikan di systemd ada env:
+  `Environment="HF_HOME=/opt/jomngaji/jomngaji-backend/.cache/huggingface"`
+
 ### Tidak bisa diakses dari internet
 - Pastikan DNS domain benar.
 - Cek firewall `ufw status`.
@@ -247,4 +264,4 @@ sudo journalctl -u jomngaji-backend -n 200 --no-pager
 
 ---
 
-Kalau Anda mau, langkah berikutnya saya bisa bantu bikinkan **versi Docker + docker-compose** untuk deploy yang lebih repeatable (termasuk Postgres dan Nginx) agar proses release lebih rapi.
+Kalau Anda mau, langkah berikutnya saya bisa bantu bikinkan **versi Docker + docker-compose** untuk deploy yang lebih repeatable (termasuk MariaDB dan Nginx) agar proses release lebih rapi.
