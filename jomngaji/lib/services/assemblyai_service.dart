@@ -1,10 +1,10 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
+import '../core/config/api_config.dart';
 
 class AssemblyAIService {
-  final String apiKey = "923f7c48460445bd80bd7f8569d04e39";  // Ganti dengan API key yang valid
-  final String baseUrl = "https://api.assemblyai.com/v2";
+  final String baseUrl = ApiConfig.endpoint('/ai/assemblyai');
 
   // Fungsi untuk upload file audio
   Future<String?> uploadAudio(String path) async {
@@ -40,7 +40,6 @@ class AssemblyAIService {
     final response = await http.post(
       url,
       headers: {
-        'authorization': 'Bearer $apiKey',
         'content-type': 'application/json',
       },
       body: json.encode({
@@ -64,7 +63,7 @@ class AssemblyAIService {
     final response = await http.get(
       url,
       headers: {
-        'authorization': 'Bearer $apiKey',
+        'content-type': 'application/json',
       },
     );
 

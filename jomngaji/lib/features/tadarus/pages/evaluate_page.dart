@@ -8,6 +8,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:audio_session/audio_session.dart';
 
+import '../../../core/config/api_config.dart';
 import '../../../models/surah.dart';
 import '../../../models/evaluation_result.dart';
 import '../../../services/evaluation_api.dart';
@@ -65,7 +66,7 @@ class _EvaluatePageState extends State<EvaluatePage> {
   void initState() {
     super.initState();
 
-    _api = EvaluationApi('http://10.179.249.20:4000');
+    _api = EvaluationApi(ApiConfig.baseUrl);
     _currentAyahIndex = widget.surah.ayahs.indexOf(widget.ayah);
 
     _player = ja.AudioPlayer();

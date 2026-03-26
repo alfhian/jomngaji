@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
+import '../../../core/config/api_config.dart';
 import '../../../services/progress_service.dart';
 import '../../../routes/app_routes.dart';
 import '../../auth/services/auth_service.dart';
@@ -35,7 +36,7 @@ class _TadarusCardState extends State<TadarusCard> {
     try {
       final headers = await AuthService.authHeaders();
       final res = await http.get(
-        Uri.parse('http://10.179.249.20:4000/tadarus/global-progress'),
+        Uri.parse(ApiConfig.endpoint('/tadarus/global-progress')),
         headers: headers,
       );
 

@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
+import '../core/config/api_config.dart';
 import '../features/auth/services/auth_service.dart';
 
 class HijaiyahLesson {
@@ -63,7 +64,7 @@ class HijaiyahLessonsPayload {
 }
 
 class HijaiyahService {
-  static const String baseUrl = 'http://10.179.249.20:4000';
+  static String get baseUrl => ApiConfig.baseUrl;
 
   static double _normalizeProgress(dynamic raw) {
     final parsed = double.tryParse('${raw ?? 0}') ?? 0;

@@ -1,8 +1,9 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../../../core/config/api_config.dart';
 import '../../../models/surah.dart';
 
-const String baseUrl = "http://10.179.249.20:4000/quran";
+final String baseUrl = ApiConfig.endpoint('/quran');
 
 // Ambil daftar surah
 Future<List<Surah>> loadQuranDataset() async {

@@ -53,7 +53,7 @@ class _ExamQuestion {
 }
 
 class _ExamTajwidPageState extends State<ExamTajwidPage> {
-  static const String _baseUrl = AuthService.baseUrl;
+  static String get _baseUrl => AuthService.baseUrl;
 
   final List<_ExamQuestion> _questions = const [
     _ExamQuestion.mcq(

@@ -1,16 +1,37 @@
-from google.oauth2 import id_token
-from google.auth.transport import requests
 from fastapi import HTTPException
-from app.database import get_db_connection
+from app.services.auth_service import get_db
 import os
 
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
 
-def verify_google_token(token: str):
+
+def _load_google_auth_libs():
+    """
+    Lazy import supaya app tetap bisa startup walau package google-auth
+    belum ter-install. Error akan muncul saat endpoint Google login dipakai.
+    """
     try:
-        idinfo = id_token.verify_oauth2_token(
+        from google.oauth2 import id_token as google_id_token
+        from google.auth.transport import requests as google_requests
+        return google_id_token, google_requests
+    except ModuleNotFoundError:
+        return None, None
+
+def verify_google_token(token: str):
+    google_id_token, google_requests = _load_google_auth_libs()
+    if google_id_token is None or google_requests is None:
+        raise HTTPException(
+            status_code=500,
+            detail=(
+                "Dependency google-auth belum terpasang. "
+                "Install package `google-auth`."
+            ),
+        )
+
+    try:
+        idinfo = google_id_token.verify_oauth2_token(
             token,
-            requests.Request(),
+            google_requests.Request(),
             GOOGLE_CLIENT_ID
         )
         return idinfo
@@ -24,7 +45,7 @@ def login_or_register_google(idinfo: dict):
     google_id = idinfo["sub"]
     avatar = idinfo.get("picture")
 
-    conn = get_db_connection()
+    conn = get_db()
     cursor = conn.cursor(dictionary=True)
 
     cursor.execute("SELECT * FROM users WHERE email = %s", (email,))
@@ -60,4 +81,3 @@ def login_or_register_google(idinfo: dict):
     conn.close()
 
     return user
-

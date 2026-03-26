@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../localization/app_localization.dart';
 import '../../features/auth/services/auth_service.dart';
 
 Future<void> runWithPremiumGate(
@@ -63,7 +64,7 @@ Future<void> showPremiumUpgradeDialog(
               ),
               const SizedBox(height: 16),
               Text(
-                'Upgrade ke Premium',
+                context.l10n.text('pro.upgradeTitle'),
                 textAlign: TextAlign.center,
                 style: GoogleFonts.poppins(
                   fontSize: 20,
@@ -73,7 +74,10 @@ Future<void> showPremiumUpgradeDialog(
               ),
               const SizedBox(height: 8),
               Text(
-                '$featureName khusus member Premium.\nBuka semua materi PRO tanpa batas.',
+                context.l10n.text(
+                  'pro.description',
+                  params: {'feature': featureName},
+                ),
                 textAlign: TextAlign.center,
                 style: GoogleFonts.poppins(
                   fontSize: 13,
@@ -96,7 +100,7 @@ Future<void> showPremiumUpgradeDialog(
                         ),
                       ),
                       child: Text(
-                        'Nanti',
+                        context.l10n.text('pro.later'),
                         style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
                       ),
                     ),
@@ -108,8 +112,8 @@ Future<void> showPremiumUpgradeDialog(
                       onPressed: () {
                         Navigator.pop(context);
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Halaman Premium akan segera hadir ✨'),
+                          SnackBar(
+                            content: Text(context.l10n.text('pro.pageSoon')),
                           ),
                         );
                       },
@@ -124,7 +128,7 @@ Future<void> showPremiumUpgradeDialog(
                       ),
                       icon: const Icon(Icons.auto_awesome_rounded, size: 18),
                       label: Text(
-                        'Lihat Premium',
+                        context.l10n.text('pro.viewPlan'),
                         style: GoogleFonts.poppins(fontWeight: FontWeight.w700),
                       ),
                     ),

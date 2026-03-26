@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -5,9 +7,15 @@ plugins {
 }
 
 android {
-    namespace = "com.example.jomngaji"
+    namespace = "com.jomngaji.app"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion   // pakai versi dari Flutter SDK
+
+    val keystoreProperties = Properties()
+    val keystorePropertiesFile = rootProject.file("key.properties")
+    if (keystorePropertiesFile.exists()) {
+        keystoreProperties.load(keystorePropertiesFile.inputStream())
+    }
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
@@ -19,7 +27,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.example.jomngaji"
+        applicationId = "com.jomngaji.app"
         minSdk = 24
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
@@ -38,9 +46,25 @@ android {
         }
     }
 
+    signingConfigs {
+        create("release") {
+            if (keystorePropertiesFile.exists()) {
+                storeFile = file(keystoreProperties["storeFile"] as String)
+                storePassword = keystoreProperties["storePassword"] as String
+                keyAlias = keystoreProperties["keyAlias"] as String
+                keyPassword = keystoreProperties["keyPassword"] as String
+            }
+        }
+    }
+
     buildTypes {
         release {
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig =
+                if (keystorePropertiesFile.exists()) {
+                    signingConfigs.getByName("release")
+                } else {
+                    signingConfigs.getByName("debug")
+                }
             isMinifyEnabled = false
             isShrinkResources = false
         }

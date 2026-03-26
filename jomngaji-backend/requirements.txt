@@ -7,7 +7,11 @@ pydantic==2.12.5
 
 # Auth & Database
 bcrypt==5.0.0
+# NOTE: modul yang di-import di kode adalah `from jose import ...`,
+# paket pip yang benar adalah `python-jose` (bukan `jose`).
 python-jose[cryptography]==3.5.0
+PyJWT==2.10.1
+cryptography==46.0.1
 google-auth==2.41.1
 mysql-connector-python==9.5.0
 sqlalchemy==2.0.44

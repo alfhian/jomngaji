@@ -5,7 +5,9 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 
 import '../../../core/localization/app_localization.dart';
+import '../../../core/theme/app_design_tokens.dart';
 import '../../../core/widgets/custom_gradient_appbar.dart';
+import '../../../core/widgets/premium_upgrade_dialog.dart';
 import '../../../routes/app_routes.dart';
 import '../../auth/services/auth_service.dart';
 import '../widgets/app_bottom_nav.dart';
@@ -31,6 +33,7 @@ class _ProfilePageState extends State<ProfilePage> {
   int _tajwidScore = 0;
   int _tilawahScore = 0;
   int _tahfidzScore = 0;
+  bool _isPremium = false;
 
   @override
   void initState() {
@@ -83,8 +86,8 @@ class _ProfilePageState extends State<ProfilePage> {
 
       final headers = {'Authorization': 'Bearer $token'};
       final userName = (await AuthService.getUserName()) ?? 'Pengguna';
-      final avgResponse = await http.get(
-        Uri.parse('${AuthService.baseUrl}/progress/average'),
+      final moduleProgressResponse = await http.get(
+        Uri.parse('${AuthService.baseUrl}/progress/modules'),
         headers: headers,
       );
       final summaryResponse = await http.get(
@@ -96,8 +99,8 @@ class _ProfilePageState extends State<ProfilePage> {
         headers: headers,
       );
 
-      final avgJson = avgResponse.statusCode == 200
-          ? (jsonDecode(avgResponse.body) as Map<String, dynamic>)
+      final moduleJson = moduleProgressResponse.statusCode == 200
+          ? (jsonDecode(moduleProgressResponse.body) as Map<String, dynamic>)
           : <String, dynamic>{};
       final summaryJson = summaryResponse.statusCode == 200
           ? (jsonDecode(summaryResponse.body) as Map<String, dynamic>)
@@ -109,16 +112,31 @@ class _ProfilePageState extends State<ProfilePage> {
       if (!mounted) return;
       setState(() {
         _name = userName;
-        _iqra = _normalizeProgress(avgJson['iqra_avg'] ?? 0);
-        _tajwid = _normalizeProgress(avgJson['tajwid_avg'] ?? 0);
-        _tilawah = _normalizeProgress(avgJson['tilawah_avg'] ?? 0);
-        _tahfidz = _normalizeProgress(avgJson['tahfidz_avg'] ?? 0);
+        _isPremium = (summaryJson['is_premium'] == true) ||
+            (summaryJson['pro'] == true);
+        _iqra = _extractProgress(
+          (moduleJson['iqra'] as Map<String, dynamic>?) ?? <String, dynamic>{},
+        );
+        _tajwid = _extractProgress(
+          (moduleJson['tajwid'] as Map<String, dynamic>?) ?? <String, dynamic>{},
+        );
+        _tilawah = _extractProgress(
+          (moduleJson['tilawah'] as Map<String, dynamic>?) ?? <String, dynamic>{},
+        );
+        _tahfidz = _extractProgress(
+          (moduleJson['tahfidz'] as Map<String, dynamic>?) ?? <String, dynamic>{},
+        );
         _tadarus = _extractProgress(tadarusJson);
 
         _iqraScore = _normalizeScore(summaryJson['iqra_score']);
         _tajwidScore = _normalizeScore(summaryJson['tajwid_score']);
         _tilawahScore = _normalizeScore(summaryJson['tilawah_score']);
         _tahfidzScore = _normalizeScore(summaryJson['tahfidz_score']);
+      });
+      final localPremium = await AuthService.isPremiumUser();
+      if (!mounted) return;
+      setState(() {
+        _isPremium = _isPremium || localPremium;
       });
     } catch (e) {
       if (!mounted) return;
@@ -139,36 +157,40 @@ class _ProfilePageState extends State<ProfilePage> {
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(label,
-                  style: GoogleFonts.poppins(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                  )),
-              Text('$percent%',
-                  style: GoogleFonts.poppins(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black54,
-                  )),
-            ],
-          ),
-          const SizedBox(height: 6),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: LinearProgressIndicator(
-              value: value,
-              minHeight: 10,
-              backgroundColor: Colors.grey.shade300,
-              color: color,
+      child: Semantics(
+        label: 'Progress $label',
+        value: '$percent persen',
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(label,
+                    style: GoogleFonts.poppins(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    )),
+                Text('$percent%',
+                    style: GoogleFonts.poppins(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black54,
+                    )),
+              ],
             ),
-          ),
-        ],
+            const SizedBox(height: 6),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: LinearProgressIndicator(
+                value: value,
+                minHeight: 10,
+                backgroundColor: Colors.grey.shade300,
+                color: color,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -267,6 +289,7 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
           ),
           IconButton(
+            tooltip: context.l10n.text('profile.refreshTooltip'),
             onPressed: _loadProfileProgress,
             icon: const Icon(Icons.refresh_rounded, color: Colors.white),
           ),
@@ -282,9 +305,9 @@ class _ProfilePageState extends State<ProfilePage> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+        border: Border.all(color: AppColors.border),
       ),
       child: Row(
         children: [
@@ -353,10 +376,121 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
+  Widget _planCard() {
+    final planLabel = _isPremium ? 'PRO' : 'FREE';
+    final planColor = _isPremium ? const Color(0xFF16A34A) : const Color(0xFF2563EB);
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.workspace_premium_rounded, color: planColor),
+              const SizedBox(width: 8),
+              Text(
+                context.l10n.text('profile.currentPlan'),
+                style: GoogleFonts.poppins(fontWeight: FontWeight.w700),
+              ),
+              const Spacer(),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: planColor.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  planLabel,
+                  style: GoogleFonts.poppins(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: planColor,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            _isPremium
+                ? context.l10n.text('profile.planActivePro')
+                : context.l10n.text('profile.planFreePrompt'),
+            style: GoogleFonts.poppins(fontSize: 12, color: Colors.black54),
+          ),
+          const SizedBox(height: 10),
+          SizedBox(
+            width: double.infinity,
+            child: Semantics(
+              button: true,
+              label: _isPremium ? 'Kelola Plan PRO' : 'Update Plan ke PRO',
+              child: ElevatedButton.icon(
+                onPressed: () => showPremiumUpgradeDialog(
+                  context,
+                  featureName: _isPremium
+                      ? context.l10n.text('profile.managePlan')
+                      : context.l10n.text('profile.updatePlan'),
+                ),
+                icon: const Icon(Icons.autorenew_rounded),
+                label: Text(
+                  _isPremium
+                      ? context.l10n.text('profile.managePlan')
+                      : context.l10n.text('profile.updatePlan'),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: planColor,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(vertical: 11),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _confirmLogout() async {
+    final shouldLogout = await showDialog<bool>(
+      context: context,
+      builder: (ctx) {
+        return AlertDialog(
+          title: Text(context.l10n.text('profile.logoutConfirmTitle')),
+          content: Text(context.l10n.text('profile.logoutConfirmMessage')),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text(context.l10n.text('common.cancel')),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: Text(context.l10n.text('profile.logout')),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (shouldLogout != true) return;
+    await AuthService.logout();
+    if (!mounted) return;
+    Navigator.pushNamedAndRemoveUntil(
+      context,
+      AppRoutes.login,
+      (route) => false,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF4F7FC),
+      backgroundColor: AppColors.scaffold,
       appBar: CustomGradientAppBar(title: context.l10n.text('profile.title')),
       extendBody: true,
       bottomNavigationBar: const AppBottomNav(currentIndex: 3),
@@ -433,6 +567,8 @@ class _ProfilePageState extends State<ProfilePage> {
                     color: Colors.teal,
                   ),
                   const SizedBox(height: 8),
+                  _planCard(),
+                  const SizedBox(height: 12),
                   _languageCard(),
                   const SizedBox(height: 12),
                   SizedBox(
@@ -446,6 +582,25 @@ class _ProfilePageState extends State<ProfilePage> {
                         foregroundColor: const Color(0xFF0F172A),
                         side: const BorderSide(color: Color(0xFFB8C4D8)),
                         padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    child: Semantics(
+                      button: true,
+                      label: 'Logout akun',
+                      child: ElevatedButton.icon(
+                        onPressed: _confirmLogout,
+                        icon: const Icon(Icons.logout_rounded),
+                        label: Text(context.l10n.text('profile.logout')),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFDC2626),
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
                       ),
                     ),
                   ),

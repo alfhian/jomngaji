@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../../core/localization/app_localization.dart';
 import '../../../features/auth/services/auth_service.dart';
 
 class RegisterPage extends StatefulWidget {
@@ -15,6 +16,14 @@ class _RegisterPageState extends State<RegisterPage> {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
   bool isLoading = false;
+
+  @override
+  void dispose() {
+    nameController.dispose();
+    emailController.dispose();
+    passwordController.dispose();
+    super.dispose();
+  }
 
   Future<void> _handleRegister() async {
     if (!_formKey.currentState!.validate()) return;
@@ -43,6 +52,7 @@ class _RegisterPageState extends State<RegisterPage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(
@@ -84,18 +94,18 @@ class _RegisterPageState extends State<RegisterPage> {
                         borderRadius: BorderRadius.circular(28),
                       ),
                       clipBehavior: Clip.antiAlias,
-                      child: Transform.scale(
-                        scale: 1.28,
+                      child: Padding(
+                        padding: const EdgeInsets.all(10),
                         child: Image.asset(
                           'assets/images/icon-jomngaji.png',
-                          fit: BoxFit.cover,
+                          fit: BoxFit.contain,
                         ),
                       ),
                     ),
                   ),
                   const SizedBox(height: 18),
                   Text(
-                    'Buat akun baru ✨',
+                    l10n.text('register.title'),
                     style: GoogleFonts.poppins(
                       fontSize: 28,
                       fontWeight: FontWeight.w700,
@@ -104,7 +114,7 @@ class _RegisterPageState extends State<RegisterPage> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Isi data di bawah untuk mulai belajar bersama JomNgaji.',
+                    l10n.text('register.subtitle'),
                     textAlign: TextAlign.center,
                     style: GoogleFonts.poppins(
                       fontSize: 14,
@@ -129,9 +139,11 @@ class _RegisterPageState extends State<RegisterPage> {
                       children: [
                         TextFormField(
                           controller: nameController,
+                          textInputAction: TextInputAction.next,
+                          autofillHints: const [AutofillHints.name],
                           decoration: InputDecoration(
                             prefixIcon: const Icon(Icons.person_outline),
-                            labelText: "Nama Lengkap",
+                            labelText: l10n.text('register.name'),
                             filled: true,
                             fillColor: const Color(0xFFFFFBEB),
                             border: OutlineInputBorder(
@@ -139,7 +151,7 @@ class _RegisterPageState extends State<RegisterPage> {
                               borderSide: BorderSide.none,
                             ),
                           ),
-                          validator: (value) => value == null || value.isEmpty
+                          validator: (value) => value == null || value.trim().isEmpty
                               ? "Nama wajib diisi"
                               : null,
                         ),
@@ -147,9 +159,11 @@ class _RegisterPageState extends State<RegisterPage> {
                         TextFormField(
                           controller: emailController,
                           keyboardType: TextInputType.emailAddress,
+                          textInputAction: TextInputAction.next,
+                          autofillHints: const [AutofillHints.email],
                           decoration: InputDecoration(
                             prefixIcon: const Icon(Icons.email_outlined),
-                            labelText: "Email",
+                            labelText: l10n.text('login.email'),
                             filled: true,
                             fillColor: const Color(0xFFFFFBEB),
                             border: OutlineInputBorder(
@@ -158,10 +172,11 @@ class _RegisterPageState extends State<RegisterPage> {
                             ),
                           ),
                           validator: (value) {
-                            if (value == null || value.isEmpty) {
+                            final v = value?.trim() ?? '';
+                            if (v.isEmpty) {
                               return "Email wajib diisi";
                             }
-                            if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
+                            if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(v)) {
                               return "Format email tidak valid";
                             }
                             return null;
@@ -171,9 +186,11 @@ class _RegisterPageState extends State<RegisterPage> {
                         TextFormField(
                           controller: passwordController,
                           obscureText: true,
+                          textInputAction: TextInputAction.done,
+                          autofillHints: const [AutofillHints.newPassword],
                           decoration: InputDecoration(
                             prefixIcon: const Icon(Icons.lock_outline),
-                            labelText: "Password",
+                            labelText: l10n.text('login.password'),
                             filled: true,
                             fillColor: const Color(0xFFFFFBEB),
                             border: OutlineInputBorder(
@@ -205,7 +222,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                       color: Colors.white,
                                     ),
                                   )
-                                : const Text("Register"),
+                                : Text(l10n.text('register.button')),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: const Color(0xFFF97316),
                               foregroundColor: Colors.white,
@@ -225,7 +242,7 @@ class _RegisterPageState extends State<RegisterPage> {
                   TextButton(
                     onPressed: () => Navigator.pop(context),
                     child: Text(
-                      "Sudah punya akun? Login",
+                      l10n.text('register.haveAccount'),
                       style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
                     ),
                   ),

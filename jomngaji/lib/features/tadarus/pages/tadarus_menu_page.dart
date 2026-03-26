@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'package:just_audio/just_audio.dart';
 
+import '../../../core/config/api_config.dart';
 import '../../../core/widgets/custom_gradient_appbar.dart';
 import '../../../core/widgets/premium_upgrade_dialog.dart';
 import '../../../models/surah.dart';
@@ -104,7 +105,7 @@ class _TadarusMenuPageState extends State<TadarusMenuPage> {
       final headers = await AuthService.authHeaders();
 
       final res = await http.get(
-        Uri.parse('http://10.179.249.20:4000/tadarus/last-activity'),
+        Uri.parse(ApiConfig.endpoint('/tadarus/last-activity')),
         headers: headers,
       );
 
@@ -146,7 +147,7 @@ class _TadarusMenuPageState extends State<TadarusMenuPage> {
       final headers = await AuthService.authHeaders();
 
       final res = await http.get(
-        Uri.parse('http://10.179.249.20:4000/tadarus/global-progress'),
+        Uri.parse(ApiConfig.endpoint('/tadarus/global-progress')),
         headers: headers,
       );
 
@@ -181,7 +182,7 @@ class _TadarusMenuPageState extends State<TadarusMenuPage> {
 
         try {
           final res = await http.get(
-            Uri.parse('http://10.179.249.20:4000/tadarus/progress?surah=${s.number}'),
+            Uri.parse(ApiConfig.endpoint('/tadarus/progress?surah=${s.number}')),
             headers: headers,
           );
 

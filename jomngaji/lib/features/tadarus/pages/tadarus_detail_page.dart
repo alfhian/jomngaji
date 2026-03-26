@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'package:just_audio/just_audio.dart';
 
+import '../../../core/config/api_config.dart';
 import '../../../core/widgets/custom_gradient_appbar.dart';
 import '../../../models/surah.dart';
 import '../../auth/services/auth_service.dart';
@@ -72,7 +73,7 @@ class _TadarusDetailPageState extends State<TadarusDetailPage> {
   Future<int> _fetchCompletedAyahCount(int surahNumber) async {
     final headers = await AuthService.authHeaders();
     final res = await http.get(
-      Uri.parse('http://10.179.249.20:4000/tadarus/progress?surah=$surahNumber'),
+      Uri.parse(ApiConfig.endpoint('/tadarus/progress?surah=$surahNumber')),
       headers: headers,
     );
 

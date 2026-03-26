@@ -1,10 +1,11 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
+import '../core/config/api_config.dart';
 
 class OpenAIPronunciationService {
-  static const String apiKey = "REMOVEDproj-JftLUsCkdkAm8m95Yyiq4PYTPchCXHIkHdGqfDBjWNaIpvvS5PMaAYeTOva1z_HomERu1DmcOoT3BlbkFJYNUQ0auzTiMkCybBAow_Mc-_ZBeqNsiVfjwipotphc_sEiseNeuAucULMWtj0_BVZzdcUaArMA";
-  static const String transcribeUrl = "https://api.openai.com/v1/audio/transcriptions";
+  static String get transcribeUrl =>
+      ApiConfig.endpoint('/ai/openai/transcriptions');
 
   /// Kirim audio ke OpenAI Whisper untuk transkripsi
   static Future<String?> transcribe(String audioPath) async {
@@ -16,7 +17,6 @@ class OpenAIPronunciationService {
 
     try {
       final request = http.MultipartRequest("POST", Uri.parse(transcribeUrl))
-        ..headers["Authorization"] = "Bearer $apiKey"
         ..fields["model"] = "whisper-1"
         ..files.add(await http.MultipartFile.fromPath("file", audioPath));
 

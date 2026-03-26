@@ -146,6 +146,141 @@ class AppLocalization {
       AppLanguage.id: 'Pilih bahasa untuk semua teks dalam aplikasi.',
       AppLanguage.en: 'Choose language for all app text.',
     },
+    'profile.currentPlan': {
+      AppLanguage.ms: 'Pelan Semasa',
+      AppLanguage.id: 'Paket Saat Ini',
+      AppLanguage.en: 'Current Plan',
+    },
+    'profile.planActivePro': {
+      AppLanguage.ms: 'Akaun anda sudah aktif PRO. Urus pelan untuk perpanjang atau ubah.',
+      AppLanguage.id: 'Akun kamu sudah aktif PRO. Kelola plan jika ingin perpanjang atau ubah.',
+      AppLanguage.en: 'Your account is already PRO. Manage your plan to renew or change it.',
+    },
+    'profile.planFreePrompt': {
+      AppLanguage.ms: 'Naik taraf ke PRO untuk membuka semua materi tanpa had.',
+      AppLanguage.id: 'Upgrade ke PRO untuk membuka semua materi tanpa batas.',
+      AppLanguage.en: 'Upgrade to PRO to unlock all learning content with no limits.',
+    },
+    'profile.managePlan': {
+      AppLanguage.ms: 'Urus Pelan',
+      AppLanguage.id: 'Kelola Plan',
+      AppLanguage.en: 'Manage Plan',
+    },
+    'profile.updatePlan': {
+      AppLanguage.ms: 'Kemaskini Pelan',
+      AppLanguage.id: 'Update Plan',
+      AppLanguage.en: 'Update Plan',
+    },
+    'profile.refreshTooltip': {
+      AppLanguage.ms: 'Muat semula data profil',
+      AppLanguage.id: 'Refresh data profile',
+      AppLanguage.en: 'Refresh profile data',
+    },
+    'profile.logout': {
+      AppLanguage.ms: 'Log Keluar',
+      AppLanguage.id: 'Logout',
+      AppLanguage.en: 'Logout',
+    },
+    'profile.logoutConfirmTitle': {
+      AppLanguage.ms: 'Log Keluar',
+      AppLanguage.id: 'Logout',
+      AppLanguage.en: 'Logout',
+    },
+    'profile.logoutConfirmMessage': {
+      AppLanguage.ms: 'Anda pasti mahu keluar daripada akaun ini?',
+      AppLanguage.id: 'Yakin ingin keluar dari akun ini?',
+      AppLanguage.en: 'Are you sure you want to log out from this account?',
+    },
+    'common.cancel': {
+      AppLanguage.ms: 'Batal',
+      AppLanguage.id: 'Batal',
+      AppLanguage.en: 'Cancel',
+    },
+    'login.welcome': {
+      AppLanguage.ms: 'Selamat datang 👋',
+      AppLanguage.id: 'Selamat datang 👋',
+      AppLanguage.en: 'Welcome 👋',
+    },
+    'login.subtitle': {
+      AppLanguage.ms: 'Sila log masuk untuk teruskan belajar mengaji.',
+      AppLanguage.id: 'Silakan login untuk melanjutkan belajar ngaji.',
+      AppLanguage.en: 'Please log in to continue your Quran learning journey.',
+    },
+    'login.email': {
+      AppLanguage.ms: 'E-mel',
+      AppLanguage.id: 'Email',
+      AppLanguage.en: 'Email',
+    },
+    'login.password': {
+      AppLanguage.ms: 'Kata Laluan',
+      AppLanguage.id: 'Password',
+      AppLanguage.en: 'Password',
+    },
+    'login.button': {
+      AppLanguage.ms: 'Log Masuk',
+      AppLanguage.id: 'Login',
+      AppLanguage.en: 'Login',
+    },
+    'login.googleButton': {
+      AppLanguage.ms: 'Log Masuk dengan Google',
+      AppLanguage.id: 'Login dengan Google',
+      AppLanguage.en: 'Sign in with Google',
+    },
+    'login.noAccount': {
+      AppLanguage.ms: 'Belum ada akaun? Daftar',
+      AppLanguage.id: 'Belum punya akun? Register',
+      AppLanguage.en: 'Don’t have an account? Register',
+    },
+    'register.title': {
+      AppLanguage.ms: 'Cipta akaun baharu ✨',
+      AppLanguage.id: 'Buat akun baru ✨',
+      AppLanguage.en: 'Create a new account ✨',
+    },
+    'register.subtitle': {
+      AppLanguage.ms: 'Isi maklumat di bawah untuk mula belajar bersama JomNgaji.',
+      AppLanguage.id: 'Isi data di bawah untuk mulai belajar bersama JomNgaji.',
+      AppLanguage.en: 'Fill in the details below to start learning with JomNgaji.',
+    },
+    'register.name': {
+      AppLanguage.ms: 'Nama Penuh',
+      AppLanguage.id: 'Nama Lengkap',
+      AppLanguage.en: 'Full Name',
+    },
+    'register.button': {
+      AppLanguage.ms: 'Daftar',
+      AppLanguage.id: 'Register',
+      AppLanguage.en: 'Register',
+    },
+    'register.haveAccount': {
+      AppLanguage.ms: 'Sudah ada akaun? Log Masuk',
+      AppLanguage.id: 'Sudah punya akun? Login',
+      AppLanguage.en: 'Already have an account? Login',
+    },
+    'pro.upgradeTitle': {
+      AppLanguage.ms: 'Naik taraf ke PRO',
+      AppLanguage.id: 'Upgrade ke PRO',
+      AppLanguage.en: 'Upgrade to PRO',
+    },
+    'pro.description': {
+      AppLanguage.ms: '{feature} khas untuk ahli PRO.\nBuka semua materi PRO tanpa had.',
+      AppLanguage.id: '{feature} khusus member PRO.\nBuka semua materi PRO tanpa batas.',
+      AppLanguage.en: '{feature} is available for PRO members.\nUnlock all PRO learning content without limits.',
+    },
+    'pro.later': {
+      AppLanguage.ms: 'Nanti',
+      AppLanguage.id: 'Nanti',
+      AppLanguage.en: 'Later',
+    },
+    'pro.viewPlan': {
+      AppLanguage.ms: 'Lihat Pelan PRO',
+      AppLanguage.id: 'Lihat Plan PRO',
+      AppLanguage.en: 'View PRO Plan',
+    },
+    'pro.pageSoon': {
+      AppLanguage.ms: 'Halaman PRO akan hadir tidak lama lagi ✨',
+      AppLanguage.id: 'Halaman PRO akan segera hadir ✨',
+      AppLanguage.en: 'PRO page is coming soon ✨',
+    },
     'lang.ms': {
       AppLanguage.ms: 'Bahasa Malaysia',
       AppLanguage.id: 'Bahasa Malaysia',
