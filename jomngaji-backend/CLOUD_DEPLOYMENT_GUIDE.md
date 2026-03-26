@@ -2,6 +2,22 @@
 
 Panduan ini ditujukan untuk backend `jomngaji-backend` dengan stack **FastAPI + Uvicorn** di server **Ubuntu 22.04/24.04**.
 
+## Profil server Anda (berdasarkan spesifikasi terlampir)
+
+- Region: **Malaysia (Kuala Lumpur)**
+- OS: **Ubuntu 24.04 LTS**
+- IP publik: **187.127.103.60**
+- SSH user: **root**
+- vCPU: **4 Core**
+- RAM: **16 GB**
+- Storage: **200 GB**
+
+Implikasi ke setup:
+- Gunakan timezone server `Asia/Kuala_Lumpur` agar log lebih mudah ditracking.
+- Worker backend bisa dinaikkan ke **4** untuk baseline awal (monitor CPU/RAM lalu tuning).
+- Spesifikasi ini cukup untuk backend + MariaDB + Nginx dalam 1 VPS untuk fase awal production.
+
+
 ## 1) Persiapan server
 
 ### Spesifikasi minimum (disarankan)
@@ -14,6 +30,10 @@ Panduan ini ditujukan untuk backend `jomngaji-backend` dengan stack **FastAPI + 
 ```bash
 sudo apt update && sudo apt upgrade -y
 sudo apt install -y python3 python3-venv python3-pip git nginx ufw mariadb-server
+
+# opsional tapi direkomendasikan (sesuai lokasi server Anda)
+sudo timedatectl set-timezone Asia/Kuala_Lumpur
+timedatectl
 ```
 
 ### Buka firewall
@@ -104,13 +124,15 @@ Group=www-data
 WorkingDirectory=/opt/jomngaji/jomngaji-backend
 Environment="PATH=/opt/jomngaji/jomngaji-backend/.venv/bin"
 EnvironmentFile=/opt/jomngaji/jomngaji-backend/.env
-ExecStart=/opt/jomngaji/jomngaji-backend/.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 4000 --workers 2
+ExecStart=/opt/jomngaji/jomngaji-backend/.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 4000 --workers 4
 Restart=always
 RestartSec=3
 
 [Install]
 WantedBy=multi-user.target
 ```
+
+> Untuk VPS 4 vCPU, nilai awal `--workers 4` cukup aman. Jika request mulai berat, lakukan tuning berdasarkan metrik CPU, memory, dan latency.
 
 Aktifkan service:
 ```bash
