@@ -1,16 +1,18 @@
-# jomngaji
+# JomNgaji Flutter App
 
-A new Flutter project.
+## Development quick start
 
-## Getting Started
+```bash
+flutter pub get
+flutter run
+```
 
-This project is a starting point for a Flutter application.
+## Build artifacts
 
-A few resources to get you started if this is your first Flutter project:
+- APK (testing): `flutter build apk --release`
+- AAB (Google Play): `flutter build appbundle --release`
+- IPA (App Store, macOS): `flutter build ipa --release`
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+Panduan lengkap release Android + iOS:
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+- `docs/mobile_release_guide.md`
