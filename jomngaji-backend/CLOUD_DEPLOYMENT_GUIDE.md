@@ -47,6 +47,8 @@ SECRET_KEY=replace_with_strong_secret
 ALGORITHM=HS256
 ACCESS_TOKEN_EXPIRE_MINUTES=10080
 DATABASE_URL=postgresql://user:password@127.0.0.1:5432/jomngaji
+CORS_ALLOW_ORIGINS=https://app.jomngaji.com,https://jomngaji.com
+ENABLE_DEV_UPGRADE=false
 ```
 
 > Jika app Anda membaca env langsung dari shell/systemd, pastikan key yang dibutuhkan di-load sebelum service start.

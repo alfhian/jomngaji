@@ -1,12 +1,12 @@
 # Frontend UI/UX & Security Audit (JomNgaji)
 
-Tanggal audit: 2026-03-25
+Tanggal audit: 2026-03-26
 Scope: folder `jomngaji/` (Flutter frontend)
 
 ## Ringkasan status
 
 - **UI/UX: Cukup baik** untuk visual dasar dan alur utama (login/register), tetapi belum konsisten terhadap aksesibilitas dan skala maintainability.
-- **Security: Belum aman untuk production** karena ditemukan kredensial/API key di sisi client, penggunaan HTTP plaintext, dan penyimpanan token pada storage non-secure.
+- **Security: Meningkat signifikan**, namun masih perlu hardening backend production (CORS origin whitelist, endpoint dev-only harus nonaktif, dan kontrol environment deployment).
 
 ## Temuan UI/UX
 
@@ -103,7 +103,20 @@ Scope: folder `jomngaji/` (Flutter frontend)
 2. Audit seluruh copy monetisasi agar tidak ada istilah “Premium” yang tersisa di UI user-facing.
 3. Tambahkan checklist CI/lint sederhana untuk mendeteksi string monetisasi non-standar.
 
+## Update fix langsung (2026-03-26)
+
+- ✅ **Backend CORS hardening**: konfigurasi CORS sekarang berbasis env `CORS_ALLOW_ORIGINS` dan tidak lagi kombinasi berisiko `allow_origins=["*"]` + credentials.
+- ✅ **Endpoint dev-only diproteksi**: route `POST /upgrade` kini nonaktif default, hanya aktif jika `ENABLE_DEV_UPGRADE=true`.
+- ✅ **Frontend default host dirapikan**: default dev API kembali ke `10.0.2.2:4000` saja; multi-IP tetap didukung via `--dart-define=API_BASE_URLS=...` agar tidak hardcoded IP pribadi di source.
+- ✅ **Dokumen deploy diperbarui**: panduan cloud kini menegaskan env penting untuk CORS dan endpoint dev-only.
+
+### Kekurangan yang masih perlu dituntaskan
+
+1. Tambahkan rate limiting di endpoint auth sensitif (`/login`, `/register`, `/reset-password`, `/auth/google`).
+2. Tambahkan structured logging + request ID untuk incident tracing production.
+3. Tambahkan automated secret scanning di CI (mis. gitleaks/trufflehog) agar kebocoran secret tidak terulang.
+
 ## Verdict
 
 - **UI/UX saat ini:** sudah punya fondasi visual yang bagus, **belum matang** untuk standar accessibility & konsistensi skala.
-- **Security saat ini:** **belum layak production** sampai isu critical/high ditutup.
+- **Security saat ini:** cukup baik untuk staging, tetapi perlu hardening lanjutan (rate limiting, audit logging, CI secret scanning) sebelum production skala besar.

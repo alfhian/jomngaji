@@ -11,6 +11,13 @@ from auth import create_access_token, get_current_user
 import os
 
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
+_raw_cors_origins = os.getenv(
+    "CORS_ALLOW_ORIGINS",
+    "http://localhost:3000,http://127.0.0.1:3000,http://10.0.2.2:4000,https://jomngaji.com,https://api.jomngaji.com",
+)
+CORS_ALLOW_ORIGINS = [origin.strip() for origin in _raw_cors_origins.split(",") if origin.strip()]
+CORS_ALLOW_CREDENTIALS = "*" not in CORS_ALLOW_ORIGINS
+ENABLE_DEV_UPGRADE = os.getenv("ENABLE_DEV_UPGRADE", "false").lower() == "true"
 
 
 def _load_google_auth_libs():
@@ -134,10 +141,10 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=CORS_ALLOW_ORIGINS,
+    allow_credentials=CORS_ALLOW_CREDENTIALS,
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type", "Accept", "Origin"],
 )
 
 # =========================
@@ -223,6 +230,9 @@ def verify_premium(user_id: int = Depends(get_current_user)):
 
 @app.post("/upgrade")
 def dev_upgrade(user_id: int = Depends(get_current_user)):
+    if not ENABLE_DEV_UPGRADE:
+        raise HTTPException(status_code=403, detail="Upgrade endpoint is disabled")
+
     db = get_db()
     cursor = db.cursor()
 

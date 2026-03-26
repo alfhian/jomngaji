@@ -3,7 +3,7 @@ class ApiConfig {
   static const String _defaultBaseUrl = 'https://api.jomngaji.com';
   static const String _defaultBaseUrls = _isProd
       ? 'https://api.jomngaji.com'
-      : 'http://10.0.2.2:4000,http://192.168.1.141:4000,http://10.179.249.20:4000';
+      : 'http://10.0.2.2:4000';
 
   static const String _rawBaseUrl = String.fromEnvironment(
     'API_BASE_URL',
