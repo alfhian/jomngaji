@@ -87,6 +87,10 @@ class _ProfilePageState extends State<ProfilePage> {
         Uri.parse('${AuthService.baseUrl}/progress/average'),
         headers: headers,
       );
+      final iqraProgressResponse = await http.get(
+        Uri.parse('${AuthService.baseUrl}/hijaiyah/global-progress'),
+        headers: headers,
+      );
       final summaryResponse = await http.get(
         Uri.parse('${AuthService.baseUrl}/progress/summary'),
         headers: headers,
@@ -102,6 +106,9 @@ class _ProfilePageState extends State<ProfilePage> {
       final summaryJson = summaryResponse.statusCode == 200
           ? (jsonDecode(summaryResponse.body) as Map<String, dynamic>)
           : <String, dynamic>{};
+      final iqraProgressJson = iqraProgressResponse.statusCode == 200
+          ? (jsonDecode(iqraProgressResponse.body) as Map<String, dynamic>)
+          : <String, dynamic>{};
       final tadarusJson = tadarusResponse.statusCode == 200
           ? (jsonDecode(tadarusResponse.body) as Map<String, dynamic>)
           : <String, dynamic>{};
@@ -109,7 +116,7 @@ class _ProfilePageState extends State<ProfilePage> {
       if (!mounted) return;
       setState(() {
         _name = userName;
-        _iqra = _normalizeProgress(avgJson['iqra_avg'] ?? 0);
+        _iqra = _extractProgress(iqraProgressJson);
         _tajwid = _normalizeProgress(avgJson['tajwid_avg'] ?? 0);
         _tilawah = _normalizeProgress(avgJson['tilawah_avg'] ?? 0);
         _tahfidz = _normalizeProgress(avgJson['tahfidz_avg'] ?? 0);
