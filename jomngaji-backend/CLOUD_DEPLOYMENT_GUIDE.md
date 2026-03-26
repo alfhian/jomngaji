@@ -13,7 +13,7 @@ Panduan ini ditujukan untuk backend `jomngaji-backend` dengan stack **FastAPI + 
 ### Install paket dasar
 ```bash
 sudo apt update && sudo apt upgrade -y
-sudo apt install -y python3 python3-venv python3-pip git nginx ufw
+sudo apt install -y python3 python3-venv python3-pip git nginx ufw mariadb-server
 ```
 
 ### Buka firewall
@@ -46,12 +46,29 @@ Buat file `.env` di `jomngaji-backend` (sesuaikan dengan kebutuhan app):
 SECRET_KEY=replace_with_strong_secret
 ALGORITHM=HS256
 ACCESS_TOKEN_EXPIRE_MINUTES=10080
-DATABASE_URL=postgresql://user:password@127.0.0.1:5432/jomngaji
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_USER=jomngaji_user
+DB_PASSWORD=replace_with_strong_password
+DB_NAME=jomngaji
 CORS_ALLOW_ORIGINS=https://app.jomngaji.com,https://jomngaji.com
 ENABLE_DEV_UPGRADE=false
 ```
 
 > Jika app Anda membaca env langsung dari shell/systemd, pastikan key yang dibutuhkan di-load sebelum service start.
+
+
+### Setup MariaDB singkat
+
+```bash
+sudo systemctl enable mariadb
+sudo systemctl start mariadb
+sudo mysql -e "CREATE DATABASE IF NOT EXISTS jomngaji;"
+sudo mysql -e "CREATE USER IF NOT EXISTS 'jomngaji_user'@'127.0.0.1' IDENTIFIED BY 'replace_with_strong_password';"
+sudo mysql -e "GRANT ALL PRIVILEGES ON jomngaji.* TO 'jomngaji_user'@'127.0.0.1'; FLUSH PRIVILEGES;"
+```
+
+> Sesuaikan kredensial dengan yang dipakai backend Anda (`app/services/auth_service.py`).
 
 ## 4) Test manual sebelum dibuat service
 
