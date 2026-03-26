@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import 'core/localization/app_localization.dart';
+import 'core/theme/app_theme.dart';
 import 'features/auth/services/auth_service.dart';
 import 'routes/app_routes.dart';
 
@@ -31,23 +31,17 @@ class JomNgajiApp extends StatelessWidget {
     return MaterialApp(
       title: l10n.text('app.title'),
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        useMaterial3: true,
-        textTheme: GoogleFonts.poppinsTextTheme(),
-        fontFamilyFallback: const [
-          'Cairo',
-          'Amiri',
-          'Roboto',
-        ],
-        appBarTheme: AppBarTheme(
-          titleTextStyle: GoogleFonts.cairo(
-            fontSize: 22,
-            fontWeight: FontWeight.w700,
-            color: Colors.white,
-          ),
-          foregroundColor: Colors.white,
-          backgroundColor: Colors.green,
-        ),
+      theme: AppTheme.lightTheme,
+      builder: (context, child) {
+        final media = MediaQuery.of(context);
+        final clampedScale = media.textScaler.clamp(
+          minScaleFactor: 0.9,
+          maxScaleFactor: 1.3,
+        );
+        return MediaQuery(
+          data: media.copyWith(textScaler: clampedScale),
+          child: child ?? const SizedBox.shrink(),
+        );
       ),
       initialRoute: isLoggedIn ? AppRoutes.home : AppRoutes.login,
       routes: AppRoutes.routes,

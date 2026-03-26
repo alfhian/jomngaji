@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 
 import '../../../core/localization/app_localization.dart';
+import '../../../core/theme/app_design_tokens.dart';
 import '../../../core/widgets/custom_gradient_appbar.dart';
 import '../../../core/widgets/premium_upgrade_dialog.dart';
 import '../../../routes/app_routes.dart';
@@ -156,36 +157,40 @@ class _ProfilePageState extends State<ProfilePage> {
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(label,
-                  style: GoogleFonts.poppins(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                  )),
-              Text('$percent%',
-                  style: GoogleFonts.poppins(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black54,
-                  )),
-            ],
-          ),
-          const SizedBox(height: 6),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: LinearProgressIndicator(
-              value: value,
-              minHeight: 10,
-              backgroundColor: Colors.grey.shade300,
-              color: color,
+      child: Semantics(
+        label: 'Progress $label',
+        value: '$percent persen',
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(label,
+                    style: GoogleFonts.poppins(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    )),
+                Text('$percent%',
+                    style: GoogleFonts.poppins(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black54,
+                    )),
+              ],
             ),
-          ),
-        ],
+            const SizedBox(height: 6),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: LinearProgressIndicator(
+                value: value,
+                minHeight: 10,
+                backgroundColor: Colors.grey.shade300,
+                color: color,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -284,6 +289,7 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
           ),
           IconButton(
+            tooltip: 'Refresh data profile',
             onPressed: _loadProfileProgress,
             icon: const Icon(Icons.refresh_rounded, color: Colors.white),
           ),
@@ -299,9 +305,9 @@ class _ProfilePageState extends State<ProfilePage> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+        border: Border.all(color: AppColors.border),
       ),
       child: Row(
         children: [
@@ -377,9 +383,9 @@ class _ProfilePageState extends State<ProfilePage> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+        border: Border.all(color: AppColors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -420,18 +426,22 @@ class _ProfilePageState extends State<ProfilePage> {
           const SizedBox(height: 10),
           SizedBox(
             width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: () => showPremiumUpgradeDialog(
-                context,
-                featureName: _isPremium ? 'Kelola paket PRO' : 'Update Plan',
-              ),
-              icon: const Icon(Icons.autorenew_rounded),
-              label: Text(_isPremium ? 'Kelola Plan' : 'Update Plan'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: planColor,
-                foregroundColor: Colors.white,
-                elevation: 0,
-                padding: const EdgeInsets.symmetric(vertical: 11),
+            child: Semantics(
+              button: true,
+              label: _isPremium ? 'Kelola Plan PRO' : 'Update Plan ke PRO',
+              child: ElevatedButton.icon(
+                onPressed: () => showPremiumUpgradeDialog(
+                  context,
+                  featureName: _isPremium ? 'Kelola paket PRO' : 'Update Plan',
+                ),
+                icon: const Icon(Icons.autorenew_rounded),
+                label: Text(_isPremium ? 'Kelola Plan' : 'Update Plan'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: planColor,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(vertical: 11),
+                ),
               ),
             ),
           ),
@@ -474,7 +484,7 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF4F7FC),
+      backgroundColor: AppColors.scaffold,
       appBar: CustomGradientAppBar(title: context.l10n.text('profile.title')),
       extendBody: true,
       bottomNavigationBar: const AppBottomNav(currentIndex: 3),
@@ -572,15 +582,19 @@ class _ProfilePageState extends State<ProfilePage> {
                   const SizedBox(height: 12),
                   SizedBox(
                     width: double.infinity,
-                    child: ElevatedButton.icon(
-                      onPressed: _confirmLogout,
-                      icon: const Icon(Icons.logout_rounded),
-                      label: const Text('Logout'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFDC2626),
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
+                    child: Semantics(
+                      button: true,
+                      label: 'Logout akun',
+                      child: ElevatedButton.icon(
+                        onPressed: _confirmLogout,
+                        icon: const Icon(Icons.logout_rounded),
+                        label: const Text('Logout'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFDC2626),
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
                       ),
                     ),
                   ),
