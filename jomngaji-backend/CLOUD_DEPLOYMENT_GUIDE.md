@@ -179,10 +179,18 @@ sudo systemctl reload nginx
 
 ## 7) HTTPS (wajib production)
 
-Pastikan domain `api.jomngaji.com` sudah mengarah ke IP server, lalu:
+### Penjelasan singkat: `api.jomngaji.com` itu apa?
+- Itu **contoh subdomain API** milik Anda sendiri (misalnya `api.nama-domain-anda.com`).
+- Certbot/Let's Encrypt **butuh domain publik** yang resolve ke IP VPS.
+- Jika saat ini Anda **belum punya domain**, maka sertifikat HTTPS publik belum bisa diterbitkan.
+
+### Opsi A (disarankan): punya domain sendiri
+1. Beli/siapkan domain.
+2. Buat DNS record `A` (mis. `api.domainanda.com`) ke IP VPS Anda: `187.127.103.60`.
+3. Jalankan certbot:
 ```bash
 sudo apt install -y certbot python3-certbot-nginx
-sudo certbot --nginx -d api.jomngaji.com
+sudo certbot --nginx -d api.domainanda.com
 ```
 
 Cek auto-renew:
@@ -190,10 +198,18 @@ Cek auto-renew:
 sudo systemctl status certbot.timer
 ```
 
+### Opsi B (sementara, tanpa domain): testing via IP + HTTP
+- Anda tetap bisa testing backend via `http://187.127.103.60` (tanpa HTTPS).
+- Untuk keamanan, batasi akses dulu (UFW/IP allowlist) dan **jangan gunakan mode ini untuk production publik**.
+- Di Flutter, gunakan sementara:
+  `--dart-define=API_BASE_URL=http://187.127.103.60:4000`
+
+> Ringkasnya: tanpa domain, server tetap jalan dan bisa dites. Tetapi untuk HTTPS valid di internet, domain tetap diperlukan.
+
 ## 8) Checklist pasca deploy
 
-- Endpoint health/docs terbuka via HTTPS.
-- Login/register dari app Flutter sukses ke domain backend.
+- Endpoint health/docs terbuka via HTTPS (jika domain sudah tersedia) atau HTTP terbatas (mode sementara).
+- Login/register dari app Flutter sukses ke endpoint backend (domain atau IP sementara).
 - CORS hanya mengizinkan origin frontend yang valid.
 - `SECRET_KEY` kuat dan tidak di-commit.
 - Service restart otomatis saat crash (`Restart=always`).
