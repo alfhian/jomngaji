@@ -8,14 +8,22 @@ from datetime import datetime, timedelta
 from app.services.auth_service import get_db
 from auth import create_access_token, get_current_user
 
-# =========================
-# 🔥 GOOGLE AUTH IMPORT
-# =========================
-from google.oauth2 import id_token
-from google.auth.transport import requests as google_requests
 import os
 
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
+
+
+def _load_google_auth_libs():
+    """
+    Lazy import agar server tetap bisa startup meski google-auth belum terpasang.
+    Error dipicu hanya saat endpoint /auth/google dipanggil.
+    """
+    try:
+        from google.oauth2 import id_token as google_id_token
+        from google.auth.transport import requests as google_requests
+        return google_id_token, google_requests
+    except ModuleNotFoundError:
+        return None, None
 
 # =========================
 # Utils
@@ -242,13 +250,18 @@ def dev_upgrade(user_id: int = Depends(get_current_user)):
 # ==========================================================
 @app.post("/auth/google")
 def google_login(token: str = Form(...)):
-    print("TOKEN RECEIVED:", token)
-    print("GOOGLE_CLIENT_ID:", GOOGLE_CLIENT_ID)
+    google_id_token, google_requests = _load_google_auth_libs()
     try:
+        if google_id_token is None or google_requests is None:
+            raise HTTPException(
+                status_code=500,
+                detail="Dependency google-auth belum terpasang.",
+            )
+
         if not GOOGLE_CLIENT_ID:
             raise HTTPException(status_code=500, detail="GOOGLE_CLIENT_ID belum diset")
 
-        idinfo = id_token.verify_oauth2_token(
+        idinfo = google_id_token.verify_oauth2_token(
             token,
             google_requests.Request(),
             GOOGLE_CLIENT_ID,
@@ -277,9 +290,10 @@ def google_login(token: str = Form(...)):
             "provider": "google",
         }
 
-    except Exception as e:
-        print("GOOGLE VERIFY ERROR:", str(e))
-        raise HTTPException(status_code=401, detail=str(e))
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(status_code=401, detail="Google login gagal")
 
 
 # @app.get("/hijaiyah/lessons")
