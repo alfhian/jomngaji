@@ -1,5 +1,8 @@
 class ApiConfig {
-  static const String _defaultBaseUrl = 'https://api.jomngaji.com';
+  static const bool _isProd = bool.fromEnvironment('dart.vm.product');
+  static const String _defaultBaseUrl = _isProd
+      ? 'https://api.jomngaji.com'
+      : 'http://10.0.2.2:4000';
   static const String _rawBaseUrl = String.fromEnvironment(
     'API_BASE_URL',
     defaultValue: _defaultBaseUrl,
@@ -14,10 +17,11 @@ class ApiConfig {
       throw StateError('API_BASE_URL tidak valid: $normalized');
     }
 
-    final isLocal = uri.host == 'localhost' || uri.host == '127.0.0.1';
-    if (uri.scheme != 'https' && !isLocal) {
+    final allowHttpInDev = !_isProd;
+
+    if (uri.scheme != 'https' && !allowHttpInDev) {
       throw StateError(
-        'API_BASE_URL wajib https untuk environment non-local: $normalized',
+        'API_BASE_URL wajib https untuk production/non-local: $normalized',
       );
     }
     return normalized;

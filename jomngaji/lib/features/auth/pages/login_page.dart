@@ -34,7 +34,7 @@ class _LoginPageState extends State<LoginPage> {
       Navigator.pushReplacementNamed(context, AppRoutes.home);
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString())),
+        SnackBar(content: Text(_friendlyLoginError(e))),
       );
     } finally {
       if (mounted) setState(() => isLoading = false);
@@ -282,4 +282,15 @@ class _LoginPageState extends State<LoginPage> {
       return 'Konfigurasi OAuth Google belum valid (SHA-1 / client ID). Cek konfigurasi Firebase/Google Cloud.';
     }
     return 'Google login gagal. Silakan coba lagi.';
+  }
+
+  String _friendlyLoginError(Object error) {
+    final raw = error.toString();
+    if (raw.contains('Failed host lookup') || raw.contains('SocketException')) {
+      return 'Backend tidak bisa diakses. Untuk emulator Android gunakan API_BASE_URL=http://10.0.2.2:4000.';
+    }
+    if (raw.contains('Connection refused')) {
+      return 'Backend belum aktif. Jalankan server di port 4000 lalu coba login lagi.';
+    }
+    return 'Login gagal. Periksa email/password dan koneksi internet.';
   }
