@@ -38,3 +38,17 @@ itu **umumnya bukan** karena URL backend (`API_BASE_URL`), melainkan koneksi per
 
 - Error `ApiException: 7` biasanya masalah koneksi ke layanan Google, **bukan** endpoint API backend Anda.
 - Jadi biasanya **tidak perlu ganti URL backend** untuk menyelesaikan error ini.
+
+## Untuk login email/password (backend lokal sering ganti IP)
+
+Jika backend lokal Anda sering pindah IP, jalankan app dengan daftar fallback:
+
+```bash
+flutter run --dart-define=API_BASE_URLS=http://10.0.2.2:4000,http://192.168.1.141:4000,http://10.179.249.20:4000
+```
+
+Atau pin satu IP saja:
+
+```bash
+flutter run --dart-define=API_BASE_URL=http://192.168.1.141:4000
+```

@@ -287,7 +287,9 @@ class _LoginPageState extends State<LoginPage> {
   String _friendlyLoginError(Object error) {
     final raw = error.toString();
     if (raw.contains('Failed host lookup') || raw.contains('SocketException')) {
-      return 'Backend tidak bisa diakses. Untuk emulator Android gunakan API_BASE_URL=http://10.0.2.2:4000.';
+      return 'Backend tidak bisa diakses. Anda bisa set '
+          'API_BASE_URL atau API_BASE_URLS '
+          '(contoh: http://10.0.2.2:4000,http://192.168.1.141:4000,http://10.179.249.20:4000).';
     }
     if (raw.contains('Connection refused')) {
       return 'Backend belum aktif. Jalankan server di port 4000 lalu coba login lagi.';

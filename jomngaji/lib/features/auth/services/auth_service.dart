@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -13,6 +14,37 @@ class AuthService {
   static const _keyUserId = 'userId';
   static const _keyName = 'name';
   static const _keyIsPremium = 'is_premium';
+
+  static bool _isNetworkError(Object error) {
+    return error is SocketException || error is http.ClientException;
+  }
+
+  static Future<http.Response> _postWithBaseUrlFallback({
+    required String path,
+    Map<String, String>? headers,
+    Object? body,
+  }) async {
+    Object? lastError;
+    for (final url in ApiConfig.endpointCandidates(path)) {
+      try {
+        return await http.post(
+          Uri.parse(url),
+          headers: headers,
+          body: body,
+        );
+      } catch (e) {
+        if (_isNetworkError(e)) {
+          lastError = e;
+          continue;
+        }
+        rethrow;
+      }
+    }
+    throw Exception(
+      'Semua API_BASE_URL gagal diakses. '
+      'Pastikan backend aktif dan IP benar. Detail: $lastError',
+    );
+  }
 
   static Future<bool> isLoggedIn() async {
     final prefs = await SharedPreferences.getInstance();
@@ -56,8 +88,8 @@ class AuthService {
   }
 
   static Future<void> login(String email, String password) async {
-    final res = await http.post(
-      Uri.parse(ApiConfig.endpoint('/login')),
+    final res = await _postWithBaseUrlFallback(
+      path: '/login',
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({'email': email, 'password': password}),
     );
@@ -80,8 +112,8 @@ class AuthService {
         'access_token': accessToken,
     };
 
-    final res = await http.post(
-      Uri.parse(ApiConfig.endpoint('/auth/google')),
+    final res = await _postWithBaseUrlFallback(
+      path: '/auth/google',
       body: body,
     );
 
@@ -127,8 +159,8 @@ class AuthService {
   }
 
   static Future<void> register(String email, String password, String name) async {
-    final res = await http.post(
-      Uri.parse(ApiConfig.endpoint('/register')),
+    final res = await _postWithBaseUrlFallback(
+      path: '/register',
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({'email': email, 'password': password, 'name': name}),
     );
@@ -155,8 +187,8 @@ class AuthService {
       extra: {'Content-Type': 'application/x-www-form-urlencoded'},
     );
 
-    final res = await http.post(
-      Uri.parse(ApiConfig.endpoint('/reset-password')),
+    final res = await _postWithBaseUrlFallback(
+      path: '/reset-password',
       headers: headers,
       body: {
         'old_password': oldPassword,
