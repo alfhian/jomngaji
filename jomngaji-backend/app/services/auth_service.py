@@ -12,8 +12,8 @@ from auth import create_access_token
 def get_db():
     return mysql.connector.connect(
         host="localhost",
-        user="root",
-        password="",
+        user="jomngaji_user",
+        password="69SUTs-Y11RLNk",
         database="jomngaji"
     )
 
