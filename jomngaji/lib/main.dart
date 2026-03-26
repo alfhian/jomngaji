@@ -42,7 +42,7 @@ class JomNgajiApp extends StatelessWidget {
           data: media.copyWith(textScaler: clampedScale),
           child: child ?? const SizedBox.shrink(),
         );
-      ),
+      },
       initialRoute: isLoggedIn ? AppRoutes.home : AppRoutes.login,
       routes: AppRoutes.routes,
       onGenerateRoute: AppRoutes.onGenerateRoute,
