@@ -289,7 +289,7 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
           ),
           IconButton(
-            tooltip: 'Refresh data profile',
+            tooltip: context.l10n.text('profile.refreshTooltip'),
             onPressed: _loadProfileProgress,
             icon: const Icon(Icons.refresh_rounded, color: Colors.white),
           ),
@@ -395,7 +395,7 @@ class _ProfilePageState extends State<ProfilePage> {
               Icon(Icons.workspace_premium_rounded, color: planColor),
               const SizedBox(width: 8),
               Text(
-                'Paket Saat Ini',
+                context.l10n.text('profile.currentPlan'),
                 style: GoogleFonts.poppins(fontWeight: FontWeight.w700),
               ),
               const Spacer(),
@@ -419,8 +419,8 @@ class _ProfilePageState extends State<ProfilePage> {
           const SizedBox(height: 10),
           Text(
             _isPremium
-                ? 'Akun kamu sudah aktif PRO. Kelola plan jika ingin perpanjang atau ubah.'
-                : 'Upgrade ke PRO untuk membuka semua materi premium tanpa batas.',
+                ? context.l10n.text('profile.planActivePro')
+                : context.l10n.text('profile.planFreePrompt'),
             style: GoogleFonts.poppins(fontSize: 12, color: Colors.black54),
           ),
           const SizedBox(height: 10),
@@ -432,10 +432,16 @@ class _ProfilePageState extends State<ProfilePage> {
               child: ElevatedButton.icon(
                 onPressed: () => showPremiumUpgradeDialog(
                   context,
-                  featureName: _isPremium ? 'Kelola paket PRO' : 'Update Plan',
+                  featureName: _isPremium
+                      ? context.l10n.text('profile.managePlan')
+                      : context.l10n.text('profile.updatePlan'),
                 ),
                 icon: const Icon(Icons.autorenew_rounded),
-                label: Text(_isPremium ? 'Kelola Plan' : 'Update Plan'),
+                label: Text(
+                  _isPremium
+                      ? context.l10n.text('profile.managePlan')
+                      : context.l10n.text('profile.updatePlan'),
+                ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: planColor,
                   foregroundColor: Colors.white,
@@ -455,16 +461,16 @@ class _ProfilePageState extends State<ProfilePage> {
       context: context,
       builder: (ctx) {
         return AlertDialog(
-          title: const Text('Logout'),
-          content: const Text('Yakin ingin keluar dari akun ini?'),
+          title: Text(context.l10n.text('profile.logoutConfirmTitle')),
+          content: Text(context.l10n.text('profile.logoutConfirmMessage')),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Batal'),
+              child: Text(context.l10n.text('common.cancel')),
             ),
             FilledButton(
               onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Logout'),
+              child: Text(context.l10n.text('profile.logout')),
             ),
           ],
         );
@@ -588,7 +594,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       child: ElevatedButton.icon(
                         onPressed: _confirmLogout,
                         icon: const Icon(Icons.logout_rounded),
-                        label: const Text('Logout'),
+                        label: Text(context.l10n.text('profile.logout')),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFFDC2626),
                           foregroundColor: Colors.white,

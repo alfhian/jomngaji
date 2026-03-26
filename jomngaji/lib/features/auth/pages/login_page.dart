@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
+import '../../../core/localization/app_localization.dart';
 import '../../../features/auth/services/auth_service.dart';
 import '../../../routes/app_routes.dart';
 
@@ -124,6 +125,7 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(
@@ -174,7 +176,7 @@ class _LoginPageState extends State<LoginPage> {
                 ),
                 const SizedBox(height: 18),
                 Text(
-                  'Selamat datang 👋',
+                  l10n.text('login.welcome'),
                   style: GoogleFonts.poppins(
                     fontSize: 28,
                     fontWeight: FontWeight.w700,
@@ -183,7 +185,7 @@ class _LoginPageState extends State<LoginPage> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Silakan login untuk melanjutkan belajar ngaji.',
+                  l10n.text('login.subtitle'),
                   textAlign: TextAlign.center,
                   style: GoogleFonts.poppins(
                     fontSize: 14,
@@ -214,7 +216,7 @@ class _LoginPageState extends State<LoginPage> {
                           autofillHints: const [AutofillHints.email],
                           decoration: InputDecoration(
                             prefixIcon: const Icon(Icons.email_outlined),
-                            labelText: 'Email',
+                            labelText: l10n.text('login.email'),
                             filled: true,
                             fillColor: const Color(0xFFF8FAFC),
                             border: OutlineInputBorder(
@@ -238,7 +240,7 @@ class _LoginPageState extends State<LoginPage> {
                           autofillHints: const [AutofillHints.password],
                           decoration: InputDecoration(
                             prefixIcon: const Icon(Icons.lock_outline),
-                            labelText: 'Password',
+                            labelText: l10n.text('login.password'),
                             filled: true,
                             fillColor: const Color(0xFFF8FAFC),
                             border: OutlineInputBorder(
@@ -270,7 +272,7 @@ class _LoginPageState extends State<LoginPage> {
                                       color: Colors.white,
                                     ),
                                   )
-                                : const Text('Login'),
+                                : Text(l10n.text('login.button')),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: const Color(0xFF2563EB),
                               foregroundColor: Colors.white,
@@ -295,7 +297,7 @@ class _LoginPageState extends State<LoginPage> {
                                     width: 16,
                                     child: CircularProgressIndicator(strokeWidth: 2),
                                   )
-                                : const Text('Login dengan Google'),
+                                : Text(l10n.text('login.googleButton')),
                             style: OutlinedButton.styleFrom(
                               foregroundColor: const Color(0xFF0F172A),
                               side: const BorderSide(color: Color(0xFFBFDBFE)),
@@ -318,7 +320,7 @@ class _LoginPageState extends State<LoginPage> {
                 TextButton(
                   onPressed: () => Navigator.pushNamed(context, AppRoutes.register),
                   child: Text(
-                    'Belum punya akun? Register',
+                    l10n.text('login.noAccount'),
                     style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
                   ),
                 ),

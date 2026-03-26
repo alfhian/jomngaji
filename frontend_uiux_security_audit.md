@@ -88,6 +88,21 @@ Scope: folder `jomngaji/` (Flutter frontend)
 | Localization | Sulit scale multi-bahasa | Pindahkan seluruh hardcoded string ke localization keys | Proses terjemahan lebih cepat |
 | Terminologi Monetisasi | Copy membingungkan | Standarisasi seluruh label jadi “PRO” | Brand voice konsisten |
 
+## Progress implementasi (update terbaru)
+
+- ✅ **#1 Design System**: in progress (theme & tokens sudah mulai dipakai, belum merata ke semua layar).
+- ✅ **#2 Accessibility**: in progress (baseline text scale & semantics mulai diterapkan, belum audit penuh).
+- ✅ **#3 Form & Validation**: done untuk auth utama (login sudah pakai `Form + TextFormField + validator`).
+- ✅ **#4 Controller Lifecycle**: done untuk auth utama (controller login/register sudah `dispose()`).
+- ✅ **#5 Localization**: **mulai di-fix** — string utama login/register/profile & dialog PRO sudah dipindah ke localization keys.
+- ✅ **#6 Terminologi Monetisasi**: **mulai di-fix** — copy utama di profile + upgrade dialog diseragamkan menjadi **PRO**.
+
+### Catatan lanjutan untuk #5 dan #6
+
+1. Lanjutkan migrasi string hardcoded di seluruh fitur (tadarus/iqra/tajwid/tilawah/tahfidz) ke `AppLocalization`.
+2. Audit seluruh copy monetisasi agar tidak ada istilah “Premium” yang tersisa di UI user-facing.
+3. Tambahkan checklist CI/lint sederhana untuk mendeteksi string monetisasi non-standar.
+
 ## Verdict
 
 - **UI/UX saat ini:** sudah punya fondasi visual yang bagus, **belum matang** untuk standar accessibility & konsistensi skala.

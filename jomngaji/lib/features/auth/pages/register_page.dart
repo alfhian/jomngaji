@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../../core/localization/app_localization.dart';
 import '../../../features/auth/services/auth_service.dart';
 
 class RegisterPage extends StatefulWidget {
@@ -51,6 +52,7 @@ class _RegisterPageState extends State<RegisterPage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(
@@ -103,7 +105,7 @@ class _RegisterPageState extends State<RegisterPage> {
                   ),
                   const SizedBox(height: 18),
                   Text(
-                    'Buat akun baru ✨',
+                    l10n.text('register.title'),
                     style: GoogleFonts.poppins(
                       fontSize: 28,
                       fontWeight: FontWeight.w700,
@@ -112,7 +114,7 @@ class _RegisterPageState extends State<RegisterPage> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Isi data di bawah untuk mulai belajar bersama JomNgaji.',
+                    l10n.text('register.subtitle'),
                     textAlign: TextAlign.center,
                     style: GoogleFonts.poppins(
                       fontSize: 14,
@@ -141,7 +143,7 @@ class _RegisterPageState extends State<RegisterPage> {
                           autofillHints: const [AutofillHints.name],
                           decoration: InputDecoration(
                             prefixIcon: const Icon(Icons.person_outline),
-                            labelText: "Nama Lengkap",
+                            labelText: l10n.text('register.name'),
                             filled: true,
                             fillColor: const Color(0xFFFFFBEB),
                             border: OutlineInputBorder(
@@ -161,7 +163,7 @@ class _RegisterPageState extends State<RegisterPage> {
                           autofillHints: const [AutofillHints.email],
                           decoration: InputDecoration(
                             prefixIcon: const Icon(Icons.email_outlined),
-                            labelText: "Email",
+                            labelText: l10n.text('login.email'),
                             filled: true,
                             fillColor: const Color(0xFFFFFBEB),
                             border: OutlineInputBorder(
@@ -188,7 +190,7 @@ class _RegisterPageState extends State<RegisterPage> {
                           autofillHints: const [AutofillHints.newPassword],
                           decoration: InputDecoration(
                             prefixIcon: const Icon(Icons.lock_outline),
-                            labelText: "Password",
+                            labelText: l10n.text('login.password'),
                             filled: true,
                             fillColor: const Color(0xFFFFFBEB),
                             border: OutlineInputBorder(
@@ -220,7 +222,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                       color: Colors.white,
                                     ),
                                   )
-                                : const Text("Register"),
+                                : Text(l10n.text('register.button')),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: const Color(0xFFF97316),
                               foregroundColor: Colors.white,
@@ -240,7 +242,7 @@ class _RegisterPageState extends State<RegisterPage> {
                   TextButton(
                     onPressed: () => Navigator.pop(context),
                     child: Text(
-                      "Sudah punya akun? Login",
+                      l10n.text('register.haveAccount'),
                       style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
                     ),
                   ),
