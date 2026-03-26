@@ -267,6 +267,8 @@ sudo systemctl cat jomngaji-backend
 
 # 2) verifikasi binary di ExecStart ada
 ls -lah /opt/jomngaji/jomngaji-backend/.venv/bin/python
+file /opt/jomngaji/jomngaji-backend/.venv/bin/python
+namei -l /opt/jomngaji/jomngaji-backend/.venv/bin/python
 
 # 3) jika python belum ada, buat ulang venv + install dependency
 cd /opt/jomngaji/jomngaji-backend
@@ -274,13 +276,24 @@ python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 
-# 4) reload & restart
+# 4) pastikan path python di service = path python aktif venv
+which python
+readlink -f "$(which python)"
+
+# 5) reload & restart
 sudo systemctl daemon-reload
 sudo systemctl restart jomngaji-backend
 sudo systemctl status jomngaji-backend
 ```
 - Gunakan `ExecStart` berikut (recommended):
   `ExecStart=/opt/jomngaji/jomngaji-backend/.venv/bin/python -m uvicorn app.main:app --host 127.0.0.1 --port 4000 --workers 4`
+- Jika output `which python` ternyata `/opt/jomngaji/.venv/bin/python` (bukan di `jomngaji-backend/.venv`), maka update `ExecStart` agar persis sama dengan path tersebut.
+- Jika `namei -l` menunjukkan direktori parent tidak punya bit execute (`x`) untuk user `www-data`, perbaiki permission:
+```bash
+sudo chmod o+rx /opt
+sudo chmod o+rx /opt/jomngaji
+sudo chmod -R o+rx /opt/jomngaji/jomngaji-backend/.venv/bin
+```
 
 ### Tidak bisa diakses dari internet
 - Pastikan DNS domain benar.
