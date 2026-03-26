@@ -850,6 +850,164 @@ def progress_summary(user_id: int = Depends(get_current_user)):
     }
 
 
+def _quiz_question_progress(user_id: int, quiz_codes: list[str]) -> tuple[int, int, float]:
+    if not quiz_codes:
+        return 0, 0, 0.0
+
+    db = get_db()
+    cursor = db.cursor(dictionary=True)
+    placeholders = ",".join(["%s"] * len(quiz_codes))
+
+    cursor.execute(
+        f"""
+        SELECT q.id, q.quiz_code, COUNT(qq.id) AS total_questions
+        FROM quizzes q
+        LEFT JOIN quiz_questions qq ON qq.quiz_id = q.id
+        WHERE q.quiz_code IN ({placeholders})
+        GROUP BY q.id, q.quiz_code
+        """,
+        tuple(quiz_codes),
+    )
+    quiz_rows = cursor.fetchall() or []
+    total_questions = int(sum((row.get("total_questions") or 0) for row in quiz_rows))
+
+    total_correct = 0
+    for row in quiz_rows:
+        quiz_id = row["id"]
+        cursor.execute(
+            """
+            SELECT MAX(correct) AS best_correct
+            FROM quiz_attempts
+            WHERE user_id=%s AND quiz_id=%s
+            """,
+            (user_id, quiz_id),
+        )
+        best_row = cursor.fetchone() or {}
+        best_correct = int(best_row.get("best_correct") or 0)
+        total_correct += min(best_correct, int(row.get("total_questions") or 0))
+
+    cursor.close()
+    db.close()
+
+    ratio = (total_correct / total_questions) if total_questions > 0 else 0.0
+    return total_questions, total_correct, round(ratio, 4)
+
+
+@app.get("/progress/modules")
+def progress_modules(user_id: int = Depends(get_current_user)):
+    # ================= IQRA =================
+    iqra_global = get_hijaiyah_global_progress(user_id) or {}
+
+    db = get_db()
+    cursor = db.cursor(dictionary=True)
+
+    cursor.execute("SELECT COUNT(*) AS total FROM hijaiyah_lessons")
+    total_hijaiyah_lessons = int((cursor.fetchone() or {}).get("total") or 0)
+
+    cursor.execute(
+        "SELECT COUNT(*) AS total FROM hijaiyah_lesson_unlocks WHERE user_id=%s",
+        (user_id,),
+    )
+    unlocked_hijaiyah_lessons = int((cursor.fetchone() or {}).get("total") or 0)
+
+    cursor.execute("SELECT COUNT(*) AS total FROM suku_kata_levels")
+    total_suku_kata_levels = int((cursor.fetchone() or {}).get("total") or 0)
+
+    cursor.execute(
+        "SELECT COUNT(*) AS total FROM suku_kata_level_unlocks WHERE user_id=%s",
+        (user_id,),
+    )
+    unlocked_suku_kata_levels = int((cursor.fetchone() or {}).get("total") or 0)
+
+    cursor.execute(
+        "SELECT MAX(final_score) AS best_score FROM iqra_exam_results WHERE user_id=%s",
+        (user_id,),
+    )
+    iqra_exam_best = float((cursor.fetchone() or {}).get("best_score") or 0)
+    iqra_exam_passed = 1 if iqra_exam_best >= 60 else 0
+
+    cursor.execute(
+        "SELECT MAX(score_final) AS best_score FROM tajwid_evaluations WHERE user_id=%s",
+        (user_id,),
+    )
+    tajwid_exam_best = float((cursor.fetchone() or {}).get("best_score") or 0)
+    tajwid_exam_passed = 1 if tajwid_exam_best >= 60 else 0
+
+    cursor.execute(
+        "SELECT MAX(score_final) AS best_score FROM tilawah_evaluations WHERE user_id=%s",
+        (user_id,),
+    )
+    tilawah_exam_best = float((cursor.fetchone() or {}).get("best_score") or 0)
+    tilawah_exam_passed = 1 if tilawah_exam_best >= 60 else 0
+
+    cursor.execute(
+        "SELECT MAX(score_final) AS best_score FROM tahfidz_evaluations WHERE user_id=%s",
+        (user_id,),
+    )
+    tahfidz_exam_best = float((cursor.fetchone() or {}).get("best_score") or 0)
+    tahfidz_exam_passed = 1 if tahfidz_exam_best >= 60 else 0
+
+    cursor.close()
+    db.close()
+
+    hijaiyah_ratio = (
+        unlocked_hijaiyah_lessons / total_hijaiyah_lessons
+        if total_hijaiyah_lessons > 0
+        else 0
+    )
+    suku_kata_ratio = (
+        unlocked_suku_kata_levels / total_suku_kata_levels
+        if total_suku_kata_levels > 0
+        else 0
+    )
+    iqra_exam_ratio = float(iqra_exam_passed)
+    iqra_progress = round((hijaiyah_ratio + suku_kata_ratio + iqra_exam_ratio) / 3, 4)
+
+    # ================= QUIZ-BASED MODULES =================
+    tajwid_codes = ["nun_tanwin", "mim_mati", "mad", "qalqalah", "ghunnah"]
+    tilawah_codes = ["tilawah_level_1", "tilawah_level_2", "tilawah_level_3"]
+    tahfidz_codes = ["tahfidz_level_1", "tahfidz_level_2", "tahfidz_level_3"]
+
+    tajwid_total_q, tajwid_correct_q, tajwid_quiz_ratio = _quiz_question_progress(user_id, tajwid_codes)
+    tilawah_total_q, tilawah_correct_q, tilawah_quiz_ratio = _quiz_question_progress(user_id, tilawah_codes)
+    tahfidz_total_q, tahfidz_correct_q, tahfidz_quiz_ratio = _quiz_question_progress(user_id, tahfidz_codes)
+
+    tajwid_progress = round((tajwid_quiz_ratio + float(tajwid_exam_passed)) / 2, 4)
+    tilawah_progress = round((tilawah_quiz_ratio + float(tilawah_exam_passed)) / 2, 4)
+    tahfidz_progress = round((tahfidz_quiz_ratio + float(tahfidz_exam_passed)) / 2, 4)
+
+    return {
+        "iqra": {
+            "progress": iqra_progress,
+            "hijaiyah_total_lessons": total_hijaiyah_lessons,
+            "hijaiyah_unlocked_lessons": unlocked_hijaiyah_lessons,
+            "suku_kata_total_levels": total_suku_kata_levels,
+            "suku_kata_unlocked_levels": unlocked_suku_kata_levels,
+            "iqra_exam_passed": bool(iqra_exam_passed),
+            "completed_letters": iqra_global.get("completed_letters", 0),
+            "total_letters": iqra_global.get("total_letters", 0),
+        },
+        "tajwid": {
+            "progress": tajwid_progress,
+            "quiz_total_questions": tajwid_total_q,
+            "quiz_correct_questions": tajwid_correct_q,
+            "exam_passed": bool(tajwid_exam_passed),
+        },
+        "tilawah": {
+            "progress": tilawah_progress,
+            "quiz_total_questions": tilawah_total_q,
+            "quiz_correct_questions": tilawah_correct_q,
+            "exam_passed": bool(tilawah_exam_passed),
+        },
+        "tahfidz": {
+            "progress": tahfidz_progress,
+            "quiz_total_questions": tahfidz_total_q,
+            "quiz_correct_questions": tahfidz_correct_q,
+            "exam_passed": bool(tahfidz_exam_passed),
+        },
+    }
+
+
 @app.get("/progress/average")
 def progress_average(user_id: int = Depends(get_current_user)):
     iqra_avg = float(get_hijaiyah_global_progress(user_id).get("average_score", 0) or 0)

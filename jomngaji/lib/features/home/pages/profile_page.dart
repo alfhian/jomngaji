@@ -83,12 +83,8 @@ class _ProfilePageState extends State<ProfilePage> {
 
       final headers = {'Authorization': 'Bearer $token'};
       final userName = (await AuthService.getUserName()) ?? 'Pengguna';
-      final avgResponse = await http.get(
-        Uri.parse('${AuthService.baseUrl}/progress/average'),
-        headers: headers,
-      );
-      final iqraProgressResponse = await http.get(
-        Uri.parse('${AuthService.baseUrl}/hijaiyah/global-progress'),
+      final moduleProgressResponse = await http.get(
+        Uri.parse('${AuthService.baseUrl}/progress/modules'),
         headers: headers,
       );
       final summaryResponse = await http.get(
@@ -100,14 +96,11 @@ class _ProfilePageState extends State<ProfilePage> {
         headers: headers,
       );
 
-      final avgJson = avgResponse.statusCode == 200
-          ? (jsonDecode(avgResponse.body) as Map<String, dynamic>)
+      final moduleJson = moduleProgressResponse.statusCode == 200
+          ? (jsonDecode(moduleProgressResponse.body) as Map<String, dynamic>)
           : <String, dynamic>{};
       final summaryJson = summaryResponse.statusCode == 200
           ? (jsonDecode(summaryResponse.body) as Map<String, dynamic>)
-          : <String, dynamic>{};
-      final iqraProgressJson = iqraProgressResponse.statusCode == 200
-          ? (jsonDecode(iqraProgressResponse.body) as Map<String, dynamic>)
           : <String, dynamic>{};
       final tadarusJson = tadarusResponse.statusCode == 200
           ? (jsonDecode(tadarusResponse.body) as Map<String, dynamic>)
@@ -116,10 +109,18 @@ class _ProfilePageState extends State<ProfilePage> {
       if (!mounted) return;
       setState(() {
         _name = userName;
-        _iqra = _extractProgress(iqraProgressJson);
-        _tajwid = _normalizeProgress(avgJson['tajwid_avg'] ?? 0);
-        _tilawah = _normalizeProgress(avgJson['tilawah_avg'] ?? 0);
-        _tahfidz = _normalizeProgress(avgJson['tahfidz_avg'] ?? 0);
+        _iqra = _extractProgress(
+          (moduleJson['iqra'] as Map<String, dynamic>?) ?? <String, dynamic>{},
+        );
+        _tajwid = _extractProgress(
+          (moduleJson['tajwid'] as Map<String, dynamic>?) ?? <String, dynamic>{},
+        );
+        _tilawah = _extractProgress(
+          (moduleJson['tilawah'] as Map<String, dynamic>?) ?? <String, dynamic>{},
+        );
+        _tahfidz = _extractProgress(
+          (moduleJson['tahfidz'] as Map<String, dynamic>?) ?? <String, dynamic>{},
+        );
         _tadarus = _extractProgress(tadarusJson);
 
         _iqraScore = _normalizeScore(summaryJson['iqra_score']);
