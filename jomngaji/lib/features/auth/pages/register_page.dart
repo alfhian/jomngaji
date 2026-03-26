@@ -84,11 +84,11 @@ class _RegisterPageState extends State<RegisterPage> {
                         borderRadius: BorderRadius.circular(28),
                       ),
                       clipBehavior: Clip.antiAlias,
-                      child: Transform.scale(
-                        scale: 1.28,
+                      child: Padding(
+                        padding: const EdgeInsets.all(10),
                         child: Image.asset(
                           'assets/images/icon-jomngaji.png',
-                          fit: BoxFit.cover,
+                          fit: BoxFit.contain,
                         ),
                       ),
                     ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
@@ -74,7 +75,7 @@ class _LoginPageState extends State<LoginPage> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Google login gagal: $e')),
+        SnackBar(content: Text(_friendlyGoogleError(e))),
       );
     } finally {
       if (mounted) setState(() => isGoogleLoading = false);
@@ -116,21 +117,21 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                     ],
                   ),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(28),
-                    ),
-                    clipBehavior: Clip.antiAlias,
-                    child: Transform.scale(
-                      scale: 1.28,
-                      child: Image.asset(
-                        'assets/images/icon-jomngaji.png',
-                        fit: BoxFit.cover,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(28),
+                      ),
+                      clipBehavior: Clip.antiAlias,
+                      child: Padding(
+                        padding: const EdgeInsets.all(10),
+                        child: Image.asset(
+                          'assets/images/icon-jomngaji.png',
+                          fit: BoxFit.contain,
+                        ),
                       ),
                     ),
                   ),
-                ),
                 const SizedBox(height: 18),
                 Text(
                   'Selamat datang 👋',
@@ -267,3 +268,16 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 }
+  String _friendlyGoogleError(Object error) {
+    final raw = error.toString();
+    if (error is PlatformException && error.code == 'network_error') {
+      return 'Koneksi ke layanan Google bermasalah. Cek internet, tanggal/jam perangkat, dan coba lagi.';
+    }
+    if (raw.contains('ApiException: 7') || raw.contains('network_error')) {
+      return 'Tidak bisa terhubung ke Google. Pastikan internet stabil dan Google Play Services aktif.';
+    }
+    if (raw.contains('10')) {
+      return 'Konfigurasi OAuth Google belum valid (SHA-1 / client ID). Cek konfigurasi Firebase/Google Cloud.';
+    }
+    return 'Google login gagal. Silakan coba lagi.';
+  }
