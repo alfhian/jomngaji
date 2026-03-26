@@ -129,7 +129,8 @@ WorkingDirectory=/opt/jomngaji/jomngaji-backend
 Environment="PATH=/opt/jomngaji/jomngaji-backend/.venv/bin"
 EnvironmentFile=/opt/jomngaji/jomngaji-backend/.env
 Environment="HF_HOME=/opt/jomngaji/jomngaji-backend/.cache/huggingface"
-ExecStart=/opt/jomngaji/jomngaji-backend/.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 4000 --workers 4
+# lebih aman pakai python -m uvicorn agar tidak kena error 203/EXEC
+ExecStart=/opt/jomngaji/jomngaji-backend/.venv/bin/python -m uvicorn app.main:app --host 127.0.0.1 --port 4000 --workers 4
 Restart=always
 RestartSec=3
 
@@ -256,6 +257,30 @@ sudo systemctl restart jomngaji-backend
 ```
 - Pastikan di systemd ada env:
   `Environment="HF_HOME=/opt/jomngaji/jomngaji-backend/.cache/huggingface"`
+
+### `status=203/EXEC` saat start service
+- Error ini berarti **binary di `ExecStart` tidak bisa dieksekusi** (path salah, file tidak ada, atau permission/noexec).
+- Jalankan checklist ini:
+```bash
+# 1) cek isi unit aktif
+sudo systemctl cat jomngaji-backend
+
+# 2) verifikasi binary di ExecStart ada
+ls -lah /opt/jomngaji/jomngaji-backend/.venv/bin/python
+
+# 3) jika python belum ada, buat ulang venv + install dependency
+cd /opt/jomngaji/jomngaji-backend
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+
+# 4) reload & restart
+sudo systemctl daemon-reload
+sudo systemctl restart jomngaji-backend
+sudo systemctl status jomngaji-backend
+```
+- Gunakan `ExecStart` berikut (recommended):
+  `ExecStart=/opt/jomngaji/jomngaji-backend/.venv/bin/python -m uvicorn app.main:app --host 127.0.0.1 --port 4000 --workers 4`
 
 ### Tidak bisa diakses dari internet
 - Pastikan DNS domain benar.
