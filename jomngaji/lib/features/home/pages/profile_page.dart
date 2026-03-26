@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 
 import '../../../core/localization/app_localization.dart';
 import '../../../core/widgets/custom_gradient_appbar.dart';
+import '../../../core/widgets/premium_upgrade_dialog.dart';
 import '../../../routes/app_routes.dart';
 import '../../auth/services/auth_service.dart';
 import '../widgets/app_bottom_nav.dart';
@@ -31,6 +32,7 @@ class _ProfilePageState extends State<ProfilePage> {
   int _tajwidScore = 0;
   int _tilawahScore = 0;
   int _tahfidzScore = 0;
+  bool _isPremium = false;
 
   @override
   void initState() {
@@ -109,6 +111,8 @@ class _ProfilePageState extends State<ProfilePage> {
       if (!mounted) return;
       setState(() {
         _name = userName;
+        _isPremium = (summaryJson['is_premium'] == true) ||
+            (summaryJson['pro'] == true);
         _iqra = _extractProgress(
           (moduleJson['iqra'] as Map<String, dynamic>?) ?? <String, dynamic>{},
         );
@@ -127,6 +131,11 @@ class _ProfilePageState extends State<ProfilePage> {
         _tajwidScore = _normalizeScore(summaryJson['tajwid_score']);
         _tilawahScore = _normalizeScore(summaryJson['tilawah_score']);
         _tahfidzScore = _normalizeScore(summaryJson['tahfidz_score']);
+      });
+      final localPremium = await AuthService.isPremiumUser();
+      if (!mounted) return;
+      setState(() {
+        _isPremium = _isPremium || localPremium;
       });
     } catch (e) {
       if (!mounted) return;
@@ -361,6 +370,107 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
+  Widget _planCard() {
+    final planLabel = _isPremium ? 'PRO' : 'FREE';
+    final planColor = _isPremium ? const Color(0xFF16A34A) : const Color(0xFF2563EB);
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.workspace_premium_rounded, color: planColor),
+              const SizedBox(width: 8),
+              Text(
+                'Paket Saat Ini',
+                style: GoogleFonts.poppins(fontWeight: FontWeight.w700),
+              ),
+              const Spacer(),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: planColor.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  planLabel,
+                  style: GoogleFonts.poppins(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: planColor,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            _isPremium
+                ? 'Akun kamu sudah aktif PRO. Kelola plan jika ingin perpanjang atau ubah.'
+                : 'Upgrade ke PRO untuk membuka semua materi premium tanpa batas.',
+            style: GoogleFonts.poppins(fontSize: 12, color: Colors.black54),
+          ),
+          const SizedBox(height: 10),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: () => showPremiumUpgradeDialog(
+                context,
+                featureName: _isPremium ? 'Kelola paket PRO' : 'Update Plan',
+              ),
+              icon: const Icon(Icons.autorenew_rounded),
+              label: Text(_isPremium ? 'Kelola Plan' : 'Update Plan'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: planColor,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(vertical: 11),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _confirmLogout() async {
+    final shouldLogout = await showDialog<bool>(
+      context: context,
+      builder: (ctx) {
+        return AlertDialog(
+          title: const Text('Logout'),
+          content: const Text('Yakin ingin keluar dari akun ini?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Batal'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('Logout'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (shouldLogout != true) return;
+    await AuthService.logout();
+    if (!mounted) return;
+    Navigator.pushNamedAndRemoveUntil(
+      context,
+      AppRoutes.login,
+      (route) => false,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -441,6 +551,8 @@ class _ProfilePageState extends State<ProfilePage> {
                     color: Colors.teal,
                   ),
                   const SizedBox(height: 8),
+                  _planCard(),
+                  const SizedBox(height: 12),
                   _languageCard(),
                   const SizedBox(height: 12),
                   SizedBox(
@@ -453,6 +565,21 @@ class _ProfilePageState extends State<ProfilePage> {
                       style: OutlinedButton.styleFrom(
                         foregroundColor: const Color(0xFF0F172A),
                         side: const BorderSide(color: Color(0xFFB8C4D8)),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: _confirmLogout,
+                      icon: const Icon(Icons.logout_rounded),
+                      label: const Text('Logout'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFDC2626),
+                        foregroundColor: Colors.white,
+                        elevation: 0,
                         padding: const EdgeInsets.symmetric(vertical: 12),
                       ),
                     ),
