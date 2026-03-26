@@ -271,10 +271,12 @@ class _LoginPageState extends State<LoginPage> {
   String _friendlyGoogleError(Object error) {
     final raw = error.toString();
     if (error is PlatformException && error.code == 'network_error') {
-      return 'Koneksi ke layanan Google bermasalah. Cek internet, tanggal/jam perangkat, dan coba lagi.';
+      return 'Koneksi ke Google Play Services bermasalah (bukan API backend URL). '
+          'Cek internet, tanggal/jam otomatis, lalu coba lagi.';
     }
     if (raw.contains('ApiException: 7') || raw.contains('network_error')) {
-      return 'Tidak bisa terhubung ke Google. Pastikan internet stabil dan Google Play Services aktif.';
+      return 'Tidak bisa terhubung ke Google (ApiException: 7). '
+          'Biasanya karena jaringan/Play Services, bukan karena endpoint API aplikasi.';
     }
     if (raw.contains('10')) {
       return 'Konfigurasi OAuth Google belum valid (SHA-1 / client ID). Cek konfigurasi Firebase/Google Cloud.';
