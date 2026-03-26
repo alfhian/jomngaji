@@ -1,5 +1,9 @@
 class ApiConfig {
   static const bool _isProd = bool.fromEnvironment('dart.vm.product');
+  static const bool _allowHttpInProd = bool.fromEnvironment(
+    'ALLOW_HTTP_IN_PROD',
+    defaultValue: false,
+  );
   static const String _defaultBaseUrl = 'https://api.jomngaji.com';
   static const String _defaultBaseUrls = _isProd
       ? 'https://api.jomngaji.com'
@@ -30,7 +34,8 @@ class ApiConfig {
         throw StateError('API_BASE_URL tidak valid: $url');
       }
       final allowHttpInDev = !_isProd;
-      if (uri.scheme != 'https' && !allowHttpInDev) {
+      final allowHttpViaFlag = _isProd && _allowHttpInProd;
+      if (uri.scheme != 'https' && !allowHttpInDev && !allowHttpViaFlag) {
         throw StateError('API_BASE_URL wajib https untuk production/non-local: $url');
       }
     }

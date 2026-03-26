@@ -25,6 +25,16 @@ flutter build apk --release
 Output:
 - `build/app/outputs/flutter-apk/app-release.apk`
 
+Jika backend masih pakai HTTP + IP publik VPS (contoh `187.127.103.60`), build dengan override berikut:
+
+```bash
+flutter build apk --release \
+  --dart-define=API_BASE_URL=http://187.127.103.60:4000 \
+  --dart-define=ALLOW_HTTP_IN_PROD=true
+```
+
+> `ALLOW_HTTP_IN_PROD=true` hanya untuk fase testing sementara. Untuk production publik, sangat disarankan pindah ke HTTPS + domain.
+
 Untuk testing internal cepat (tanpa optimasi release), bisa gunakan:
 
 ```bash
