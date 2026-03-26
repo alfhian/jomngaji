@@ -14,6 +14,7 @@ class AuthService {
   static const _keyUserId = 'userId';
   static const _keyName = 'name';
   static const _keyIsPremium = 'is_premium';
+  static const _keyPreferredBaseUrl = 'preferred_base_url';
 
   static bool _isNetworkError(Object error) {
     return error is SocketException || error is http.ClientException;
@@ -25,13 +26,26 @@ class AuthService {
     Object? body,
   }) async {
     Object? lastError;
-    for (final url in ApiConfig.endpointCandidates(path)) {
+    final prefs = await SharedPreferences.getInstance();
+    final preferred = prefs.getString(_keyPreferredBaseUrl);
+
+    final baseUrls = [...ApiConfig.baseUrls];
+    if (preferred != null && baseUrls.contains(preferred)) {
+      baseUrls
+        ..remove(preferred)
+        ..insert(0, preferred);
+    }
+
+    for (final base in baseUrls) {
+      final url = '$base${path.startsWith('/') ? path : '/$path'}';
       try {
-        return await http.post(
+        final response = await http.post(
           Uri.parse(url),
           headers: headers,
           body: body,
         );
+        await prefs.setString(_keyPreferredBaseUrl, base);
+        return response;
       } catch (e) {
         if (_isNetworkError(e)) {
           lastError = e;
@@ -95,7 +109,9 @@ class AuthService {
     );
 
     if (res.statusCode != 200) {
-      throw Exception('Login gagal. Periksa email/password Anda.');
+      throw Exception(
+        'Login gagal (${res.statusCode}). Periksa email/password atau pastikan app mengarah ke backend yang sama.',
+      );
     }
 
     final data = jsonDecode(res.body) as Map<String, dynamic>;
@@ -177,6 +193,7 @@ class AuthService {
     await prefs.remove(_keyUserId);
     await prefs.remove(_keyName);
     await prefs.remove(_keyIsPremium);
+    await prefs.remove(_keyPreferredBaseUrl);
   }
 
   static Future<void> resetPassword({

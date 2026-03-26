@@ -29,7 +29,10 @@ class _LoginPageState extends State<LoginPage> {
   Future<void> _handleLogin() async {
     setState(() => isLoading = true);
     try {
-      await AuthService.login(emailController.text, passwordController.text);
+      await AuthService.login(
+        emailController.text.trim(),
+        passwordController.text,
+      );
       if (!mounted) return;
       Navigator.pushReplacementNamed(context, AppRoutes.home);
     } catch (e) {
