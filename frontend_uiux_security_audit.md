@@ -16,16 +16,24 @@ Scope: folder `jomngaji/` (Flutter frontend)
 3. Register sudah memakai validasi form dasar (required, email format, minimum password length).
 
 ### Gap / Risiko UX
-1. **Theme terpusat belum dipakai konsisten**
-   - `AppTheme` tersedia tetapi `MaterialApp` masih membuat `ThemeData` inline di `main.dart`.
-2. **Aksesibilitas belum optimal**
-   - Banyak ukuran font dan warna hardcoded pada login/register, belum terlihat strategi text scaling atau semantic labels.
-3. **Login belum berbasis Form validator**
-   - Login memakai `TextField` biasa, bukan `TextFormField + Form` seperti register.
-4. **Stateful controller belum di-dispose**
-   - `TextEditingController` dibuat pada halaman auth namun tidak terlihat override `dispose()`.
-5. **Internationalization belum konsisten**
-   - Infrastruktur localization ada, tetapi string UI auth banyak yang hardcoded Indonesia.
+1. **Design system belum konsisten end-to-end**
+   - `AppTheme` dan standar visual sudah ada, namun masih banyak style/spacing/color hardcoded per page.
+   - Dampak: UI sulit dipelihara saat skala fitur bertambah dan berisiko inkonsisten antar-screen.
+2. **Aksesibilitas (a11y) belum menjadi baseline**
+   - Belum ada aturan baku untuk dynamic text scale, semantics label, minimum tap target, dan kontras.
+   - Dampak: pengalaman pengguna dengan kebutuhan aksesibilitas menurun dan potensi drop-off naik.
+3. **Validasi & error UX auth belum seragam**
+   - Register sudah menggunakan validasi form, sementara login masih bergantung alur submit langsung.
+   - Dampak: UX error handling tidak konsisten dan pengguna sulit memahami cara memperbaiki input.
+4. **Lifecycle input controller belum seragam**
+   - Beberapa halaman stateful auth masih berpotensi tidak menutup `TextEditingController` secara konsisten.
+   - Dampak: risiko memory leak kecil-menengah pada sesi panjang dan maintainability menurun.
+5. **Internationalization belum tuntas**
+   - Infrastruktur localization sudah ada, namun banyak string masih hardcoded pada layer UI.
+   - Dampak: sulit menambah multi-bahasa dan copy update membutuhkan perubahan kode langsung.
+6. **Komponen status produk belum konsisten**
+   - Label fitur berbayar sempat bercampur antara istilah “Premium” dan “PRO”.
+   - Dampak: brand voice kurang konsisten dan berpotensi membingungkan pengguna.
 
 ## Temuan Security
 
@@ -54,17 +62,31 @@ Scope: folder `jomngaji/` (Flutter frontend)
 2. **Pindahkan seluruh panggilan API ber-key ke backend proxy** (jangan dari app client langsung).
 3. **Wajibkan HTTPS untuk seluruh endpoint API**.
 4. **Migrasikan token ke secure storage**.
+5. **Samakan istilah monetisasi menjadi “PRO” di seluruh UI** (menu, badge, CTA, dialog, copy).
 
 ### 1-2 minggu
 1. Refactor ke **theme system tunggal** (`AppTheme` + design tokens).
 2. Terapkan **Form validation** juga di login.
-3. Tambahkan **route guard/auth middleware** di level routing.
-4. Sanitasi error message untuk user-friendly output.
+3. Terapkan checklist **aksesibilitas minimum** (semantics, kontras, text scale, tap target).
+4. Tambahkan **route guard/auth middleware** di level routing.
+5. Sanitasi error message untuk user-friendly output.
 
 ### 2-4 minggu
 1. Audit aksesibilitas (kontras warna, dynamic text scale, semantics, focus order).
-2. Lakukan uji usability cepat (task completion, error rate, time-on-task).
+2. Lakukan uji usability cepat (task completion, error rate, time-on-task) untuk alur login, onboarding, dan modul belajar.
 3. Tambah automated lint/check untuk mencegah hardcoded secret di commit berikutnya.
+4. Bentuk **UX quality gate** pada PR checklist (consistency, a11y, i18n, error UX, performance).
+
+## Rencana perbaikan Gap / Risiko UX (end-to-end)
+
+| Area | Risiko | Aksi Fix | Output |
+|---|---|---|---|
+| Design System | Inkonsistensi visual antar layar | Migrasi style hardcoded ke token/theme + reusable widget | Konsistensi visual dan refactor lebih cepat |
+| Accessibility | Sulit dipakai user dengan kebutuhan khusus | Tambah semantics, kontras minimum, text scale test, tap target min 44dp | Peningkatan aksesibilitas terukur |
+| Form & Validation | Error handling tidak konsisten | Login disamakan dengan Form validator register + inline error | Input flow lebih jelas, error rate turun |
+| Controller Lifecycle | Potensi leak & debt teknis | Wajib `dispose()` untuk seluruh controller stateful + lint/code review checklist | Stabilitas runtime lebih baik |
+| Localization | Sulit scale multi-bahasa | Pindahkan seluruh hardcoded string ke localization keys | Proses terjemahan lebih cepat |
+| Terminologi Monetisasi | Copy membingungkan | Standarisasi seluruh label jadi “PRO” | Brand voice konsisten |
 
 ## Verdict
 

@@ -306,7 +306,7 @@ class _LatihanSukuKataMenuPageState extends State<LatihanSukuKataMenuPage> {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
-                  'PREMIUM',
+                  'PRO',
                   style: GoogleFonts.poppins(
                     fontSize: 10,
                     fontWeight: FontWeight.w700,
