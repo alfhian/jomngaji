@@ -1,18 +1,23 @@
 import os
-from typing import Optional
-
-from faster_whisper import WhisperModel
+from typing import Any, Optional
 
 FW_MODEL_SIZE = os.getenv("FW_MODEL_SIZE", "small")
 FW_DEVICE = os.getenv("FW_DEVICE", "cpu")
 FW_COMPUTE_TYPE = os.getenv("FW_COMPUTE_TYPE", "int8")
 
-_model: Optional[WhisperModel] = None
+_model: Optional[Any] = None
 
 
-def get_faster_whisper_model() -> WhisperModel:
+def get_faster_whisper_model():
     global _model
     if _model is None:
+        try:
+            from faster_whisper import WhisperModel
+        except ModuleNotFoundError as exc:
+            raise RuntimeError(
+                "Dependency `faster-whisper` belum terpasang. "
+                "Install package `faster-whisper`."
+            ) from exc
         _model = WhisperModel(
             FW_MODEL_SIZE,
             device=FW_DEVICE,
