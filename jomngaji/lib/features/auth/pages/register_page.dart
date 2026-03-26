@@ -16,6 +16,14 @@ class _RegisterPageState extends State<RegisterPage> {
   final passwordController = TextEditingController();
   bool isLoading = false;
 
+  @override
+  void dispose() {
+    nameController.dispose();
+    emailController.dispose();
+    passwordController.dispose();
+    super.dispose();
+  }
+
   Future<void> _handleRegister() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -129,6 +137,8 @@ class _RegisterPageState extends State<RegisterPage> {
                       children: [
                         TextFormField(
                           controller: nameController,
+                          textInputAction: TextInputAction.next,
+                          autofillHints: const [AutofillHints.name],
                           decoration: InputDecoration(
                             prefixIcon: const Icon(Icons.person_outline),
                             labelText: "Nama Lengkap",
@@ -139,7 +149,7 @@ class _RegisterPageState extends State<RegisterPage> {
                               borderSide: BorderSide.none,
                             ),
                           ),
-                          validator: (value) => value == null || value.isEmpty
+                          validator: (value) => value == null || value.trim().isEmpty
                               ? "Nama wajib diisi"
                               : null,
                         ),
@@ -147,6 +157,8 @@ class _RegisterPageState extends State<RegisterPage> {
                         TextFormField(
                           controller: emailController,
                           keyboardType: TextInputType.emailAddress,
+                          textInputAction: TextInputAction.next,
+                          autofillHints: const [AutofillHints.email],
                           decoration: InputDecoration(
                             prefixIcon: const Icon(Icons.email_outlined),
                             labelText: "Email",
@@ -158,10 +170,11 @@ class _RegisterPageState extends State<RegisterPage> {
                             ),
                           ),
                           validator: (value) {
-                            if (value == null || value.isEmpty) {
+                            final v = value?.trim() ?? '';
+                            if (v.isEmpty) {
                               return "Email wajib diisi";
                             }
-                            if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
+                            if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(v)) {
                               return "Format email tidak valid";
                             }
                             return null;
@@ -171,6 +184,8 @@ class _RegisterPageState extends State<RegisterPage> {
                         TextFormField(
                           controller: passwordController,
                           obscureText: true,
+                          textInputAction: TextInputAction.done,
+                          autofillHints: const [AutofillHints.newPassword],
                           decoration: InputDecoration(
                             prefixIcon: const Icon(Icons.lock_outline),
                             labelText: "Password",
