@@ -112,6 +112,10 @@ class _LoginPageState extends State<LoginPage> {
 
   String _friendlyLoginError(Object error) {
     final raw = error.toString();
+    if (raw.contains('TimeoutException')) {
+      return 'Koneksi ke server timeout. Cek API_BASE_URL (VPS), '
+          'pastikan port terbuka, lalu coba lagi.';
+    }
     if (raw.contains('Failed host lookup') || raw.contains('SocketException')) {
       return 'Backend tidak bisa diakses. Anda bisa set '
           'API_BASE_URL atau API_BASE_URLS '
@@ -126,20 +130,25 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color(0xFFF2F7FF), Color(0xFFE8F2FF), Color(0xFFFFFFFF)],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
+    return WillPopScope(
+      onWillPop: () async {
+        await SystemNavigator.pop();
+        return false;
+      },
+      child: Scaffold(
+        body: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Color(0xFFF2F7FF), Color(0xFFE8F2FF), Color(0xFFFFFFFF)],
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+            ),
           ),
-        ),
-        child: SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
-            child: Column(
-              children: [
+          child: SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
+              child: Column(
+                children: [
                 Container(
                   width: 122,
                   height: 122,
@@ -324,7 +333,8 @@ class _LoginPageState extends State<LoginPage> {
                     style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
                   ),
                 ),
-              ],
+                ],
+              ),
             ),
           ),
         ),

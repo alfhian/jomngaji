@@ -44,6 +44,19 @@ class JomNgajiApp extends StatelessWidget {
         );
       },
       initialRoute: isLoggedIn ? AppRoutes.home : AppRoutes.login,
+      onGenerateInitialRoutes: (initialRouteName) {
+        final routeName = isLoggedIn ? AppRoutes.home : AppRoutes.login;
+        final builder = AppRoutes.routes[routeName];
+        if (builder == null) {
+          return <Route<dynamic>>[];
+        }
+        return <Route<dynamic>>[
+          MaterialPageRoute<void>(
+            settings: RouteSettings(name: routeName),
+            builder: builder,
+          ),
+        ];
+      },
       routes: AppRoutes.routes,
       onGenerateRoute: AppRoutes.onGenerateRoute,
     );
