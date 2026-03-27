@@ -39,15 +39,27 @@ def _load_audio_dependencies():
 
 
 def _resolve_hf_cache_dir() -> Path:
-    configured_home = os.getenv("HF_HOME")
-    if configured_home:
-        cache_home = Path(configured_home)
-    else:
-        backend_root = Path(__file__).resolve().parents[2]
-        cache_home = backend_root / ".cache" / "huggingface"
+    backend_root = Path(__file__).resolve().parents[2]
+    default_cache_home = backend_root / ".cache" / "huggingface"
 
-    cache_home.mkdir(parents=True, exist_ok=True)
-    return cache_home
+    configured_home = os.getenv("HF_HOME")
+    candidates = [Path(configured_home)] if configured_home else []
+    candidates.append(default_cache_home)
+
+    for cache_home in candidates:
+        try:
+            cache_home.mkdir(parents=True, exist_ok=True)
+            probe_file = cache_home / ".write_probe"
+            probe_file.write_text("ok", encoding="utf-8")
+            probe_file.unlink(missing_ok=True)
+            return cache_home
+        except OSError:
+            continue
+
+    raise RuntimeError(
+        "Tidak menemukan cache directory Hugging Face yang writable. "
+        "Atur HF_HOME ke path yang bisa ditulis user service."
+    )
 
 
 def _load_wav2vec_stack():
@@ -62,6 +74,9 @@ def _load_wav2vec_stack():
             ) from exc
         _device = "cuda" if torch.cuda.is_available() else "cpu"
         cache_dir = _resolve_hf_cache_dir()
+        os.environ.setdefault("HF_HOME", str(cache_dir))
+        os.environ.setdefault("HF_HUB_CACHE", str(cache_dir / "hub"))
+        os.environ.setdefault("TRANSFORMERS_CACHE", str(cache_dir / "transformers"))
         model_id = "facebook/wav2vec2-base-960h"
 
         try:

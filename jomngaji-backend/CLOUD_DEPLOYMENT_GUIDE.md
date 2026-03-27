@@ -126,10 +126,11 @@ After=network.target
 User=www-data
 Group=www-data
 WorkingDirectory=/opt/jomngaji/jomngaji-backend
-Environment="PATH=/opt/jomngaji/jomngaji-backend/.venv/bin"
+Environment="PATH=/opt/jomngaji/jomngaji-backend/.venv/bin:/opt/jomngaji/.venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin"
 EnvironmentFile=/opt/jomngaji/jomngaji-backend/.env
 Environment="HF_HOME=/opt/jomngaji/jomngaji-backend/.cache/huggingface"
-ExecStart=/opt/jomngaji/jomngaji-backend/.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 4000 --workers 4
+# jalankan via /usr/bin/env agar tidak hardcode path python venv yang belum tentu sama di tiap server
+ExecStart=/usr/bin/env uvicorn app.main:app --host 127.0.0.1 --port 4000 --workers 4
 Restart=always
 RestartSec=3
 
@@ -256,6 +257,47 @@ sudo systemctl restart jomngaji-backend
 ```
 - Pastikan di systemd ada env:
   `Environment="HF_HOME=/opt/jomngaji/jomngaji-backend/.cache/huggingface"`
+
+### `status=203/EXEC` saat start service
+- Error ini berarti **binary di `ExecStart` tidak bisa dieksekusi** (path salah, file tidak ada, atau permission/noexec).
+- Jalankan checklist ini:
+```bash
+# 1) cek isi unit aktif
+sudo systemctl cat jomngaji-backend
+
+# 2) verifikasi binary di ExecStart ada
+ls -lah /opt/jomngaji/jomngaji-backend/.venv/bin/python
+file /opt/jomngaji/jomngaji-backend/.venv/bin/python
+namei -l /opt/jomngaji/jomngaji-backend/.venv/bin/python
+sudo -u www-data /usr/bin/env uvicorn --version
+
+# 3) jika python belum ada, buat ulang venv + install dependency
+cd /opt/jomngaji/jomngaji-backend
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+
+# 4) pastikan path python di service = path python aktif venv
+which python
+readlink -f "$(which python)"
+
+# 5) reload & restart
+sudo systemctl daemon-reload
+sudo systemctl restart jomngaji-backend
+sudo systemctl status jomngaji-backend
+```
+- Gunakan `ExecStart` berikut (recommended):
+  `ExecStart=/usr/bin/env uvicorn app.main:app --host 127.0.0.1 --port 4000 --workers 4`
+- Jika output `which python` ternyata `/opt/jomngaji/.venv/bin/python` (bukan di `jomngaji-backend/.venv`), maka update `ExecStart` agar persis sama dengan path tersebut.
+- Jika muncul `No such file or directory` untuk `/opt/jomngaji/jomngaji-backend/.venv/bin/python`, berarti venv Anda bukan di folder backend. Pilih salah satu:
+  1) ubah `PATH` systemd agar mencakup venv aktual (mis. `/opt/jomngaji/.venv/bin`), atau
+  2) buat ulang venv di `/opt/jomngaji/jomngaji-backend/.venv` agar sesuai panduan.
+- Jika `namei -l` menunjukkan direktori parent tidak punya bit execute (`x`) untuk user `www-data`, perbaiki permission:
+```bash
+sudo chmod o+rx /opt
+sudo chmod o+rx /opt/jomngaji
+sudo chmod -R o+rx /opt/jomngaji/jomngaji-backend/.venv/bin
+```
 
 ### Tidak bisa diakses dari internet
 - Pastikan DNS domain benar.
