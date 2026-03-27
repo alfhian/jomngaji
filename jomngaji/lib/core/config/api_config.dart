@@ -1,5 +1,9 @@
 class ApiConfig {
   static const bool _isProd = bool.fromEnvironment('dart.vm.product');
+  static const bool _allowHttpInProd = bool.fromEnvironment(
+    'ALLOW_HTTP_IN_PROD',
+    defaultValue: false,
+  );
   static const String _defaultBaseUrl = 'https://api.jomngaji.com';
   static const String _defaultBaseUrls = _isProd
       ? 'https://api.jomngaji.com'
@@ -15,28 +19,34 @@ class ApiConfig {
   );
 
   static List<String> get baseUrls {
-    final candidates = <String>[
+    final rawCandidates = <String>[
       if (_rawBaseUrl.trim().isNotEmpty) _rawBaseUrl.trim(),
       if (_rawBaseUrl.trim().isEmpty)
         ..._rawBaseUrls.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty),
     ];
-    if (candidates.isEmpty) {
-      candidates.add(_defaultBaseUrl);
+    if (rawCandidates.isEmpty) {
+      rawCandidates.add(_defaultBaseUrl);
     }
 
-    for (final url in candidates) {
+    final normalized = <String>[];
+    for (final url in rawCandidates) {
       final uri = Uri.tryParse(url);
       if (uri == null || !uri.hasScheme || uri.host.isEmpty) {
-        throw StateError('API_BASE_URL tidak valid: $url');
+        continue;
       }
       final allowHttpInDev = !_isProd;
-      if (uri.scheme != 'https' && !allowHttpInDev) {
-        throw StateError('API_BASE_URL wajib https untuk production/non-local: $url');
+      final allowHttpViaFlag = _isProd && _allowHttpInProd;
+      if (uri.scheme != 'https' && !allowHttpInDev && !allowHttpViaFlag) {
+        continue;
       }
+      normalized.add(url.endsWith('/') ? url.substring(0, url.length - 1) : url);
     }
-    return candidates
-        .map((e) => e.endsWith('/') ? e.substring(0, e.length - 1) : e)
-        .toList();
+
+    if (normalized.isEmpty) {
+      return [_defaultBaseUrl];
+    }
+
+    return normalized;
   }
 
   static String get baseUrl {
