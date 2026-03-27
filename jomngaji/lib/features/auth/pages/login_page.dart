@@ -17,8 +17,7 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   static const String _googleWebClientId = String.fromEnvironment(
     'GOOGLE_WEB_CLIENT_ID',
-    defaultValue:
-        '861364329931-lc09h3isvjl7i5shbir15nf0jbj7bros.apps.googleusercontent.com',
+    defaultValue: '',
   );
 
   final _formKey = GlobalKey<FormState>();
@@ -105,7 +104,9 @@ class _LoginPageState extends State<LoginPage> {
           'Biasanya karena jaringan/Play Services, bukan karena endpoint API aplikasi.';
     }
     if (raw.contains('10')) {
-      return 'Konfigurasi OAuth Google belum valid (SHA-1 / client ID). Cek konfigurasi Firebase/Google Cloud.';
+      return 'Konfigurasi OAuth Google belum valid (SHA-1 / client ID). '
+          'Pastikan packageName + SHA-1 sesuai, atau set '
+          '--dart-define=GOOGLE_WEB_CLIENT_ID=<web-client-id>.';
     }
     return 'Google login gagal. Silakan coba lagi.';
   }
