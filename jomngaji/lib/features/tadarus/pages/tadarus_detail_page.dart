@@ -343,7 +343,7 @@ class _TadarusDetailPageState extends State<TadarusDetailPage> {
         border: Border.all(color: const Color(0xFFBDEFD6)),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
             surah.name,
@@ -427,15 +427,18 @@ class _TadarusDetailPageState extends State<TadarusDetailPage> {
             ],
           ),
           const SizedBox(height: 12),
-          Directionality(
-            textDirection: TextDirection.rtl,
-            child: Text(
-              ayah.text,
-              textAlign: TextAlign.right,
-              style: GoogleFonts.amiri(
-                fontSize: 29,
-                height: 1.9,
-                color: const Color(0xFF0F172A),
+          Align(
+            alignment: Alignment.centerRight,
+            child: Directionality(
+              textDirection: TextDirection.rtl,
+              child: Text(
+                ayah.text,
+                textAlign: TextAlign.right,
+                style: GoogleFonts.amiri(
+                  fontSize: 29,
+                  height: 1.9,
+                  color: const Color(0xFF0F172A),
+                ),
               ),
             ),
           ),
