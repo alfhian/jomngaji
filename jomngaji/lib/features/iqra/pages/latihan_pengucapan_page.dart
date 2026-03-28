@@ -402,15 +402,37 @@ class _LatihanPengucapanPageState extends State<LatihanPengucapanPage> {
   Widget _infoCard() {
     final current = widget.hurufList[_currentIndex];
     return Container(
-      margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFE7FFF2),
-        borderRadius: BorderRadius.circular(18),
+        gradient: LinearGradient(
+          colors: [
+            current.color.withOpacity(0.22),
+            current.color.withOpacity(0.08),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
       ),
-      child: Text(
-        "Latihan bunyi: \"${current.latin}\"",
-        style: GoogleFonts.poppins(fontSize: 14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "Latih pelafalan huruf hijaiyah ini dengan rekaman. Ulangi sampai pengucapan makin stabil.",
+            style: GoogleFonts.poppins(fontSize: 13, height: 1.45),
+          ),
+          const SizedBox(height: 10),
+          const Divider(height: 1),
+          const SizedBox(height: 10),
+          Text(
+            "Target saat ini: ${current.latin} (${current.nama})",
+            style: GoogleFonts.poppins(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: const Color(0xFF1F2937),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -427,14 +449,20 @@ class _LatihanPengucapanPageState extends State<LatihanPengucapanPage> {
           },
           child: Container(
             margin: const EdgeInsets.all(4),
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
             decoration: BoxDecoration(
-              color: active ? const Color(0xFF42C88A) : Colors.grey.shade200,
+              color: active ? const Color(0xFF42C88A) : Colors.white,
               borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: active ? Colors.transparent : const Color(0xFFE2E8F0),
+              ),
             ),
             child: Text(
               widget.hurufList[i].latin,
-              style: GoogleFonts.poppins(color: active ? Colors.white : Colors.black),
+              style: GoogleFonts.poppins(
+                color: active ? Colors.white : const Color(0xFF334155),
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
         );
@@ -443,54 +471,82 @@ class _LatihanPengucapanPageState extends State<LatihanPengucapanPage> {
   }
 
   Widget _hurufPreview(HijaiyahData data) {
-    return Column(
-      children: [
-        Container(
-          width: 120,
-          height: 120,
-          decoration: BoxDecoration(
-            color: data.color,
-            borderRadius: BorderRadius.circular(32),
-          ),
-          child: Center(
-            child: Text(
-              data.huruf,
-              style: const TextStyle(fontSize: 64, fontWeight: FontWeight.bold),
+    return Container(
+      padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(22),
+        boxShadow: const [BoxShadow(color: Color(0x14000000), blurRadius: 12)],
+      ),
+      child: Column(
+        children: [
+          Container(
+            width: 112,
+            height: 112,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [data.color.withOpacity(0.96), data.color.withOpacity(0.70)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(30),
+            ),
+            child: Center(
+              child: Text(
+                data.huruf,
+                style: const TextStyle(
+                  fontSize: 62,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                  height: 1,
+                ),
+              ),
             ),
           ),
-        ),
-        const SizedBox(height: 10),
-        Text(data.latin, style: GoogleFonts.poppins(fontSize: 20, fontWeight: FontWeight.bold)),
-        Text(data.nama, style: GoogleFonts.poppins(color: Colors.black54)),
-      ],
+          const SizedBox(height: 10),
+          Text(
+            data.latin,
+            style: GoogleFonts.poppins(fontSize: 20, fontWeight: FontWeight.bold),
+          ),
+          Text(data.nama, style: GoogleFonts.poppins(color: Colors.black54)),
+        ],
+      ),
     );
   }
 
   Widget _recordControls() {
-    return Column(
-      children: [
-        AnimatedContainer(
-          duration: const Duration(milliseconds: 300),
-          width: 96,
-          height: 96,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: _isRecording ? Colors.red : const Color(0xFF42C88A),
-            boxShadow: [BoxShadow(blurRadius: 12, color: Colors.black26)],
+    return Center(
+      child: Column(
+        children: [
+          GestureDetector(
+            onTap: _isRecording ? _stopRecording : _startRecording,
+            child: Container(
+              width: 88,
+              height: 88,
+              decoration: BoxDecoration(
+                color: _isRecording ? Colors.red : const Color(0xFF42C88A),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                _isRecording ? Icons.stop_rounded : Icons.mic_rounded,
+                color: Colors.white,
+                size: 36,
+              ),
+            ),
           ),
-          child: IconButton(
-            iconSize: 42,
-            icon: Icon(_isRecording ? Icons.stop : Icons.mic, color: Colors.white),
-            onPressed: _isRecording ? _stopRecording : _startRecording,
+          const SizedBox(height: 10),
+          Text(
+            _isRecording ? "Sedang merekam..." : "Tap untuk rekam",
+            style: GoogleFonts.poppins(),
           ),
-        ),
-        const SizedBox(height: 12),
-        Text(
-          _isRecording ? "Sedang merekam..." : "Tap untuk mulai merekam",
-          style: GoogleFonts.poppins(color: Colors.grey),
-        ),
-      ],
+        ],
+      ),
     );
+  }
+
+  void _nextLetter() {
+    if (_currentIndex >= widget.hurufList.length - 1 || _isRecording) return;
+    setState(() => _currentIndex++);
   }
 
   Widget _playbackAndEvaluateButtons() {
@@ -499,18 +555,57 @@ class _LatihanPengucapanPageState extends State<LatihanPengucapanPage> {
 
     return Column(
       children: [
-        ElevatedButton.icon(
+        FilledButton.icon(
           onPressed: _isPlaying ? null : _playRecorded,
-          icon: const Icon(Icons.play_arrow),
-          label: Text(_isPlaying ? "Memutar..." : "Putar rekaman"),
-          style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF5E60CE)),
+          icon: Icon(
+            _isPlaying ? Icons.graphic_eq_rounded : Icons.play_arrow_rounded,
+          ),
+          label: Text(_isPlaying ? "Memutar..." : "Putar Rekaman"),
         ),
-        const SizedBox(height: 12),
-        ElevatedButton.icon(
+        const SizedBox(height: 8),
+        FilledButton.icon(
           onPressed: _isEvaluating ? null : _onEvaluate,
-          icon: const Icon(Icons.auto_awesome),
+          icon: _isEvaluating
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
+                )
+              : const Icon(Icons.auto_awesome_rounded),
           label: Text(_isEvaluating ? "Menilai..." : "Nilai Pengucapan"),
-          style: ElevatedButton.styleFrom(backgroundColor: Colors.orange.shade700),
+          style: FilledButton.styleFrom(backgroundColor: const Color(0xFF42C88A)),
+        ),
+        if (_currentIndex < widget.hurufList.length - 1) ...[
+          const SizedBox(height: 8),
+          OutlinedButton.icon(
+            onPressed: _nextLetter,
+            icon: const Icon(Icons.navigate_next_rounded),
+            label: const Text("Huruf Berikutnya"),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _progressBar() {
+    final progress = (_currentIndex + 1) / widget.hurufList.length;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        LinearProgressIndicator(
+          value: progress,
+          minHeight: 8,
+          borderRadius: BorderRadius.circular(99),
+          backgroundColor: const Color(0xFFE2E8F0),
+          color: const Color(0xFF42C88A),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          "Latihan ${_currentIndex + 1}/${widget.hurufList.length}",
+          style: GoogleFonts.poppins(fontSize: 12),
         ),
       ],
     );
@@ -522,18 +617,32 @@ class _LatihanPengucapanPageState extends State<LatihanPengucapanPage> {
 
     return Scaffold(
       appBar: CustomGradientAppBar(title: widget.lessonTitle),
-      body: ListView(
-        padding: const EdgeInsets.all(20),
-        children: [
-          _infoCard(),
-          if (widget.hurufList.length > 1) _hurufTabs(),
-          const SizedBox(height: 16),
-          _hurufPreview(current),
-          const SizedBox(height: 24),
-          _recordControls(),
-          const SizedBox(height: 20),
-          _playbackAndEvaluateButtons(),
-        ],
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xFFF7F9FF), Color(0xFFEFF7FF)],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: ListView(
+          padding: const EdgeInsets.all(20),
+          children: [
+            _infoCard(),
+            const SizedBox(height: 12),
+            _progressBar(),
+            if (widget.hurufList.length > 1) ...[
+              const SizedBox(height: 10),
+              _hurufTabs(),
+            ],
+            const SizedBox(height: 14),
+            _hurufPreview(current),
+            const SizedBox(height: 16),
+            _recordControls(),
+            const SizedBox(height: 14),
+            _playbackAndEvaluateButtons(),
+          ],
+        ),
       ),
     );
   }
