@@ -121,25 +121,51 @@ class _EvaluatePageState extends State<EvaluatePage> {
     return '$s$a';
   }
 
-  String _audioUrl(int index) {
-    return '$_tadarusAudioBaseUrl/${_audioCode(index)}.mp3';
+  List<String> _audioUrlCandidates(int index) {
+    final baseCode = _audioCode(index);
+    final surah = baseCode.substring(0, 3);
+    final ayah = int.tryParse(baseCode.substring(3)) ?? 0;
+    final fallback = (ayah + 1).toString().padLeft(3, '0');
+    return [
+      '$_tadarusAudioBaseUrl/$baseCode.mp3',
+      '$_tadarusAudioBaseUrl/$surah$fallback.mp3',
+    ];
   }
 
   Future<void> _playAyahAudio(int index) async {
     if (index < 0 || index >= widget.surah.ayahs.length) return;
 
-    final audioUrl = _audioUrl(index);
+    try {
+      if (_playingIndex == index && _player.playing) {
+        await _player.pause();
+        return;
+      }
 
-    if (_playingIndex == index && _player.playing) {
-      await _player.pause();
-      return;
+      await _player.stop();
+
+      Object? lastError;
+      for (final url in _audioUrlCandidates(index)) {
+        try {
+          await _player.setUrl(url);
+          lastError = null;
+          break;
+        } catch (e) {
+          lastError = e;
+        }
+      }
+
+      if (lastError != null) {
+        throw lastError;
+      }
+
+      setState(() => _playingIndex = index);
+      await _player.play();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Audio ayat tidak bisa diputar: $e')),
+      );
     }
-
-    await _player.stop();
-    await _player.setUrl(audioUrl);
-
-    setState(() => _playingIndex = index);
-    await _player.play();
   }
 
   void _nextAyah() {
@@ -208,11 +234,25 @@ class _EvaluatePageState extends State<EvaluatePage> {
   }
 
   Future<String> _downloadReferenceAudio(int index) async {
-    final url = _audioUrl(index);
-    final response = await http.get(Uri.parse(url));
-    if (response.statusCode != 200) {
-      throw Exception('Gagal download audio referensi (${response.statusCode})');
+    http.Response? response;
+    Object? lastError;
+    for (final url in _audioUrlCandidates(index)) {
+      try {
+        final res = await http.get(Uri.parse(url));
+        if (res.statusCode == 200) {
+          response = res;
+          break;
+        }
+        lastError = 'HTTP ${res.statusCode}';
+      } catch (e) {
+        lastError = e;
+      }
     }
+
+    if (response == null) {
+      throw Exception('Gagal download audio referensi. Detail: $lastError');
+    }
+
     final dir = await getTemporaryDirectory();
     final file = File('${dir.path}/${_audioCode(index)}.mp3');
     await file.writeAsBytes(response.bodyBytes);
