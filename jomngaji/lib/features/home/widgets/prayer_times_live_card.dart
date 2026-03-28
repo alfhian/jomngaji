@@ -52,7 +52,7 @@ class _PrayerTimesLiveCardState extends State<PrayerTimesLiveCard> {
     }
   }
 
-  (String prayer, String time, Duration left) _nextPrayer() {
+  ({String prayer, String time, Duration left}) _nextPrayer() {
     final now = DateTime.now();
     final timings = _data?.timings ?? {};
 
@@ -93,7 +93,11 @@ class _PrayerTimesLiveCardState extends State<PrayerTimesLiveCard> {
       nextTime = subuh;
     }
 
-    return (nextPrayer, nextTime, next.difference(now));
+    return (
+      prayer: nextPrayer,
+      time: nextTime,
+      left: next.difference(now),
+    );
   }
 
   String _labelPrayer(String apiName) {
