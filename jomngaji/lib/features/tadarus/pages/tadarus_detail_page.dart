@@ -110,9 +110,12 @@ class _TadarusDetailPageState extends State<TadarusDetailPage> {
     }
 
     final s = surah!.number.toString().padLeft(3, '0');
-    final audioIndex = surah!.number == 1 ? index : (index + 1);
-    final a = audioIndex.toString().padLeft(3, '0');
-    final audioUrl = '$_tadarusAudioBaseUrl/$s$a.mp3';
+    final primaryIndex = surah!.number == 1 ? index : (index + 1);
+    final fallbackIndex = primaryIndex + 1;
+    final candidates = <String>[
+      '$_tadarusAudioBaseUrl/$s${primaryIndex.toString().padLeft(3, '0')}.mp3',
+      '$_tadarusAudioBaseUrl/$s${fallbackIndex.toString().padLeft(3, '0')}.mp3',
+    ];
 
     try {
       _isSwitchingTrack = true;
@@ -124,7 +127,19 @@ class _TadarusDetailPageState extends State<TadarusDetailPage> {
 
       if (_playingIndex != index) {
         await _player.stop();
-        await _player.setUrl(audioUrl);
+        Object? lastError;
+        for (final url in candidates) {
+          try {
+            await _player.setUrl(url);
+            lastError = null;
+            break;
+          } catch (e) {
+            lastError = e;
+          }
+        }
+        if (lastError != null) {
+          throw lastError;
+        }
       }
 
       if (!mounted) return;
