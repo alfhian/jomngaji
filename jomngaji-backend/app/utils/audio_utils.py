@@ -3,6 +3,10 @@ import subprocess
 import tempfile
 from pathlib import Path
 
+class AudioConversionError(RuntimeError):
+    """Raised when uploaded audio cannot be converted to WAV."""
+
+
 def ensure_wav(path: str) -> str:
     # kalau sudah wav, langsung return
     if path.lower().endswith(".wav"):
@@ -10,13 +14,35 @@ def ensure_wav(path: str) -> str:
     # convert ke wav standar
     new_path = os.path.splitext(path)[0] + ".wav"
     cmd = ["ffmpeg", "-y", "-i", path, "-ar", "16000", "-ac", "1", new_path]
-    subprocess.run(cmd, check=True)
+    try:
+        subprocess.run(cmd, check=True, capture_output=True, text=True)
+    except FileNotFoundError as exc:
+        raise AudioConversionError(
+            "Konversi audio membutuhkan ffmpeg, tetapi ffmpeg belum terpasang di server."
+        ) from exc
+    except subprocess.CalledProcessError as exc:
+        err_msg = (exc.stderr or exc.stdout or "").strip()
+        raise AudioConversionError(
+            "Gagal mengonversi audio ke format WAV. "
+            f"Detail ffmpeg: {err_msg or 'unknown error'}"
+        ) from exc
     return new_path
 
 def convert_to_wav(path: str) -> str:
     new_path = os.path.splitext(path)[0] + "_conv.wav"
     cmd = ["ffmpeg", "-y", "-i", path, "-ar", "16000", "-ac", "1", new_path]
-    subprocess.run(cmd, check=True)
+    try:
+        subprocess.run(cmd, check=True, capture_output=True, text=True)
+    except FileNotFoundError as exc:
+        raise AudioConversionError(
+            "Konversi audio membutuhkan ffmpeg, tetapi ffmpeg belum terpasang di server."
+        ) from exc
+    except subprocess.CalledProcessError as exc:
+        err_msg = (exc.stderr or exc.stdout or "").strip()
+        raise AudioConversionError(
+            "Gagal mengonversi audio ke format WAV. "
+            f"Detail ffmpeg: {err_msg or 'unknown error'}"
+        ) from exc
     return new_path
 
 

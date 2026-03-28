@@ -44,7 +44,7 @@ def _load_google_auth_libs():
 # =========================
 # Utils
 # =========================
-from app.utils.audio_utils import save_upload, ensure_wav
+from app.utils.audio_utils import AudioConversionError, save_upload, ensure_wav
 
 # =========================
 # AI Services (General)
@@ -553,8 +553,11 @@ async def evaluate(
     # =============================
     # AUDIO → TEXT (ASR)
     # =============================
-    path = ensure_wav(save_upload(audio))
-    transcript = transcribe_audio(path)
+    try:
+        path = ensure_wav(save_upload(audio))
+        transcript = transcribe_audio(path)
+    except AudioConversionError as e:
+        raise HTTPException(status_code=503, detail=str(e))
 
     # =============================
     # TAJWID (GLOBAL)
@@ -699,6 +702,8 @@ async def evaluate_tajwid_endpoint(
             "suggestions": result["suggestions"],
         }
 
+    except AudioConversionError as e:
+        raise HTTPException(status_code=503, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -740,6 +745,8 @@ async def evaluate_tilawah_endpoint(
             "suggestions": result["suggestions"],
         }
 
+    except AudioConversionError as e:
+        raise HTTPException(status_code=503, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -781,6 +788,8 @@ async def evaluate_tahfidz_endpoint(
             "suggestions": result["suggestions"],
         }
 
+    except AudioConversionError as e:
+        raise HTTPException(status_code=503, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -816,6 +825,8 @@ async def evaluate_tadarus_endpoint(
             "suggestions": suggestions,
         }
 
+    except AudioConversionError as e:
+        raise HTTPException(status_code=503, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -851,6 +862,8 @@ async def evaluate_tadarus_audio_endpoint(
 
     except HTTPException:
         raise
+    except AudioConversionError as e:
+        raise HTTPException(status_code=503, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
