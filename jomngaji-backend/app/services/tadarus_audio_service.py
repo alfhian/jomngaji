@@ -5,7 +5,7 @@ import numpy as np
 from fastapi import UploadFile
 from difflib import SequenceMatcher
 
-from app.utils.audio_utils import save_upload, ensure_wav
+from app.utils.audio_utils import AudioConversionError, save_upload, ensure_wav
 from app.services.tadarus_asr_service import transcribe_tadarus
 from app.services.tadarus_service import evaluate_tadarus, get_score_band
 
@@ -175,7 +175,15 @@ def evaluate_audio_only(
     print("\n========== [TADARUS EVALUATION] ==========")
 
     user_path = ensure_wav(save_upload(user_audio))
-    ref_path = ensure_wav(save_upload(reference_audio))
+    ref_raw_path = save_upload(reference_audio)
+    ref_path = ref_raw_path
+    reference_conversion_unavailable = False
+
+    try:
+        ref_path = ensure_wav(ref_raw_path)
+    except AudioConversionError as exc:
+        reference_conversion_unavailable = True
+        print(f"[REFERENCE CONVERSION FALLBACK] {exc}")
 
     audio_data = load_audio_16k(user_path)
     if not is_valid_audio(audio_data):
@@ -194,6 +202,8 @@ def evaluate_audio_only(
     ayat_score = ayat_similarity(ayat_text, user_text) * 100
     audio_model_unavailable = False
     try:
+        if reference_conversion_unavailable:
+            raise RuntimeError("Reference audio conversion unavailable")
         audio_score = audio_similarity(ref_path, user_path) * 100
     except RuntimeError as exc:
         audio_model_unavailable = True

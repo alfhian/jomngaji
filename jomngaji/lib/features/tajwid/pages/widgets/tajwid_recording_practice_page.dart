@@ -106,11 +106,11 @@ class _TajwidRecordingPracticePageState extends State<TajwidRecordingPracticePag
 
     final dir = await getTemporaryDirectory();
     final path =
-        '${dir.path}/tajwid_${widget.quizCode}_${_index}_${DateTime.now().millisecondsSinceEpoch}.aac';
+        '${dir.path}/tajwid_${widget.quizCode}_${_index}_${DateTime.now().millisecondsSinceEpoch}.wav';
 
     await _recorder.startRecorder(
       toFile: path,
-      codec: Codec.aacADTS,
+      codec: Codec.pcm16WAV,
       sampleRate: 16000,
       numChannels: 1,
       bitRate: 16000,
