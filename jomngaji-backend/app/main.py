@@ -283,6 +283,16 @@ def google_login(token: str = Form(...)):
                 detail="GOOGLE_CLIENT_ID/GOOGLE_CLIENT_IDS belum diset",
             )
 
+        token = token.strip()
+        if token.count(".") != 2:
+            raise HTTPException(
+                status_code=401,
+                detail=(
+                    "Google token bukan ID token JWT. "
+                    "Pastikan aplikasi mengirim idToken (bukan accessToken)."
+                ),
+            )
+
         idinfo = google_id_token.verify_oauth2_token(
             token,
             google_requests.Request(),

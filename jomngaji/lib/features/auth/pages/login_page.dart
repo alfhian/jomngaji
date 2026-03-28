@@ -68,17 +68,17 @@ class _LoginPageState extends State<LoginPage> {
       final auth = await account.authentication;
       final idToken = auth.idToken;
       final accessToken = auth.accessToken;
-      final oauthToken = idToken ?? accessToken;
 
-      if (oauthToken == null || oauthToken.isEmpty) {
+      if (idToken == null || idToken.isEmpty) {
         throw Exception(
-          'Token Google tidak tersedia. '
-          'Silakan cek konfigurasi Google Sign-In di Android/iOS.',
+          'ID token Google tidak tersedia. '
+          'Pastikan Web Client ID benar via '
+          '--dart-define=GOOGLE_WEB_CLIENT_ID=<web-client-id>.',
         );
       }
 
       await AuthService.loginWithGoogle(
-        oauthToken,
+        idToken,
         accessToken: accessToken,
       );
       if (!mounted) return;
