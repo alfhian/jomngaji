@@ -6,6 +6,7 @@ import '../widgets/app_bottom_nav.dart';
 import '../widgets/category_list.dart';
 import '../widgets/header_section.dart';
 import '../widgets/home_daily_quiz_card.dart';
+import '../widgets/prayer_times_live_card.dart';
 import '../widgets/tadarus_card.dart';
 
 class HomePage extends StatelessWidget {
@@ -32,6 +33,8 @@ class HomePage extends StatelessWidget {
                     SectionTitle(title: l10n.text('home.categoryTitle'), showSeeAll: false),
                     SizedBox(height: 12),
                     CategoryList(),
+                    SizedBox(height: 20),
+                    const PrayerTimesLiveCard(),
                     SizedBox(height: 24),
                     SectionTitle(title: l10n.text('home.dailyQuizTitle'), showSeeAll: false),
                     SizedBox(height: 12),
