@@ -3,10 +3,12 @@ import 'package:flutter/material.dart';
 import 'core/localization/app_localization.dart';
 import 'core/theme/app_theme.dart';
 import 'features/auth/services/auth_service.dart';
+import 'services/prayer_reminder_service.dart';
 import 'routes/app_routes.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await PrayerReminderService.initialize();
   final loggedIn = await AuthService.isLoggedIn();
   final languageController = AppLanguageController();
   await languageController.load();
