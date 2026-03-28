@@ -87,7 +87,6 @@ flutter:
   assets:
     - assets/audio/huruf/
     - assets/audio/harakat/
-    - assets/audio/tadarus/
     - assets/audio/tajwid/
     - assets/images/
     

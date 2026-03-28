@@ -23,6 +23,8 @@ class TadarusMenuPage extends StatefulWidget {
 }
 
 class _TadarusMenuPageState extends State<TadarusMenuPage> {
+  static const String _tadarusAudioBaseUrl =
+      'https://everyayah.com/data/Alafasy_128kbps';
   List<Surah> _allSurahs = [];
   List<Surah> _filteredSurahs = [];
   bool _loading = true;
@@ -255,18 +257,18 @@ class _TadarusMenuPageState extends State<TadarusMenuPage> {
 
         final candidates = surah.number == 1
             ? <String>[
-                'assets/audio/tadarus/${code}000.mp3',
-                'assets/audio/tadarus/${code}001.mp3',
+                '$_tadarusAudioBaseUrl/${code}000.mp3',
+                '$_tadarusAudioBaseUrl/${code}001.mp3',
               ]
             : <String>[
-                'assets/audio/tadarus/${code}001.mp3',
-                'assets/audio/tadarus/${code}000.mp3',
+                '$_tadarusAudioBaseUrl/${code}001.mp3',
+                '$_tadarusAudioBaseUrl/${code}000.mp3',
               ];
 
         Object? lastError;
         for (final asset in candidates) {
           try {
-            await _previewPlayer.setAsset(asset);
+            await _previewPlayer.setUrl(asset);
             lastError = null;
             break;
           } catch (e) {

@@ -23,6 +23,8 @@ class TadarusDetailPage extends StatefulWidget {
 }
 
 class _TadarusDetailPageState extends State<TadarusDetailPage> {
+  static const String _tadarusAudioBaseUrl =
+      'https://everyayah.com/data/Alafasy_128kbps';
   Surah? surah;
   double progressValue = 0.0;
 
@@ -110,7 +112,7 @@ class _TadarusDetailPageState extends State<TadarusDetailPage> {
     final s = surah!.number.toString().padLeft(3, '0');
     final audioIndex = surah!.number == 1 ? index : (index + 1);
     final a = audioIndex.toString().padLeft(3, '0');
-    final asset = 'assets/audio/tadarus/$s$a.mp3';
+    final audioUrl = '$_tadarusAudioBaseUrl/$s$a.mp3';
 
     try {
       _isSwitchingTrack = true;
@@ -122,7 +124,7 @@ class _TadarusDetailPageState extends State<TadarusDetailPage> {
 
       if (_playingIndex != index) {
         await _player.stop();
-        await _player.setAsset(asset);
+        await _player.setUrl(audioUrl);
       }
 
       if (!mounted) return;
