@@ -3,13 +3,14 @@ load_dotenv()
 
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Query, Depends
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 from datetime import datetime, timedelta
 from app.services.auth_service import get_db
 from auth import create_access_token, get_current_user
 
 import os
 import logging
+import httpx
 
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
 _raw_google_client_ids = os.getenv("GOOGLE_CLIENT_IDS", "")
@@ -122,6 +123,11 @@ from app.services.quiz_service import (
 from app.services.tadarus_asr_service import transcribe_tadarus
 from app.services.tadarus_service import evaluate_tadarus
 from app.services.tadarus_evaluation_service import evaluate_and_save_tadarus
+from app.services.doa_api_service import (
+    fetch_doa_items,
+    get_doa_item,
+    validate_audio_proxy_url,
+)
 
 from app.services.auth_service import (
     register_user,
@@ -515,6 +521,69 @@ def get_ayah(surah_number: int, ayah_number: int):
     if not ayah:
         raise HTTPException(status_code=404, detail="Ayah not found")
     return ayah
+
+
+# =========================
+# DOA API (REMOTE SOURCE + AUDIO PROXY)
+# =========================
+@app.get("/doa")
+def list_doa(
+    refresh: bool = Query(False),
+    source_url: str | None = Query(None),
+):
+    try:
+        items = fetch_doa_items(force_refresh=refresh, source_url=source_url)
+        return {"count": len(items), "items": items}
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"Gagal mengambil data doa: {e}")
+
+
+@app.get("/doa/{doa_id}")
+def get_doa(
+    doa_id: str,
+    source_url: str | None = Query(None),
+):
+    try:
+        item = get_doa_item(doa_id, source_url=source_url)
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"Gagal mengambil data doa: {e}")
+
+    if not item:
+        raise HTTPException(status_code=404, detail="Doa tidak ditemukan")
+    return item
+
+
+@app.get("/doa/audio/proxy")
+def proxy_doa_audio(url: str = Query(..., description="URL audio doa yang akan di-proxy")):
+    try:
+        validate_audio_proxy_url(url)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    try:
+        with httpx.stream(
+            "GET",
+            url,
+            timeout=30.0,
+            follow_redirects=True,
+            headers={"User-Agent": "jomngaji-backend/1.0"},
+        ) as resp:
+            if resp.status_code >= 400:
+                raise HTTPException(
+                    status_code=502,
+                    detail=f"Gagal mengambil audio dari sumber (status {resp.status_code})",
+                )
+
+            media_type = resp.headers.get("content-type", "audio/mpeg")
+            return StreamingResponse(
+                resp.iter_bytes(),
+                media_type=media_type,
+                headers={"Cache-Control": "public, max-age=3600"},
+            )
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"Gagal proxy audio doa: {e}")
 
 
 # =========================
