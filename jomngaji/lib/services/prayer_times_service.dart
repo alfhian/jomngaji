@@ -27,9 +27,22 @@ class PrayerTimesService {
     'Isha',
   ];
 
+  static const List<String> malaysiaCities = [
+    'Kuala Lumpur',
+    'Shah Alam',
+    'Johor Bahru',
+    'Ipoh',
+    'Kota Kinabalu',
+    'Kuching',
+    'Alor Setar',
+    'Melaka',
+    'Kuantan',
+    'Kuala Terengganu',
+  ];
+
   static Future<PrayerTimesData> fetchTodayByCity({
-    String city = 'Jakarta',
-    String country = 'Indonesia',
+    String city = 'Kuala Lumpur',
+    String country = 'Malaysia',
     int method = 11,
   }) async {
     final url = Uri.parse(

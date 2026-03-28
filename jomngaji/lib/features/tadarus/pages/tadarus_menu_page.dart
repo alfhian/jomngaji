@@ -253,13 +253,28 @@ class _TadarusMenuPageState extends State<TadarusMenuPage> {
       if (_playingPreviewIndex != index || fromStart) {
         await _previewPlayer.stop();
 
-        final ayah001 = 'assets/audio/tadarus/${code}001.mp3';
-        final ayah000 = 'assets/audio/tadarus/${code}000.mp3';
+        final candidates = surah.number == 1
+            ? <String>[
+                'assets/audio/tadarus/${code}000.mp3',
+                'assets/audio/tadarus/${code}001.mp3',
+              ]
+            : <String>[
+                'assets/audio/tadarus/${code}001.mp3',
+                'assets/audio/tadarus/${code}000.mp3',
+              ];
 
-        try {
-          await _previewPlayer.setAsset(ayah001);
-        } catch (_) {
-          await _previewPlayer.setAsset(ayah000);
+        Object? lastError;
+        for (final asset in candidates) {
+          try {
+            await _previewPlayer.setAsset(asset);
+            lastError = null;
+            break;
+          } catch (e) {
+            lastError = e;
+          }
+        }
+        if (lastError != null) {
+          throw lastError;
         }
 
         if (!mounted) return;
@@ -318,7 +333,10 @@ class _TadarusMenuPageState extends State<TadarusMenuPage> {
     return Scaffold(
       backgroundColor: const Color(0xFFF4F7FC),
       extendBody: true,
-      appBar: const CustomGradientAppBar(title: 'Tadarus'),
+      appBar: CustomGradientAppBar(
+        title: 'Tadarus',
+        onBack: () => Navigator.pushReplacementNamed(context, AppRoutes.home),
+      ),
       bottomNavigationBar: const AppBottomNav(currentIndex: 1),
       body: _loading
           ? const Center(child: CircularProgressIndicator())

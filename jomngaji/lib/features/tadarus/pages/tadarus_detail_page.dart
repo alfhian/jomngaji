@@ -108,7 +108,8 @@ class _TadarusDetailPageState extends State<TadarusDetailPage> {
     }
 
     final s = surah!.number.toString().padLeft(3, '0');
-    final a = (index + 1).toString().padLeft(3, '0');
+    final audioIndex = surah!.number == 1 ? index : (index + 1);
+    final a = audioIndex.toString().padLeft(3, '0');
     final asset = 'assets/audio/tadarus/$s$a.mp3';
 
     try {

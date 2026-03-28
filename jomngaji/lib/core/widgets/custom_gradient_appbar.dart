@@ -2,8 +2,13 @@ import 'package:flutter/material.dart';
 
 class CustomGradientAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
+  final VoidCallback? onBack;
 
-  const CustomGradientAppBar({super.key, required this.title});
+  const CustomGradientAppBar({
+    super.key,
+    required this.title,
+    this.onBack,
+  });
 
   @override
   Size get preferredSize => const Size.fromHeight(80);
@@ -28,7 +33,7 @@ class CustomGradientAppBar extends StatelessWidget implements PreferredSizeWidge
         child: Row(
           children: [
             GestureDetector(
-              onTap: () => Navigator.pop(context),
+              onTap: onBack ?? () => Navigator.pop(context),
               child: const Icon(Icons.arrow_back_rounded, color: Colors.white),
             ),
             const SizedBox(width: 12),

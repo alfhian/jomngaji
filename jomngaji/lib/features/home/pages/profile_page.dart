@@ -566,7 +566,10 @@ class _ProfilePageState extends State<ProfilePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.scaffold,
-      appBar: CustomGradientAppBar(title: context.l10n.text('profile.title')),
+      appBar: CustomGradientAppBar(
+        title: context.l10n.text('profile.title'),
+        onBack: () => Navigator.pushReplacementNamed(context, AppRoutes.home),
+      ),
       extendBody: true,
       bottomNavigationBar: const AppBottomNav(currentIndex: 3),
       body: _loading

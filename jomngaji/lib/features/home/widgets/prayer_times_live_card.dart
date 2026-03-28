@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../services/prayer_times_service.dart';
 
@@ -13,15 +14,18 @@ class PrayerTimesLiveCard extends StatefulWidget {
 }
 
 class _PrayerTimesLiveCardState extends State<PrayerTimesLiveCard> {
+  static const _cityPrefKey = 'prayer_times_city_malaysia';
+
   PrayerTimesData? _data;
   String? _error;
   bool _loading = true;
   Timer? _ticker;
+  String _selectedCity = PrayerTimesService.malaysiaCities.first;
 
   @override
   void initState() {
     super.initState();
-    _load();
+    _init();
     _ticker = Timer.periodic(const Duration(minutes: 1), (_) {
       if (mounted) setState(() {});
     });
@@ -33,13 +37,22 @@ class _PrayerTimesLiveCardState extends State<PrayerTimesLiveCard> {
     super.dispose();
   }
 
+  Future<void> _init() async {
+    final prefs = await SharedPreferences.getInstance();
+    final city = prefs.getString(_cityPrefKey);
+    if (city != null && PrayerTimesService.malaysiaCities.contains(city)) {
+      _selectedCity = city;
+    }
+    await _load();
+  }
+
   Future<void> _load() async {
     setState(() {
       _loading = true;
       _error = null;
     });
     try {
-      final data = await PrayerTimesService.fetchTodayByCity();
+      final data = await PrayerTimesService.fetchTodayByCity(city: _selectedCity);
       if (!mounted) return;
       setState(() {
         _data = data;
@@ -50,6 +63,15 @@ class _PrayerTimesLiveCardState extends State<PrayerTimesLiveCard> {
     } finally {
       if (mounted) setState(() => _loading = false);
     }
+  }
+
+  Future<void> _onCityChanged(String city) async {
+    if (city == _selectedCity) return;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_cityPrefKey, city);
+    if (!mounted) return;
+    setState(() => _selectedCity = city);
+    await _load();
   }
 
   ({String prayer, String time, Duration left}) _nextPrayer() {
@@ -191,6 +213,28 @@ class _PrayerTimesLiveCardState extends State<PrayerTimesLiveCard> {
                 tooltip: 'Refresh jadwal',
               ),
             ],
+          ),
+          const SizedBox(height: 6),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+            decoration: BoxDecoration(
+              color: Colors.white12,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<String>(
+                value: _selectedCity,
+                dropdownColor: const Color(0xFF1E293B),
+                iconEnabledColor: Colors.white70,
+                style: GoogleFonts.poppins(color: Colors.white, fontSize: 12),
+                items: PrayerTimesService.malaysiaCities.map((city) {
+                  return DropdownMenuItem(value: city, child: Text(city));
+                }).toList(),
+                onChanged: (city) {
+                  if (city != null) _onCityChanged(city);
+                },
+              ),
+            ),
           ),
           Text(
             '${data.readableDate} • ${data.timezone}',
