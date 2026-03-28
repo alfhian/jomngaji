@@ -9,8 +9,17 @@ from app.services.auth_service import get_db
 from auth import create_access_token, get_current_user
 
 import os
+import logging
 
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
+_raw_google_client_ids = os.getenv("GOOGLE_CLIENT_IDS", "")
+GOOGLE_CLIENT_IDS = [
+    cid.strip() for cid in _raw_google_client_ids.split(",") if cid.strip()
+]
+if GOOGLE_CLIENT_ID and GOOGLE_CLIENT_ID not in GOOGLE_CLIENT_IDS:
+    GOOGLE_CLIENT_IDS.append(GOOGLE_CLIENT_ID)
+
+logger = logging.getLogger("jomngaji.api")
 _raw_cors_origins = os.getenv(
     "CORS_ALLOW_ORIGINS",
     "http://localhost:3000,http://127.0.0.1:3000,http://10.0.2.2:4000,https://jomngaji.com,https://api.jomngaji.com",
@@ -268,14 +277,28 @@ def google_login(token: str = Form(...)):
                 detail="Dependency google-auth belum terpasang.",
             )
 
-        if not GOOGLE_CLIENT_ID:
-            raise HTTPException(status_code=500, detail="GOOGLE_CLIENT_ID belum diset")
+        if not GOOGLE_CLIENT_IDS:
+            raise HTTPException(
+                status_code=500,
+                detail="GOOGLE_CLIENT_ID/GOOGLE_CLIENT_IDS belum diset",
+            )
 
         idinfo = google_id_token.verify_oauth2_token(
             token,
             google_requests.Request(),
-            GOOGLE_CLIENT_ID,
+            None,
         )
+
+        token_audience = str(idinfo.get("aud", "")).strip()
+        if token_audience not in GOOGLE_CLIENT_IDS:
+            raise HTTPException(
+                status_code=401,
+                detail=(
+                    "Google token audience tidak valid. "
+                    f"aud={token_audience}. "
+                    "Pastikan GOOGLE_CLIENT_ID/GOOGLE_CLIENT_IDS sesuai."
+                ),
+            )
 
         google_id = idinfo["sub"]
         email = idinfo["email"]
@@ -302,8 +325,12 @@ def google_login(token: str = Form(...)):
 
     except HTTPException:
         raise
-    except Exception:
-        raise HTTPException(status_code=401, detail="Google login gagal")
+    except Exception as e:
+        logger.exception("Google login gagal: %s", e)
+        raise HTTPException(
+            status_code=401,
+            detail=f"Google login gagal: {e}",
+        )
 
 
 # @app.get("/hijaiyah/lessons")
