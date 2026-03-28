@@ -11,6 +11,16 @@ class AudioConversionError(RuntimeError):
 def _resolve_ffmpeg_binary() -> str:
     env_binary = os.getenv("FFMPEG_BINARY", "").strip()
     if env_binary:
+        # dukung format .env dengan kutip:
+        # FFMPEG_BINARY='/usr/bin/ffmpeg' atau "..."
+        env_binary = env_binary.strip("'\"")
+
+        # jika user isi nama command (mis. "ffmpeg"), resolve via PATH
+        if "/" not in env_binary:
+            resolved_cmd = shutil.which(env_binary)
+            if resolved_cmd:
+                return resolved_cmd
+
         if Path(env_binary).exists():
             return env_binary
         raise AudioConversionError(
