@@ -1,4 +1,5 @@
 import os
+import shutil
 import subprocess
 import tempfile
 from pathlib import Path
@@ -7,18 +8,44 @@ class AudioConversionError(RuntimeError):
     """Raised when uploaded audio cannot be converted to WAV."""
 
 
+def _resolve_ffmpeg_binary() -> str:
+    env_binary = os.getenv("FFMPEG_BINARY", "").strip()
+    if env_binary:
+        if Path(env_binary).exists():
+            return env_binary
+        raise AudioConversionError(
+            f"FFMPEG_BINARY diset ke '{env_binary}', tetapi file tidak ditemukan."
+        )
+
+    detected = shutil.which("ffmpeg")
+    if detected:
+        return detected
+
+    for candidate in ("/usr/bin/ffmpeg", "/usr/local/bin/ffmpeg", "/bin/ffmpeg"):
+        if Path(candidate).exists():
+            return candidate
+
+    raise AudioConversionError(
+        "Konversi audio membutuhkan ffmpeg, tetapi ffmpeg belum terpasang "
+        "atau belum ada di PATH service. Install ffmpeg sistem dan/atau set "
+        "environment variable FFMPEG_BINARY."
+    )
+
+
 def ensure_wav(path: str) -> str:
     # kalau sudah wav, langsung return
     if path.lower().endswith(".wav"):
         return path
     # convert ke wav standar
     new_path = os.path.splitext(path)[0] + ".wav"
-    cmd = ["ffmpeg", "-y", "-i", path, "-ar", "16000", "-ac", "1", new_path]
+    ffmpeg_bin = _resolve_ffmpeg_binary()
+    cmd = [ffmpeg_bin, "-y", "-i", path, "-ar", "16000", "-ac", "1", new_path]
     try:
         subprocess.run(cmd, check=True, capture_output=True, text=True)
     except FileNotFoundError as exc:
         raise AudioConversionError(
-            "Konversi audio membutuhkan ffmpeg, tetapi ffmpeg belum terpasang di server."
+            "Binary ffmpeg tidak bisa dieksekusi. Pastikan path ffmpeg valid "
+            "dan bisa diakses oleh user service."
         ) from exc
     except subprocess.CalledProcessError as exc:
         err_msg = (exc.stderr or exc.stdout or "").strip()
@@ -30,12 +57,14 @@ def ensure_wav(path: str) -> str:
 
 def convert_to_wav(path: str) -> str:
     new_path = os.path.splitext(path)[0] + "_conv.wav"
-    cmd = ["ffmpeg", "-y", "-i", path, "-ar", "16000", "-ac", "1", new_path]
+    ffmpeg_bin = _resolve_ffmpeg_binary()
+    cmd = [ffmpeg_bin, "-y", "-i", path, "-ar", "16000", "-ac", "1", new_path]
     try:
         subprocess.run(cmd, check=True, capture_output=True, text=True)
     except FileNotFoundError as exc:
         raise AudioConversionError(
-            "Konversi audio membutuhkan ffmpeg, tetapi ffmpeg belum terpasang di server."
+            "Binary ffmpeg tidak bisa dieksekusi. Pastikan path ffmpeg valid "
+            "dan bisa diakses oleh user service."
         ) from exc
     except subprocess.CalledProcessError as exc:
         err_msg = (exc.stderr or exc.stdout or "").strip()
