@@ -81,11 +81,11 @@ class _LatihanPengucapanPageState extends State<LatihanPengucapanPage> {
 
     final dir = await getTemporaryDirectory();
     final path =
-        "${dir.path}/latihan_${_currentIndex}_${DateTime.now().millisecondsSinceEpoch}.aac";
+        "${dir.path}/latihan_${_currentIndex}_${DateTime.now().millisecondsSinceEpoch}.wav";
 
     await _recorder.startRecorder(
       toFile: path,
-      codec: Codec.aacADTS,
+      codec: Codec.pcm16WAV,
       sampleRate: 16000,
       numChannels: 1,
       bitRate: 16000,

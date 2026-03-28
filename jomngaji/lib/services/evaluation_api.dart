@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
@@ -23,6 +24,23 @@ class EvaluationApi {
     return AuthService.authHeaders();
   }
 
+  MediaType _audioMediaType(String path, {MediaType? fallback}) {
+    final ext = File(path).path.split('.').last.toLowerCase();
+    switch (ext) {
+      case 'wav':
+        return MediaType('audio', 'wav');
+      case 'mp3':
+        return MediaType('audio', 'mpeg');
+      case 'm4a':
+      case 'aac':
+        return MediaType('audio', 'aac');
+      case 'webm':
+        return MediaType('audio', 'webm');
+      default:
+        return fallback ?? MediaType('application', 'octet-stream');
+    }
+  }
+
   Future<Map<String, dynamic>> evaluateAudio({
     required String audioPath,
     required String targetText,
@@ -43,7 +61,7 @@ class EvaluationApi {
       await http.MultipartFile.fromPath(
         'audio',
         audioPath,
-        contentType: MediaType('audio', 'wav'),
+        contentType: _audioMediaType(audioPath, fallback: MediaType('audio', 'wav')),
       ),
     );
 
@@ -75,7 +93,7 @@ class EvaluationApi {
       await http.MultipartFile.fromPath(
         'audio',
         audioPath,
-        contentType: MediaType('audio', 'wav'),
+        contentType: _audioMediaType(audioPath, fallback: MediaType('audio', 'wav')),
       ),
     );
 
@@ -109,7 +127,7 @@ class EvaluationApi {
       await http.MultipartFile.fromPath(
         'audio',
         audioPath,
-        contentType: MediaType('audio', 'aac'),
+        contentType: _audioMediaType(audioPath, fallback: MediaType('audio', 'aac')),
       ),
     );
 
@@ -143,7 +161,7 @@ class EvaluationApi {
       await http.MultipartFile.fromPath(
         'audio',
         audioPath,
-        contentType: MediaType('audio', 'aac'),
+        contentType: _audioMediaType(audioPath, fallback: MediaType('audio', 'aac')),
       ),
     );
 
@@ -177,7 +195,7 @@ class EvaluationApi {
       await http.MultipartFile.fromPath(
         'audio',
         audioPath,
-        contentType: MediaType('audio', 'aac'),
+        contentType: _audioMediaType(audioPath, fallback: MediaType('audio', 'aac')),
       ),
     );
 
@@ -214,7 +232,7 @@ class EvaluationApi {
       await http.MultipartFile.fromPath(
         'user_audio',
         userAudioPath,
-        contentType: MediaType('audio', 'aac'),
+        contentType: _audioMediaType(userAudioPath, fallback: MediaType('audio', 'aac')),
       ),
     );
 
@@ -222,7 +240,7 @@ class EvaluationApi {
       await http.MultipartFile.fromPath(
         'reference_audio',
         referenceAudioPath,
-        contentType: MediaType('audio', 'mp3'),
+        contentType: _audioMediaType(referenceAudioPath, fallback: MediaType('audio', 'mpeg')),
       ),
     );
 
