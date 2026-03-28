@@ -192,7 +192,13 @@ def evaluate_audio_only(
     print(f"[USER TEXT] {user_text}")
 
     ayat_score = ayat_similarity(ayat_text, user_text) * 100
-    audio_score = audio_similarity(ref_path, user_path) * 100
+    audio_model_unavailable = False
+    try:
+        audio_score = audio_similarity(ref_path, user_path) * 100
+    except RuntimeError as exc:
+        audio_model_unavailable = True
+        print(f"[AUDIO MODEL FALLBACK] {exc}")
+        audio_score = ayat_score
 
     # Detail kesalahan pengucapan huruf dari evaluator tadarus
     text_scores, text_issues, text_suggestions = evaluate_tadarus(ayat_text, user_text)
@@ -211,6 +217,15 @@ def evaluate_audio_only(
     print(f"[FINAL] {final_score}")
     print("===================================\n")
 
+    fallback_note = (
+        [
+            "Penilaian kemiripan audio sedang tidak tersedia di server, "
+            "sementara skor akhir menggunakan penilaian teks bacaan."
+        ]
+        if audio_model_unavailable
+        else []
+    )
+
     return {
         "valid": True,
         "texts": {
@@ -226,5 +241,5 @@ def evaluate_audio_only(
             "audio_band": get_score_band(int(audio_score)),
         },
         "issues": text_issues,
-        "suggestions": text_suggestions,
+        "suggestions": [*text_suggestions, *fallback_note],
     }

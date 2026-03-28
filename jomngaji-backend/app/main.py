@@ -558,6 +558,8 @@ async def evaluate(
         transcript = transcribe_audio(path)
     except AudioConversionError as e:
         raise HTTPException(status_code=503, detail=str(e))
+    except RuntimeError as e:
+        raise HTTPException(status_code=503, detail=str(e))
 
     # =============================
     # TAJWID (GLOBAL)
@@ -704,6 +706,8 @@ async def evaluate_tajwid_endpoint(
 
     except AudioConversionError as e:
         raise HTTPException(status_code=503, detail=str(e))
+    except RuntimeError as e:
+        raise HTTPException(status_code=503, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -746,6 +750,8 @@ async def evaluate_tilawah_endpoint(
         }
 
     except AudioConversionError as e:
+        raise HTTPException(status_code=503, detail=str(e))
+    except RuntimeError as e:
         raise HTTPException(status_code=503, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -790,6 +796,8 @@ async def evaluate_tahfidz_endpoint(
 
     except AudioConversionError as e:
         raise HTTPException(status_code=503, detail=str(e))
+    except RuntimeError as e:
+        raise HTTPException(status_code=503, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -827,6 +835,8 @@ async def evaluate_tadarus_endpoint(
 
     except AudioConversionError as e:
         raise HTTPException(status_code=503, detail=str(e))
+    except RuntimeError as e:
+        raise HTTPException(status_code=503, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -863,6 +873,8 @@ async def evaluate_tadarus_audio_endpoint(
     except HTTPException:
         raise
     except AudioConversionError as e:
+        raise HTTPException(status_code=503, detail=str(e))
+    except RuntimeError as e:
         raise HTTPException(status_code=503, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
