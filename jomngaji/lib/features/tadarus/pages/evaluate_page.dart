@@ -116,7 +116,7 @@ class _EvaluatePageState extends State<EvaluatePage> {
   // ================= AUDIO =================
   String _audioCode(int index) {
     final s = widget.surah.number.toString().padLeft(3, '0');
-    final audioIndex = widget.surah.number == 1 ? index : (index + 1);
+    final audioIndex = index + 1;
     final a = audioIndex.toString().padLeft(3, '0');
     return '$s$a';
   }

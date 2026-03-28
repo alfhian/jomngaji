@@ -110,7 +110,7 @@ class _TadarusDetailPageState extends State<TadarusDetailPage> {
     }
 
     final s = surah!.number.toString().padLeft(3, '0');
-    final primaryIndex = surah!.number == 1 ? index : (index + 1);
+    final primaryIndex = index + 1;
     final fallbackIndex = primaryIndex + 1;
     final candidates = <String>[
       '$_tadarusAudioBaseUrl/$s${primaryIndex.toString().padLeft(3, '0')}.mp3',

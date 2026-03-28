@@ -255,15 +255,10 @@ class _TadarusMenuPageState extends State<TadarusMenuPage> {
       if (_playingPreviewIndex != index || fromStart) {
         await _previewPlayer.stop();
 
-        final candidates = surah.number == 1
-            ? <String>[
-                '$_tadarusAudioBaseUrl/${code}000.mp3',
-                '$_tadarusAudioBaseUrl/${code}001.mp3',
-              ]
-            : <String>[
-                '$_tadarusAudioBaseUrl/${code}001.mp3',
-                '$_tadarusAudioBaseUrl/${code}000.mp3',
-              ];
+        final candidates = <String>[
+          '$_tadarusAudioBaseUrl/${code}001.mp3',
+          '$_tadarusAudioBaseUrl/${code}000.mp3',
+        ];
 
         Object? lastError;
         for (final asset in candidates) {
