@@ -71,16 +71,6 @@ android {
         }
     }
 
-    // Build APK terpisah per ABI agar ukuran file jauh lebih kecil
-    splits {
-        abi {
-            isEnable = true
-            reset()
-            include("arm64-v8a", "armeabi-v7a", "x86_64")
-            isUniversalApk = false
-        }
-    }
-
     // ===== CMAKE =====
     externalNativeBuild {
         cmake {
