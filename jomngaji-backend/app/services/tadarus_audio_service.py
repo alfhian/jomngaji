@@ -185,10 +185,15 @@ def evaluate_audio_only(
         reference_conversion_unavailable = True
         print(f"[REFERENCE CONVERSION FALLBACK] {exc}")
 
-    audio_data = load_audio_16k(user_path)
-    if not is_valid_audio(audio_data):
-        print("[INVALID AUDIO]")
-        return {"valid": False, "reason": "invalid_audio"}
+    try:
+        audio_data = load_audio_16k(user_path)
+        if not is_valid_audio(audio_data):
+            print("[INVALID AUDIO]")
+            return {"valid": False, "reason": "invalid_audio"}
+    except Exception as exc:
+        # Jangan gagalkan evaluasi tadarus jika stack audio embedding tidak siap.
+        # Tetap lanjutkan penilaian berbasis teks (ASR).
+        print(f"[AUDIO VALIDATION FALLBACK] {exc}")
 
     # =========================
     # ASR
@@ -205,7 +210,7 @@ def evaluate_audio_only(
         if reference_conversion_unavailable:
             raise RuntimeError("Reference audio conversion unavailable")
         audio_score = audio_similarity(ref_path, user_path) * 100
-    except RuntimeError as exc:
+    except Exception as exc:
         audio_model_unavailable = True
         print(f"[AUDIO MODEL FALLBACK] {exc}")
         audio_score = ayat_score
