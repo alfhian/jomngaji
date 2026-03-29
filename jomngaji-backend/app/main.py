@@ -10,7 +10,7 @@ from auth import create_access_token, get_current_user
 
 import os
 import logging
-import httpx
+from urllib.request import Request, urlopen
 
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
 _raw_google_client_ids = os.getenv("GOOGLE_CLIENT_IDS", "")
@@ -561,25 +561,14 @@ def proxy_doa_audio(url: str = Query(..., description="URL audio doa yang akan d
         raise HTTPException(status_code=400, detail=str(e))
 
     try:
-        with httpx.stream(
-            "GET",
-            url,
-            timeout=30.0,
-            follow_redirects=True,
-            headers={"User-Agent": "jomngaji-backend/1.0"},
-        ) as resp:
-            if resp.status_code >= 400:
-                raise HTTPException(
-                    status_code=502,
-                    detail=f"Gagal mengambil audio dari sumber (status {resp.status_code})",
-                )
-
-            media_type = resp.headers.get("content-type", "audio/mpeg")
-            return StreamingResponse(
-                resp.iter_bytes(),
-                media_type=media_type,
-                headers={"Cache-Control": "public, max-age=3600"},
-            )
+        req = Request(url, headers={"User-Agent": "jomngaji-backend/1.0"})
+        upstream = urlopen(req, timeout=30)
+        media_type = upstream.headers.get("content-type", "audio/mpeg")
+        return StreamingResponse(
+            upstream,
+            media_type=media_type,
+            headers={"Cache-Control": "public, max-age=3600"},
+        )
     except HTTPException:
         raise
     except Exception as e:
