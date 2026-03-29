@@ -372,113 +372,67 @@ class _TilawahLevelPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      extendBodyBehindAppBar: true,
-      appBar: null,
+      backgroundColor: AppColors.scaffold,
+      appBar: CustomGradientAppBar(title: title),
       body: ListView(
+        padding: const EdgeInsets.all(24),
         children: [
-          _heroSection(context),
-          const SizedBox(height: 20),
+          _heroSection(),
+          const SizedBox(height: 24),
           _descriptionSection(),
-          const SizedBox(height: 22),
+          const SizedBox(height: 16),
           _progressSection(),
-          const SizedBox(height: 25),
+          const SizedBox(height: 20),
           _exerciseList(context),
-          const SizedBox(height: 30),
         ],
       ),
     );
   }
 
-  Widget _heroSection(BuildContext context) {
+  Widget _heroSection() {
     return Container(
       decoration: BoxDecoration(
-        borderRadius: const BorderRadius.only(
-          bottomLeft: Radius.circular(32),
-          bottomRight: Radius.circular(32),
-        ),
-        image: const DecorationImage(
-          image: AssetImage("assets/images/hijaiyah_banner_2.png"),
-          fit: BoxFit.cover,
-        ),
+        gradient: AppGradients.accent,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        boxShadow: AppShadows.medium,
       ),
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: const BorderRadius.only(
-            bottomLeft: Radius.circular(32),
-            bottomRight: Radius.circular(32),
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: GoogleFonts.plusJakartaSans(
+              color: Colors.white,
+              fontSize: 22,
+              fontWeight: FontWeight.w800,
+            ),
           ),
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Colors.black.withOpacity(0.05),
-              Colors.black.withOpacity(0.40),
-            ],
+          const SizedBox(height: 8),
+          Text(
+            description,
+            style: GoogleFonts.plusJakartaSans(
+              color: Colors.white.withOpacity(0.9),
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+            ),
           ),
-        ),
-        padding: const EdgeInsets.fromLTRB(20, 60, 20, 40),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            GestureDetector(
-              onTap: () => Navigator.pop(context),
-              child: Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.25),
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      blurRadius: 6,
-                    ),
-                  ],
-                ),
-                child: const Icon(Icons.arrow_back, color: Colors.white, size: 20),
-              ),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(999),
             ),
-            const SizedBox(height: 28),
-            Text(
-              "Latihan Tilawah",
-              style: GoogleFonts.poppins(
-                color: Colors.white.withOpacity(0.9),
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              title,
-              style: GoogleFonts.poppins(
+            child: Text(
+              levelTag,
+              style: GoogleFonts.plusJakartaSans(
                 color: Colors.white,
-                fontSize: 28,
-                height: 1.25,
-                fontWeight: FontWeight.w800,
+                fontWeight: FontWeight.w700,
               ),
             ),
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.12),
-                    blurRadius: 6,
-                  ),
-                ],
-              ),
-              child: Text(
-                levelTag,
-                style: GoogleFonts.poppins(
-                  color: Colors.orange.shade700,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -491,12 +445,12 @@ class _TilawahLevelPage extends StatelessWidget {
         children: [
           Text(
             description,
-            style: GoogleFonts.poppins(fontSize: 14, color: Colors.black87),
+            style: GoogleFonts.plusJakartaSans(fontSize: 14, color: Colors.black87),
           ),
           const SizedBox(height: 4),
           Text(
             "2 Aktivitas latihan",
-            style: GoogleFonts.poppins(fontSize: 13, color: Colors.black54),
+            style: GoogleFonts.plusJakartaSans(fontSize: 13, color: Colors.black54),
           ),
         ],
       ),
@@ -515,7 +469,7 @@ class _TilawahLevelPage extends StatelessWidget {
             children: [
               Text(
                 "Progress",
-                style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w600),
+                style: GoogleFonts.plusJakartaSans(fontSize: 15, fontWeight: FontWeight.w600),
               ),
               const SizedBox(height: 10),
               ClipRRect(
@@ -530,7 +484,7 @@ class _TilawahLevelPage extends StatelessWidget {
               const SizedBox(height: 4),
               Text(
                 "${(progressValue * 100).toInt()}% selesai",
-                style: GoogleFonts.poppins(fontSize: 12, color: Colors.black54),
+                style: GoogleFonts.plusJakartaSans(fontSize: 12, color: Colors.black54),
               ),
             ],
           );
@@ -612,11 +566,10 @@ class _TilawahLevelPage extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 14),
         padding: const EdgeInsets.all(18),
         decoration: BoxDecoration(
-          color: unlocked ? color : Colors.white,
-          borderRadius: BorderRadius.circular(22),
-          border: Border.all(
-            color: unlocked ? Colors.transparent : Colors.grey.shade300,
-          ),
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          boxShadow: AppShadows.soft,
+          border: Border.all(color: AppColors.border.withOpacity(0.5)),
         ),
         child: Row(
           children: [
@@ -624,7 +577,7 @@ class _TilawahLevelPage extends StatelessWidget {
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: iconColor.withOpacity(0.1),
-                shape: BoxShape.circle,
+                borderRadius: BorderRadius.circular(AppRadius.sm),
               ),
               child: Icon(icon, size: 26, color: iconColor),
             ),
@@ -635,7 +588,7 @@ class _TilawahLevelPage extends StatelessWidget {
                 children: [
                   Text(
                     title,
-                    style: GoogleFonts.poppins(
+                    style: GoogleFonts.plusJakartaSans(
                       fontWeight: FontWeight.w700,
                       fontSize: 14,
                     ),
@@ -643,9 +596,9 @@ class _TilawahLevelPage extends StatelessWidget {
                   const SizedBox(height: 3),
                   Text(
                     subtitle,
-                    style: GoogleFonts.poppins(
+                    style: GoogleFonts.plusJakartaSans(
                       fontSize: 13,
-                      color: Colors.black87,
+                      color: AppColors.textSecondary,
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -655,11 +608,11 @@ class _TilawahLevelPage extends StatelessWidget {
             ),
             Container(
               padding: const EdgeInsets.all(8),
-              decoration: const BoxDecoration(
-                color: Color(0xFF50D1A0),
-                shape: BoxShape.circle,
+              decoration: BoxDecoration(
+                color: AppColors.accent.withOpacity(0.12),
+                borderRadius: BorderRadius.circular(999),
               ),
-              child: const Icon(Icons.play_arrow_rounded, color: Colors.white),
+              child: const Icon(Icons.play_arrow_rounded, color: AppColors.accent),
             ),
           ],
         ),

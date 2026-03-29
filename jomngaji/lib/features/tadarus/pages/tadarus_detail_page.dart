@@ -409,23 +409,13 @@ class _TadarusDetailPageState extends State<TadarusDetailPage> {
         children: [
           Row(
             children: [
-              Stack(
-                alignment: Alignment.center,
-                children: [
-                  const Icon(
-                    Icons.star_border_rounded,
-                    size: 36,
-                    color: AppColors.accent,
-                  ),
-                  Text(
-                    _toArabicIndicNumber(ayah.ayah),
-                    style: GoogleFonts.amiri(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFF0F172A),
-                    ),
-                  ),
-                ],
+              Text(
+                _toArabicIndicNumber(ayah.ayah),
+                style: GoogleFonts.amiri(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.accent,
+                ),
               ),
               const Spacer(),
               IconButton(

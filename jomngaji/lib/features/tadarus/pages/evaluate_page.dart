@@ -137,7 +137,6 @@ class _EvaluatePageState extends State<EvaluatePage> {
             height: 1.9,
             color: isHighlighted ? Colors.redAccent : const Color(0xFF0F172A),
             fontWeight: isHighlighted ? FontWeight.w700 : FontWeight.w500,
-            backgroundColor: isHighlighted ? Colors.red.withOpacity(0.12) : null,
           ),
         ),
       );

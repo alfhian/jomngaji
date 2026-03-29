@@ -153,6 +153,8 @@ class _LoginPageState extends State<LoginPage> {
             child: Column(
               children: [
                 const SizedBox(height: 20),
+                _heroBanner(),
+                const SizedBox(height: 20),
                 _logoHeader(),
                 const SizedBox(height: 32),
                 Text(
@@ -187,28 +189,22 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Widget _logoHeader() {
-    return Container(
-      width: 100,
-      height: 100,
-      decoration: BoxDecoration(
-        gradient: AppGradients.primary,
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        boxShadow: AppShadows.medium,
-      ),
-      child: Center(
-        child: Container(
-          width: 70,
-          height: 70,
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(AppRadius.sm),
-          ),
-          child: Image.asset(
-            'assets/images/icon-jomngaji.png',
-            fit: BoxFit.contain,
-          ),
-        ),
+    return Image.asset(
+      'assets/images/icon-jomngaji.png',
+      width: 92,
+      height: 92,
+      fit: BoxFit.contain,
+    );
+  }
+
+  Widget _heroBanner() {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(AppRadius.md),
+      child: Image.asset(
+        'assets/images/home_banner.png',
+        width: double.infinity,
+        height: 130,
+        fit: BoxFit.cover,
       ),
     );
   }
