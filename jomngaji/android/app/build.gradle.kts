@@ -27,13 +27,6 @@ android {
         jvmTarget = JavaVersion.VERSION_11.toString()
     }
 
-    val localAbis =
-        (project.findProperty("LOCAL_ABIS") as String?)
-            ?.split(",")
-            ?.map { it.trim() }
-            ?.filter { it.isNotEmpty() }
-            .orEmpty()
-
     defaultConfig {
         applicationId = "com.jomngaji.app"
         minSdk = 24
@@ -45,16 +38,6 @@ android {
         externalNativeBuild {
             cmake {
                 cppFlags += "-std=c++17 -O3 -fexceptions"
-            }
-        }
-
-        // Opsional untuk environment disk kecil:
-        // batasi ABI yang dipaketkan dengan:
-        // ORG_GRADLE_PROJECT_LOCAL_ABIS=x86_64 flutter run --release ...
-        // atau kombinasi: arm64-v8a,x86_64
-        if (localAbis.isNotEmpty()) {
-            ndk {
-                abiFilters += localAbis
             }
         }
 
