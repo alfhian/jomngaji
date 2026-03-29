@@ -1,6 +1,5 @@
 import json
 from app.services.auth_service import get_db
-from app.repositories.db_compat import get_evaluations_table
 
 FEATURE_TYPE = "tadarus"
 EVALUATIONS_TABLE = "learning_evaluations"
@@ -11,28 +10,16 @@ EVALUATIONS_TABLE = "learning_evaluations"
 def get_evaluated_ayahs(user_id: int, surah: int) -> list[int]:
     db = get_db()
     cursor = db.cursor(dictionary=True)
-    table_name = get_evaluations_table(FEATURE_TYPE)
 
-    if table_name == EVALUATIONS_TABLE:
-        cursor.execute(
-            f"""
+    cursor.execute(
+        f"""
         SELECT ayah
         FROM {EVALUATIONS_TABLE}
         WHERE user_id = %s AND surah = %s AND feature_type = %s
         ORDER BY ayah
         """,
         (user_id, surah, FEATURE_TYPE),
-        )
-    else:
-        cursor.execute(
-            """
-            SELECT ayah
-            FROM tadarus_evaluations
-            WHERE user_id = %s AND surah = %s
-            ORDER BY ayah
-            """,
-            (user_id, surah),
-        )
+    )
 
     rows = cursor.fetchall()
 
@@ -67,29 +54,18 @@ def upsert_evaluation(
 
     db = get_db()
     cursor = db.cursor(dictionary=True)
-    table_name = get_evaluations_table(FEATURE_TYPE)
 
     # =========================
     # CEK DATA EXISTING
     # =========================
-    if table_name == EVALUATIONS_TABLE:
-        cursor.execute(
-            f"""
+    cursor.execute(
+        f"""
         SELECT id, score_final
         FROM {EVALUATIONS_TABLE}
         WHERE user_id = %s AND surah = %s AND ayah = %s AND feature_type = %s
         """,
         (user_id, surah, ayah, FEATURE_TYPE),
-        )
-    else:
-        cursor.execute(
-            """
-            SELECT id, score_final
-            FROM tadarus_evaluations
-            WHERE user_id = %s AND surah = %s AND ayah = %s
-            """,
-            (user_id, surah, ayah),
-        )
+    )
 
     record = cursor.fetchone()
 
@@ -105,10 +81,9 @@ def upsert_evaluation(
             db.close()
             return False
 
-        update_table = EVALUATIONS_TABLE if table_name == EVALUATIONS_TABLE else "tadarus_evaluations"
         cursor.execute(
             f"""
-            UPDATE {update_table}
+            UPDATE {EVALUATIONS_TABLE}
             SET
                 score_final = %s,
                 score_ayat = %s,
@@ -136,10 +111,9 @@ def upsert_evaluation(
     # INSERT
     # =========================
     else:
-        if table_name == EVALUATIONS_TABLE:
-            cursor.execute(
-                f"""
-                INSERT INTO {EVALUATIONS_TABLE}
+        cursor.execute(
+            f"""
+            INSERT INTO {EVALUATIONS_TABLE}
             (
                 user_id,
                 feature_type,
@@ -169,39 +143,7 @@ def upsert_evaluation(
                 json.dumps(issues, ensure_ascii=False),
                 json.dumps(suggestions, ensure_ascii=False),
             ),
-            )
-        else:
-            cursor.execute(
-                """
-                INSERT INTO tadarus_evaluations
-                (
-                    user_id,
-                    surah,
-                    ayah,
-                    score_final,
-                    score_ayat,
-                    score_audio,
-                    asr_user,
-                    asr_ref,
-                    issues,
-                    suggestions,
-                    evaluated_at
-                )
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW())
-                """,
-                (
-                    user_id,
-                    surah,
-                    ayah,
-                    score_final,
-                    score_ayat,
-                    score_audio,
-                    asr_user,
-                    asr_ref,
-                    json.dumps(issues, ensure_ascii=False),
-                    json.dumps(suggestions, ensure_ascii=False),
-                ),
-            )
+        )
 
     db.commit()
     cursor.close()

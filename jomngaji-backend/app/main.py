@@ -99,7 +99,6 @@ from app.repositories.tahfidz_repo import (
     get_last_tahfidz_evaluation,
     get_average_tahfidz_score,
 )
-from app.repositories.db_compat import has_unified_attempts, table_exists
 
 # =========================
 # Services
@@ -1014,27 +1013,16 @@ def _quiz_question_progress(user_id: int, quiz_codes: list[str]) -> tuple[int, i
     total_questions = int(sum((row.get("total_questions") or 0) for row in quiz_rows))
 
     total_correct = 0
-    use_unified_attempts = has_unified_attempts()
     for row in quiz_rows:
         quiz_id = row["id"]
-        if use_unified_attempts:
-            cursor.execute(
-                """
-                SELECT MAX(correct_answers) AS best_correct
-                FROM learning_assessment_attempts
-                WHERE user_id=%s AND quiz_id=%s AND assessment_kind='quiz'
-                """,
-                (user_id, quiz_id),
-            )
-        else:
-            cursor.execute(
-                """
-                SELECT MAX(correct) AS best_correct
-                FROM quiz_attempts
-                WHERE user_id=%s AND quiz_id=%s
-                """,
-                (user_id, quiz_id),
-            )
+        cursor.execute(
+            """
+            SELECT MAX(correct_answers) AS best_correct
+            FROM learning_assessment_attempts
+            WHERE user_id=%s AND quiz_id=%s AND assessment_kind='quiz'
+            """,
+            (user_id, quiz_id),
+        )
         best_row = cursor.fetchone() or {}
         best_correct = int(best_row.get("best_correct") or 0)
         total_correct += min(best_correct, int(row.get("total_questions") or 0))
@@ -1072,38 +1060,29 @@ def progress_modules(user_id: int = Depends(get_current_user)):
     )
     unlocked_suku_kata_levels = int((cursor.fetchone() or {}).get("total") or 0)
 
-    if has_unified_attempts():
-        cursor.execute(
-            "SELECT MAX(final_score) AS best_score FROM learning_assessment_attempts WHERE user_id=%s AND feature_type='iqra' AND assessment_kind='exam'",
-            (user_id,),
-        )
-    else:
-        cursor.execute(
-            "SELECT MAX(final_score) AS best_score FROM iqra_exam_results WHERE user_id=%s",
-            (user_id,),
-        )
+    cursor.execute(
+        "SELECT MAX(final_score) AS best_score FROM learning_assessment_attempts WHERE user_id=%s AND feature_type='iqra' AND assessment_kind='exam'",
+        (user_id,),
+    )
     iqra_exam_best = float((cursor.fetchone() or {}).get("best_score") or 0)
     iqra_exam_passed = 1 if iqra_exam_best >= 60 else 0
 
-    tajwid_table = "learning_evaluations" if table_exists("learning_evaluations") else "tajwid_evaluations"
     cursor.execute(
-        f"SELECT MAX(score_final) AS best_score FROM {tajwid_table} WHERE user_id=%s" + (" AND feature_type='tajwid'" if tajwid_table == "learning_evaluations" else ""),
+        "SELECT MAX(score_final) AS best_score FROM learning_evaluations WHERE user_id=%s AND feature_type='tajwid'",
         (user_id,),
     )
     tajwid_exam_best = float((cursor.fetchone() or {}).get("best_score") or 0)
     tajwid_exam_passed = 1 if tajwid_exam_best >= 60 else 0
 
-    tilawah_table = "learning_evaluations" if table_exists("learning_evaluations") else "tilawah_evaluations"
     cursor.execute(
-        f"SELECT MAX(score_final) AS best_score FROM {tilawah_table} WHERE user_id=%s" + (" AND feature_type='tilawah'" if tilawah_table == "learning_evaluations" else ""),
+        "SELECT MAX(score_final) AS best_score FROM learning_evaluations WHERE user_id=%s AND feature_type='tilawah'",
         (user_id,),
     )
     tilawah_exam_best = float((cursor.fetchone() or {}).get("best_score") or 0)
     tilawah_exam_passed = 1 if tilawah_exam_best >= 60 else 0
 
-    tahfidz_table = "learning_evaluations" if table_exists("learning_evaluations") else "tahfidz_evaluations"
     cursor.execute(
-        f"SELECT MAX(score_final) AS best_score FROM {tahfidz_table} WHERE user_id=%s" + (" AND feature_type='tahfidz'" if tahfidz_table == "learning_evaluations" else ""),
+        "SELECT MAX(score_final) AS best_score FROM learning_evaluations WHERE user_id=%s AND feature_type='tahfidz'",
         (user_id,),
     )
     tahfidz_exam_best = float((cursor.fetchone() or {}).get("best_score") or 0)

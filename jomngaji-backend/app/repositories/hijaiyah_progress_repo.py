@@ -1,7 +1,6 @@
 import json
 from datetime import datetime
 from app.services.auth_service import get_db
-from app.repositories.db_compat import get_evaluations_table
 
 PASSING_SCORE = 50
 EVALUATIONS_TABLE = "learning_evaluations"
@@ -59,12 +58,10 @@ def save_hijaiyah_evaluation(
 ):
     db = get_db()
     cursor = db.cursor()
-    table_name = get_evaluations_table(FEATURE_TYPE)
 
-    if table_name == EVALUATIONS_TABLE:
-        cursor.execute(
-            f"""
-            INSERT INTO {EVALUATIONS_TABLE}
+    cursor.execute(
+        f"""
+        INSERT INTO {EVALUATIONS_TABLE}
             (
                 user_id,
                 feature_type,
@@ -80,49 +77,20 @@ def save_hijaiyah_evaluation(
                 updated_at
             )
         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), NOW())
-            """,
-            (
-                user_id,
-                FEATURE_TYPE,
-                lesson_id,
-                transcript,
-                score_final,
-                score_audio,
-                score_ayat,
-                feedback,
-                json.dumps(issues) if issues else None,
-                hijaiyah,
-            ),
-        )
-    else:
-        cursor.execute(
-            """
-            INSERT INTO hijaiyah_evaluations
-                (
-                    user_id,
-                    lesson_id,
-                    hijaiyah,
-                    transcript,
-                    score_final,
-                    score_audio,
-                    score_ayat,
-                    feedback,
-                    issues
-                )
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-            """,
-            (
-                user_id,
-                lesson_id,
-                hijaiyah,
-                transcript,
-                score_final,
-                score_audio,
-                score_ayat,
-                feedback,
-                json.dumps(issues) if issues else None,
-            ),
-        )
+        """,
+        (
+            user_id,
+            FEATURE_TYPE,
+            lesson_id,
+            transcript,
+            score_final,
+            score_audio,
+            score_ayat,
+            feedback,
+            json.dumps(issues) if issues else None,
+            hijaiyah,
+        ),
+    )
 
     print("[EVAL SAVED] row_id:", cursor.lastrowid)
 
@@ -291,29 +259,17 @@ def update_hijaiyah_after_evaluation(
 def get_last_hijaiyah_activity(user_id: int):
     db = get_db()
     cursor = db.cursor(dictionary=True)
-    table_name = get_evaluations_table(FEATURE_TYPE)
-    if table_name == EVALUATIONS_TABLE:
-        cursor.execute(
-            f"""
-            SELECT asr_ref AS hijaiyah
-            FROM {EVALUATIONS_TABLE}
-            WHERE user_id = %s AND feature_type = %s
-            ORDER BY evaluated_at DESC
-            LIMIT 1
-            """,
-            (user_id, FEATURE_TYPE),
-        )
-    else:
-        cursor.execute(
-            """
-            SELECT hijaiyah
-            FROM hijaiyah_evaluations
-            WHERE user_id = %s
-            ORDER BY evaluated_at DESC
-            LIMIT 1
-            """,
-            (user_id,),
-        )
+
+    cursor.execute(
+        f"""
+        SELECT asr_ref AS hijaiyah
+        FROM {EVALUATIONS_TABLE}
+        WHERE user_id = %s AND feature_type = %s
+        ORDER BY evaluated_at DESC
+        LIMIT 1
+        """,
+        (user_id, FEATURE_TYPE),
+    )
 
     row = cursor.fetchone()
     cursor.close()

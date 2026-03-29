@@ -1,6 +1,5 @@
 from app.services.auth_service import get_db
 from app.services import quran_service
-from app.repositories.db_compat import get_evaluations_table
 
 FEATURE_TYPE = "tadarus"
 EVALUATIONS_TABLE = "learning_evaluations"
@@ -63,61 +62,36 @@ def get_last_activity(user_id: int) -> dict:
 
     db = get_db()
     cursor = db.cursor(dictionary=True)
-    table_name = get_evaluations_table(FEATURE_TYPE)
 
     try:
         # =========================
         # Terakhir dinilai
         # =========================
-        if table_name == EVALUATIONS_TABLE:
-            cursor.execute(
-                f"""
+        cursor.execute(
+            f"""
             SELECT surah, ayah
             FROM {EVALUATIONS_TABLE}
             WHERE user_id = %s AND score_final IS NOT NULL AND feature_type = %s
             ORDER BY updated_at DESC
             LIMIT 1
             """,
-                (user_id, FEATURE_TYPE),
-            )
-        else:
-            cursor.execute(
-                """
-                SELECT surah, ayah
-                FROM tadarus_evaluations
-                WHERE user_id = %s AND score_final IS NOT NULL
-                ORDER BY updated_at DESC
-                LIMIT 1
-                """,
-                (user_id,),
-            )
+            (user_id, FEATURE_TYPE),
+        )
         last_read_row = cursor.fetchone()
 
         # =========================
         # Terakhir dilafalkan
         # =========================
-        if table_name == EVALUATIONS_TABLE:
-            cursor.execute(
-                f"""
+        cursor.execute(
+            f"""
             SELECT surah, ayah
             FROM {EVALUATIONS_TABLE}
             WHERE user_id = %s AND evaluated_at IS NOT NULL AND feature_type = %s
             ORDER BY updated_at DESC
             LIMIT 1
             """,
-                (user_id, FEATURE_TYPE),
-            )
-        else:
-            cursor.execute(
-                """
-                SELECT surah, ayah
-                FROM tadarus_evaluations
-                WHERE user_id = %s AND evaluated_at IS NOT NULL
-                ORDER BY updated_at DESC
-                LIMIT 1
-                """,
-                (user_id,),
-            )
+            (user_id, FEATURE_TYPE),
+        )
         last_recited_row = cursor.fetchone()
 
         # =========================
@@ -163,14 +137,12 @@ def update_progress(
 
     db = get_db()
     cursor = db.cursor(dictionary=True)
-    table_name = get_evaluations_table(FEATURE_TYPE)
 
     # =========================
     # HITUNG AYAT UNIK YANG LULUS
     # =========================
-    if table_name == EVALUATIONS_TABLE:
-        cursor.execute(
-            f"""
+    cursor.execute(
+        f"""
         SELECT COUNT(DISTINCT ayah) AS completed
         FROM {EVALUATIONS_TABLE}
         WHERE
@@ -179,20 +151,8 @@ def update_progress(
             AND feature_type = %s
             AND score_final IS NOT NULL
         """,
-            (user_id, surah, FEATURE_TYPE),
-        )
-    else:
-        cursor.execute(
-            """
-            SELECT COUNT(DISTINCT ayah) AS completed
-            FROM tadarus_evaluations
-            WHERE
-                user_id = %s
-                AND surah = %s
-                AND score_final IS NOT NULL
-            """,
-            (user_id, surah),
-        )
+        (user_id, surah, FEATURE_TYPE),
+    )
 
     completed = cursor.fetchone()["completed"] or 0
 
