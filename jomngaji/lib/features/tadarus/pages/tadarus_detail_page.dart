@@ -412,17 +412,17 @@ class _TadarusDetailPageState extends State<TadarusDetailPage> {
               Stack(
                 alignment: Alignment.center,
                 children: [
-                  Icon(
-                    Icons.filter_vintage_outlined,
-                    size: 32,
-                    color: AppColors.accent.withOpacity(0.78),
+                  const Icon(
+                    Icons.star_border_rounded,
+                    size: 36,
+                    color: AppColors.accent,
                   ),
                   Text(
                     _toArabicIndicNumber(ayah.ayah),
                     style: GoogleFonts.amiri(
-                      fontSize: 14,
+                      fontSize: 13,
                       fontWeight: FontWeight.w700,
-                      color: AppColors.accent,
+                      color: Color(0xFF0F172A),
                     ),
                   ),
                 ],

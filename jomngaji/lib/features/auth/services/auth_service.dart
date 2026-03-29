@@ -124,20 +124,49 @@ class AuthService {
 
     try {
       final headers = await authHeaders();
-      final res = await _getWithBaseUrlFallback(
-        path: '/premium/status',
-        headers: headers,
-      );
+      final preferred = prefs.getString(_keyPreferredBaseUrl);
+      final baseUrls = [...ApiConfig.baseUrls];
+      if (preferred != null && baseUrls.contains(preferred)) {
+        baseUrls
+          ..remove(preferred)
+          ..insert(0, preferred);
+      }
 
-      if (res.statusCode == 200) {
-        final json = jsonDecode(res.body) as Map<String, dynamic>;
-        final value = json['is_premium'];
-        final isPremium = value == true ||
-            value == 1 ||
-            value?.toString() == '1' ||
-            value?.toString().toLowerCase() == 'true';
-        await prefs.setBool(_keyIsPremium, isPremium);
-        return isPremium;
+      bool foundReachable = false;
+      bool isPremiumOnAnyBase = false;
+      String? premiumBase;
+
+      for (final base in baseUrls) {
+        try {
+          final url = '$base/premium/status';
+          final res =
+              await http.get(Uri.parse(url), headers: headers).timeout(_requestTimeout);
+          if (res.statusCode != 200) continue;
+          foundReachable = true;
+
+          final json = jsonDecode(res.body) as Map<String, dynamic>;
+          final value = json['is_premium'];
+          final isPremium = value == true ||
+              value == 1 ||
+              value?.toString() == '1' ||
+              value?.toString().toLowerCase() == 'true';
+
+          if (isPremium) {
+            isPremiumOnAnyBase = true;
+            premiumBase = base;
+            break;
+          }
+        } catch (_) {
+          // coba base URL berikutnya
+        }
+      }
+
+      if (foundReachable) {
+        if (premiumBase != null) {
+          await prefs.setString(_keyPreferredBaseUrl, premiumBase);
+        }
+        await prefs.setBool(_keyIsPremium, isPremiumOnAnyBase);
+        return isPremiumOnAnyBase;
       }
     } catch (_) {
       // fallback ke cache jika API tidak bisa diakses

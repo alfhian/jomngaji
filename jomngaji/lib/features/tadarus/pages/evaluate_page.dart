@@ -597,7 +597,11 @@ class _EvaluatePageState extends State<EvaluatePage> {
                   ),
                 ],
               ),
-              child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Flexible(
+                    child: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -764,30 +768,36 @@ class _EvaluatePageState extends State<EvaluatePage> {
                     ),
                   ],
 
-                  const SizedBox(height: 18),
-
+                ],
+              ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
                   SizedBox(
                     width: double.infinity,
-                    height: 44,
+                    height: 50,
                     child: ElevatedButton(
                       onPressed: () => Navigator.pop(context),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: scoreColor,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14),
                         ),
                       ),
                       child: Text(
                         "Tutup",
+                        textAlign: TextAlign.center,
                         style: GoogleFonts.poppins(
+                          fontSize: 16,
                           fontWeight: FontWeight.w600,
                           color: Colors.white,
+                          height: 1.1,
                         ),
                       ),
                     ),
                   ),
                 ],
-              ),
               ),
             ),
           ),
