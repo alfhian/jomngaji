@@ -57,7 +57,7 @@ def fetch_suku_kata_levels(user_id: int):
 
         ORDER BY l.order_index;
         """,
-        (user_id, user_id, user_id, user_id),
+        (user_id, user_id, user_id),
     )
 
     rows = cursor.fetchall()
