@@ -1,6 +1,9 @@
 from app.services.auth_service import get_db
 from app.services import quran_service
 
+FEATURE_TYPE = "tadarus"
+EVALUATIONS_TABLE = "learning_evaluations"
+
 def get_progress_by_surah(user_id: int, surah: int):
     print("====== GET TADARUS PROGRESS ======")
     print(f"user_id = {user_id}, surah = {surah}")
@@ -65,14 +68,14 @@ def get_last_activity(user_id: int) -> dict:
         # Terakhir dinilai
         # =========================
         cursor.execute(
-            """
+            f"""
             SELECT surah, ayah
-            FROM tadarus_evaluations
-            WHERE user_id = %s AND score_final IS NOT NULL
+            FROM {EVALUATIONS_TABLE}
+            WHERE user_id = %s AND score_final IS NOT NULL AND feature_type = %s
             ORDER BY updated_at DESC
             LIMIT 1
             """,
-            (user_id,),
+            (user_id, FEATURE_TYPE),
         )
         last_read_row = cursor.fetchone()
 
@@ -80,14 +83,14 @@ def get_last_activity(user_id: int) -> dict:
         # Terakhir dilafalkan
         # =========================
         cursor.execute(
-            """
+            f"""
             SELECT surah, ayah
-            FROM tadarus_evaluations
-            WHERE user_id = %s AND evaluated_at IS NOT NULL
+            FROM {EVALUATIONS_TABLE}
+            WHERE user_id = %s AND evaluated_at IS NOT NULL AND feature_type = %s
             ORDER BY updated_at DESC
             LIMIT 1
             """,
-            (user_id,),
+            (user_id, FEATURE_TYPE),
         )
         last_recited_row = cursor.fetchone()
 
@@ -129,7 +132,7 @@ def update_progress(
 ):
     """
     completed_ayah dihitung dari:
-    COUNT(DISTINCT ayah) pada tadarus_evaluations
+    COUNT(DISTINCT ayah) pada learning_evaluations (feature_type=tadarus)
     """
 
     db = get_db()
@@ -139,15 +142,16 @@ def update_progress(
     # HITUNG AYAT UNIK YANG LULUS
     # =========================
     cursor.execute(
-        """
+        f"""
         SELECT COUNT(DISTINCT ayah) AS completed
-        FROM tadarus_evaluations
+        FROM {EVALUATIONS_TABLE}
         WHERE
             user_id = %s
             AND surah = %s
+            AND feature_type = %s
             AND score_final IS NOT NULL
         """,
-        (user_id, surah),
+        (user_id, surah, FEATURE_TYPE),
     )
 
     completed = cursor.fetchone()["completed"] or 0

@@ -1068,21 +1068,21 @@ def progress_modules(user_id: int = Depends(get_current_user)):
     iqra_exam_passed = 1 if iqra_exam_best >= 60 else 0
 
     cursor.execute(
-        "SELECT MAX(score_final) AS best_score FROM tajwid_evaluations WHERE user_id=%s",
+        "SELECT MAX(score_final) AS best_score FROM learning_evaluations WHERE user_id=%s AND feature_type='tajwid'",
         (user_id,),
     )
     tajwid_exam_best = float((cursor.fetchone() or {}).get("best_score") or 0)
     tajwid_exam_passed = 1 if tajwid_exam_best >= 60 else 0
 
     cursor.execute(
-        "SELECT MAX(score_final) AS best_score FROM tilawah_evaluations WHERE user_id=%s",
+        "SELECT MAX(score_final) AS best_score FROM learning_evaluations WHERE user_id=%s AND feature_type='tilawah'",
         (user_id,),
     )
     tilawah_exam_best = float((cursor.fetchone() or {}).get("best_score") or 0)
     tilawah_exam_passed = 1 if tilawah_exam_best >= 60 else 0
 
     cursor.execute(
-        "SELECT MAX(score_final) AS best_score FROM tahfidz_evaluations WHERE user_id=%s",
+        "SELECT MAX(score_final) AS best_score FROM learning_evaluations WHERE user_id=%s AND feature_type='tahfidz'",
         (user_id,),
     )
     tahfidz_exam_best = float((cursor.fetchone() or {}).get("best_score") or 0)
