@@ -1,4 +1,5 @@
 from app.services.auth_service import get_db
+from app.repositories.db_compat import has_unified_attempts
 
 ATTEMPTS_TABLE = "learning_assessment_attempts"
 
@@ -102,8 +103,9 @@ def save_quiz_attempt(
     db = get_db()
     cursor = db.cursor()
 
-    cursor.execute(
-        f"""
+    if has_unified_attempts():
+        cursor.execute(
+            f"""
         INSERT INTO {ATTEMPTS_TABLE}
             (
                 user_id,
@@ -139,8 +141,17 @@ def save_quiz_attempt(
         FROM quizzes q
         WHERE q.id = %s
         """,
-        (user_id, total, correct, score, score, xp, quiz_id),
-    )
+            (user_id, total, correct, score, score, xp, quiz_id),
+        )
+    else:
+        cursor.execute(
+            """
+            INSERT INTO quiz_attempts
+                (user_id, quiz_id, correct, total, score, xp, created_at)
+            VALUES (%s, %s, %s, %s, %s, %s, NOW())
+            """,
+            (user_id, quiz_id, correct, total, score, xp),
+        )
 
     db.commit()
     cursor.close()
@@ -151,8 +162,9 @@ def get_quiz_progress_by_quiz_id(user_id: int, quiz_id: int):
     db = get_db()
     cursor = db.cursor(dictionary=True)
 
-    cursor.execute(
-        f"""
+    if has_unified_attempts():
+        cursor.execute(
+            f"""
         SELECT
             correct_answers AS correct,
             total_questions AS total,
@@ -164,8 +176,19 @@ def get_quiz_progress_by_quiz_id(user_id: int, quiz_id: int):
         ORDER BY attempted_at DESC
         LIMIT 1
         """,
-        (user_id, quiz_id),
-    )
+            (user_id, quiz_id),
+        )
+    else:
+        cursor.execute(
+            """
+            SELECT correct, total, score, xp, created_at
+            FROM quiz_attempts
+            WHERE user_id = %s AND quiz_id = %s
+            ORDER BY created_at DESC
+            LIMIT 1
+            """,
+            (user_id, quiz_id),
+        )
 
     row = cursor.fetchone()
     cursor.close()
@@ -177,14 +200,24 @@ def get_best_quiz_score(user_id: int, quiz_id: int):
     db = get_db()
     cursor = db.cursor(dictionary=True)
 
-    cursor.execute(
-        f"""
+    if has_unified_attempts():
+        cursor.execute(
+            f"""
         SELECT MAX(score) AS best_score
         FROM {ATTEMPTS_TABLE}
         WHERE user_id = %s AND quiz_id = %s AND assessment_kind = 'quiz'
         """,
-        (user_id, quiz_id),
-    )
+            (user_id, quiz_id),
+        )
+    else:
+        cursor.execute(
+            """
+            SELECT MAX(score) AS best_score
+            FROM quiz_attempts
+            WHERE user_id = %s AND quiz_id = %s
+            """,
+            (user_id, quiz_id),
+        )
     row = cursor.fetchone()
     cursor.close()
     db.close()

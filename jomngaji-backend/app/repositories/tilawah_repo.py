@@ -1,5 +1,6 @@
 from app.services.auth_service import get_db
 import json
+from app.repositories.db_compat import get_evaluations_table
 
 FEATURE_TYPE = "tilawah"
 EVALUATIONS_TABLE = "learning_evaluations"
@@ -14,15 +15,26 @@ def save_tilawah_evaluation(
 ):
     db = get_db()
     cursor = db.cursor()
+    table_name = get_evaluations_table(FEATURE_TYPE)
 
-    cursor.execute(
-        f"""
-        INSERT INTO {EVALUATIONS_TABLE}
+    if table_name == EVALUATIONS_TABLE:
+        cursor.execute(
+            f"""
+            INSERT INTO {EVALUATIONS_TABLE}
             (user_id, feature_type, lesson_id, transcript, score_final, feedback, issues, evaluated_at, updated_at)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, NOW(), NOW())
-        """,
-        (user_id, FEATURE_TYPE, lesson_id, transcript, score_final, feedback, json.dumps(issues, ensure_ascii=False)),
-    )
+            VALUES (%s, %s, %s, %s, %s, %s, %s, NOW(), NOW())
+            """,
+            (user_id, FEATURE_TYPE, lesson_id, transcript, score_final, feedback, json.dumps(issues, ensure_ascii=False)),
+        )
+    else:
+        cursor.execute(
+            """
+            INSERT INTO tilawah_evaluations
+                (user_id, lesson_id, transcript, score_final, feedback, issues, evaluated_at, updated_at)
+            VALUES (%s, %s, %s, %s, %s, %s, NOW(), NOW())
+            """,
+            (user_id, lesson_id, transcript, score_final, feedback, json.dumps(issues, ensure_ascii=False)),
+        )
 
     db.commit()
     cursor.close()
@@ -32,17 +44,29 @@ def save_tilawah_evaluation(
 def get_last_tilawah_evaluation(user_id: int, lesson_id: int):
     db = get_db()
     cursor = db.cursor(dictionary=True)
+    table_name = get_evaluations_table(FEATURE_TYPE)
 
-    cursor.execute(
-        f"""
+    if table_name == EVALUATIONS_TABLE:
+        cursor.execute(
+            f"""
         SELECT * FROM {EVALUATIONS_TABLE}
         WHERE user_id = %s AND lesson_id = %s
           AND feature_type = %s
         ORDER BY evaluated_at DESC
         LIMIT 1
         """,
-        (user_id, lesson_id, FEATURE_TYPE),
-    )
+            (user_id, lesson_id, FEATURE_TYPE),
+        )
+    else:
+        cursor.execute(
+            """
+            SELECT * FROM tilawah_evaluations
+            WHERE user_id = %s AND lesson_id = %s
+            ORDER BY evaluated_at DESC
+            LIMIT 1
+            """,
+            (user_id, lesson_id),
+        )
 
     row = cursor.fetchone()
     cursor.close()
@@ -53,10 +77,12 @@ def get_last_tilawah_evaluation(user_id: int, lesson_id: int):
 def get_tilawah_progress(user_id: int, quiz_code: str, pass_threshold: int = 50):
     db = get_db()
     cursor = db.cursor(dictionary=True)
+    table_name = get_evaluations_table(FEATURE_TYPE)
 
     # ambil attempt terakhir (untuk detail)
-    cursor.execute(
-        f"""
+    if table_name == EVALUATIONS_TABLE:
+        cursor.execute(
+            f"""
         SELECT te.score_final
         FROM {EVALUATIONS_TABLE} te
         JOIN quizzes q ON q.id = te.lesson_id
@@ -64,8 +90,20 @@ def get_tilawah_progress(user_id: int, quiz_code: str, pass_threshold: int = 50)
         ORDER BY te.evaluated_at DESC
         LIMIT 1
         """,
-        (user_id, quiz_code, FEATURE_TYPE),
-    )
+            (user_id, quiz_code, FEATURE_TYPE),
+        )
+    else:
+        cursor.execute(
+            """
+            SELECT te.score_final
+            FROM tilawah_evaluations te
+            JOIN quizzes q ON q.id = te.lesson_id
+            WHERE te.user_id = %s AND q.quiz_code = %s
+            ORDER BY te.evaluated_at DESC
+            LIMIT 1
+            """,
+            (user_id, quiz_code),
+        )
     last_row = cursor.fetchone()
     cursor.close()
     db.close()
@@ -91,16 +129,28 @@ def get_tilawah_progress(user_id: int, quiz_code: str, pass_threshold: int = 50)
 def get_best_tilawah_score(user_id: int, quiz_code: str):
     db = get_db()
     cursor = db.cursor(dictionary=True)
+    table_name = get_evaluations_table(FEATURE_TYPE)
 
-    cursor.execute(
-        f"""
+    if table_name == EVALUATIONS_TABLE:
+        cursor.execute(
+            f"""
         SELECT MAX(te.score_final) AS best_score
         FROM {EVALUATIONS_TABLE} te
         JOIN quizzes q ON q.id = te.lesson_id
         WHERE te.user_id = %s AND q.quiz_code = %s AND te.feature_type = %s
         """,
-        (user_id, quiz_code, FEATURE_TYPE),
-    )
+            (user_id, quiz_code, FEATURE_TYPE),
+        )
+    else:
+        cursor.execute(
+            """
+            SELECT MAX(te.score_final) AS best_score
+            FROM tilawah_evaluations te
+            JOIN quizzes q ON q.id = te.lesson_id
+            WHERE te.user_id = %s AND q.quiz_code = %s
+            """,
+            (user_id, quiz_code),
+        )
     row = cursor.fetchone()
     cursor.close()
     db.close()
@@ -114,15 +164,26 @@ def get_average_tilawah_score(user_id: int) -> float:
     """
     db = get_db()
     cursor = db.cursor(dictionary=True)
+    table_name = get_evaluations_table(FEATURE_TYPE)
 
-    cursor.execute(
-        f"""
+    if table_name == EVALUATIONS_TABLE:
+        cursor.execute(
+            f"""
         SELECT AVG(score_final) AS avg_score
         FROM {EVALUATIONS_TABLE}
         WHERE user_id = %s AND feature_type = %s
         """,
-        (user_id, FEATURE_TYPE),
-    )
+            (user_id, FEATURE_TYPE),
+        )
+    else:
+        cursor.execute(
+            """
+            SELECT AVG(score_final) AS avg_score
+            FROM tilawah_evaluations
+            WHERE user_id = %s
+            """,
+            (user_id,),
+        )
     row = cursor.fetchone()
     cursor.close()
     db.close()
