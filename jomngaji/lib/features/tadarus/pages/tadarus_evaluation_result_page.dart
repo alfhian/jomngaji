@@ -20,6 +20,66 @@ class TadarusEvaluationResultPage extends StatelessWidget {
     required this.totalAyah,
   });
 
+  ({Color bgColor, Color badgeColor, String headline, String subtitle}) _evaluationTone() {
+    final score = result.score.clamp(0, 100);
+    final totalIssues = result.issueDetails.length;
+    final severeIssueCount = result.issueDetails.where((e) {
+      return e.code == 'letter_replace' || e.code == 'letter_missing' || e.code == 'letter_extra';
+    }).length;
+
+    final issuePressure = ((severeIssueCount > 0 ? severeIssueCount : totalIssues) / 12).clamp(0.0, 1.0);
+    final scorePressure = (1 - (score / 100)).clamp(0.0, 1.0);
+    final severity = (scorePressure * 0.65) + (issuePressure * 0.35);
+
+    if (score <= 15 || severity >= 0.9) {
+      return (
+        bgColor: const Color(0xFFF25F5C),
+        badgeColor: const Color(0xFFFFB4B2),
+        headline: 'Bacaan belum sesuai.',
+        subtitle: 'Banyak huruf belum tepat. Ulangi perlahan per kata sambil meniru contoh audio.',
+      );
+    }
+    if (score <= 35 || severity >= 0.75) {
+      return (
+        bgColor: const Color(0xFFF47D4F),
+        badgeColor: const Color(0xFFFFC39E),
+        headline: 'Masih banyak kesalahan.',
+        subtitle: 'Fokus ke makhraj dan urutan huruf. Jangan lanjut cepat sebelum bacaan stabil.',
+      );
+    }
+    if (score <= 55 || severity >= 0.6) {
+      return (
+        bgColor: const Color(0xFFF3A73F),
+        badgeColor: const Color(0xFFFFD98C),
+        headline: 'Cukup, tapi perlu perbaikan.',
+        subtitle: 'Masih ada beberapa bagian yang salah. Latih potongan ayat yang ditandai merah.',
+      );
+    }
+    if (score <= 72 || severity >= 0.45) {
+      return (
+        bgColor: const Color(0xFFE7B83D),
+        badgeColor: const Color(0xFFFCE8A1),
+        headline: 'Lumayan baik.',
+        subtitle: 'Kesalahan mulai berkurang. Pertahankan tempo pelan dan perjelas pelafalan.',
+      );
+    }
+    if (score <= 88 || severity >= 0.25) {
+      return (
+        bgColor: const Color(0xFF6EC09B),
+        badgeColor: const Color(0xFFBFEEDB),
+        headline: 'Bacaan sudah baik.',
+        subtitle: 'Tinggal rapikan detail kecil agar makin konsisten dan mantap.',
+      );
+    }
+
+    return (
+      bgColor: const Color(0xFF4FB286),
+      badgeColor: const Color(0xFFA8E8CF),
+      headline: 'Sangat baik, pertahankan!',
+      subtitle: 'Pelafalanmu sudah rapi dan stabil. Lanjutkan ke ayat berikutnya.',
+    );
+  }
+
   static bool _isArabicDiacritic(int codeUnit) {
     return (codeUnit >= 0x0610 && codeUnit <= 0x061A) ||
         (codeUnit >= 0x064B && codeUnit <= 0x065F) ||
@@ -94,11 +154,12 @@ class TadarusEvaluationResultPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final score = result.score.clamp(0, 100);
     final hasNext = currentAyah < totalAyah;
+    final tone = _evaluationTone();
 
     return Scaffold(
       backgroundColor: AppColors.scaffold,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF78C9A6),
+        backgroundColor: tone.bgColor,
         foregroundColor: Colors.white,
         title: Text(
           'Penilaian',
@@ -110,15 +171,15 @@ class TadarusEvaluationResultPage extends StatelessWidget {
           Container(
             width: double.infinity,
             padding: const EdgeInsets.fromLTRB(16, 14, 16, 18),
-            color: const Color(0xFF78C9A6),
+            color: tone.bgColor,
             child: Row(
               children: [
                 Expanded(
                   child: Text(
-                    result.feedback.isNotEmpty ? result.feedback : 'Pelafalanmu sudah baik. Pertahankan!',
+                    '${tone.headline}\n${tone.subtitle}',
                     style: GoogleFonts.plusJakartaSans(
                       color: Colors.white,
-                      fontSize: 18,
+                      fontSize: 16,
                       fontWeight: FontWeight.w700,
                       height: 1.3,
                     ),
@@ -131,7 +192,7 @@ class TadarusEvaluationResultPage extends StatelessWidget {
                   child: CircularProgressIndicator(
                     value: score / 100,
                     strokeWidth: 7,
-                    backgroundColor: Colors.white38,
+                    backgroundColor: tone.badgeColor.withOpacity(0.45),
                     valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
                   ),
                 ),
@@ -172,12 +233,12 @@ class TadarusEvaluationResultPage extends StatelessWidget {
                           padding: const EdgeInsets.only(bottom: 6),
                           child: Text(
                             '• $e',
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 12,
-                              color: Colors.redAccent,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 12,
+                      color: score <= 35 ? Colors.redAccent : Colors.orange.shade700,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                         ),
                       ),
               ],
