@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -15,6 +14,7 @@ import '../../../models/surah.dart';
 import '../../../models/evaluation_result.dart';
 import '../../../services/evaluation_api.dart';
 import '../../../core/widgets/custom_gradient_appbar.dart';
+import 'tadarus_evaluation_result_page.dart';
 
 class EvaluatePage extends StatefulWidget {
   final Surah surah;
@@ -64,86 +64,6 @@ class _EvaluatePageState extends State<EvaluatePage> {
       return "Pelafalan belum cocok ❌ coba dengarkan contoh lalu ulangi perlahan.";
     }
   }
-
-  static bool _isArabicDiacritic(int codeUnit) {
-    return (codeUnit >= 0x0610 && codeUnit <= 0x061A) ||
-        (codeUnit >= 0x064B && codeUnit <= 0x065F) ||
-        codeUnit == 0x0670 ||
-        codeUnit == 0x06ED ||
-        codeUnit == 0x0640;
-  }
-
-  static bool _isWhitespaceOrMark(String char) {
-    final code = char.codeUnitAt(0);
-    if (char.trim().isEmpty) return true;
-    return _isArabicDiacritic(code);
-  }
-
-  List<TextSpan> _buildAyahHighlightSpans(
-    String originalText,
-    List<PronunciationIssue> issues,
-  ) {
-    final letterIssues = issues.where((e) {
-      return e.location == 'huruf' &&
-          e.startIndex != null &&
-          e.endIndex != null &&
-          (e.endIndex! > e.startIndex!);
-    }).toList();
-
-    if (letterIssues.isEmpty) {
-      return [
-        TextSpan(
-          text: originalText,
-          style: GoogleFonts.amiri(
-            fontSize: 30,
-            height: 1.9,
-            color: const Color(0xFF0F172A),
-          ),
-        ),
-      ];
-    }
-
-    final normalizedToOriginal = <int>[];
-    for (int i = 0; i < originalText.length; i++) {
-      final ch = originalText[i];
-      if (_isWhitespaceOrMark(ch)) continue;
-      normalizedToOriginal.add(i);
-    }
-
-    final highlightedIndexes = <int>{};
-    for (final issue in letterIssues) {
-      final start = issue.startIndex!;
-      final endExclusive = issue.endIndex!;
-      if (start < 0 || normalizedToOriginal.isEmpty) continue;
-      final safeStart = math.min(start, normalizedToOriginal.length - 1);
-      final safeEnd = math.min(
-        math.max(endExclusive - 1, safeStart),
-        normalizedToOriginal.length - 1,
-      );
-      for (int idx = safeStart; idx <= safeEnd; idx++) {
-        highlightedIndexes.add(normalizedToOriginal[idx]);
-      }
-    }
-
-    final spans = <TextSpan>[];
-    for (int i = 0; i < originalText.length; i++) {
-      final ch = originalText[i];
-      final isHighlighted = highlightedIndexes.contains(i);
-      spans.add(
-        TextSpan(
-          text: ch,
-          style: GoogleFonts.amiri(
-            fontSize: 30,
-            height: 1.9,
-            color: isHighlighted ? Colors.redAccent : const Color(0xFF0F172A),
-            fontWeight: isHighlighted ? FontWeight.w700 : FontWeight.w500,
-          ),
-        ),
-      );
-    }
-    return spans;
-  }
-
 
   @override
   void initState() {
@@ -337,7 +257,7 @@ class _EvaluatePageState extends State<EvaluatePage> {
       );
 
       final result = EvaluationResult.fromJson(json);
-      _showResult(result);
+      await _showResult(result);
     } finally {
       setState(() => _isEvaluating = false);
     }
@@ -542,275 +462,27 @@ class _EvaluatePageState extends State<EvaluatePage> {
     );
   }
 
-  void _showResult(EvaluationResult r) {
-    final score = r.score.clamp(0, 100);
-    final ayahText = widget.surah.ayahs[_currentAyahIndex].text;
-
-    Color scoreColor;
-    String label;
-    String emoji;
-
-    if (score >= 90) {
-      scoreColor = const Color(0xFF42C88A);
-      label = "MasyaAllah!";
-      emoji = "🌟";
-    } else if (score >= 75) {
-      scoreColor = const Color(0xFF5FB3F3);
-      label = "Bagus!";
-      emoji = "👍";
-    } else if (score >= 50) {
-      scoreColor = Colors.orange;
-      label = "Cukup Baik";
-      emoji = "🙂";
-    } else {
-      scoreColor = Colors.redAccent;
-      label = "Perlu Latihan";
-      emoji = "⚠️";
-    }
-
+  Future<void> _showResult(EvaluationResult r) async {
+    final ayah = widget.surah.ayahs[_currentAyahIndex];
     SystemSound.play(SystemSoundType.alert);
-
-    showGeneralDialog(
-      context: context,
-      barrierDismissible: true,
-      barrierLabel: "score",
-      barrierColor: Colors.black54,
-      transitionDuration: const Duration(milliseconds: 280),
-      pageBuilder: (_, __, ___) {
-        return Center(
-          child: Material(
-            color: Colors.transparent,
-            child: Container(
-              width: MediaQuery.of(context).size.width * 0.85,
-              constraints: BoxConstraints(
-                maxHeight: MediaQuery.of(context).size.height * 0.82,
-              ),
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(22),
-                boxShadow: const [
-                  BoxShadow(
-                    blurRadius: 30,
-                    color: Colors.black26,
-                  ),
-                ],
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Flexible(
-                    child: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                  Text(
-                    "$emoji  $label",
-                    style: GoogleFonts.poppins(
-                      fontSize: 21,
-                      fontWeight: FontWeight.w700,
-                      color: scoreColor,
-                    ),
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  // ===== SCORE RING (FIXED & LEBIH LEGA) =====
-                  SizedBox(
-                    width: 124,
-                    height: 124,
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        // Glow (lebih besar dari ring)
-                        Container(
-                          width: 124,
-                          height: 124,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            gradient: RadialGradient(
-                              colors: [
-                                scoreColor.withOpacity(0.25),
-                                Colors.transparent,
-                              ],
-                            ),
-                          ),
-                        ),
-
-                        // Progress ring (lebih kecil)
-                        SizedBox(
-                          width: 108,
-                          height: 108,
-                          child: CircularProgressIndicator(
-                            value: score / 100,
-                            strokeWidth: 12,
-                            backgroundColor: Colors.grey.shade200,
-                            valueColor:
-                                AlwaysStoppedAnimation<Color>(scoreColor),
-                          ),
-                        ),
-
-                        // Score text (AMAN, tidak ketutup)
-                        Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              "$score",
-                              style: GoogleFonts.poppins(
-                                fontSize: 34,
-                                fontWeight: FontWeight.bold,
-                                color: scoreColor,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              "Skor",
-                              style: GoogleFonts.poppins(
-                                fontSize: 12,
-                                color: Colors.grey.shade600,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 14),
-
-                  // ===== DESKRIPSI =====
-                  Text(
-                    _scoreDescription(score),
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.poppins(
-                      fontSize: 14,
-                      height: 1.6,
-                      color: Colors.grey.shade700,
-                    ),
-                  ),
-
-                  if (r.issueDetails.any((e) => e.location == 'huruf')) ...[
-                    const SizedBox(height: 16),
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF8FAFC),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: const Color(0xFFE2E8F0)),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Detail Kesalahan Per Huruf',
-                            style: GoogleFonts.poppins(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.redAccent,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Directionality(
-                            textDirection: TextDirection.rtl,
-                            child: RichText(
-                              textAlign: TextAlign.right,
-                              text: TextSpan(
-                                children: _buildAyahHighlightSpans(
-                                  ayahText,
-                                  r.issueDetails,
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Huruf berwarna merah menandakan bagian yang perlu diperbaiki.',
-                            style: GoogleFonts.poppins(
-                              fontSize: 11.5,
-                              color: Colors.grey.shade700,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-
-                  // ===== ERROR LIST =====
-                  if (r.errors.isNotEmpty) ...[
-                    const SizedBox(height: 16),
-                    ...r.errors.map(
-                      (e) => Padding(
-                        padding: const EdgeInsets.only(top: 4),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(
-                              Icons.error_outline,
-                              size: 16,
-                              color: Colors.redAccent,
-                            ),
-                            const SizedBox(width: 6),
-                            Flexible(
-                              child: Text(
-                                e,
-                                textAlign: TextAlign.center,
-                                style: GoogleFonts.poppins(
-                                  fontSize: 13,
-                                  color: Colors.redAccent,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-
-                ],
-              ),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 50,
-                    child: ElevatedButton(
-                      onPressed: () => Navigator.pop(context),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: scoreColor,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                      ),
-                      child: Text(
-                        "Tutup",
-                        textAlign: TextAlign.center,
-                        style: GoogleFonts.poppins(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                          height: 1.1,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
-      },
-      transitionBuilder: (_, anim, __, child) {
-        return Transform.scale(
-          scale: Curves.easeOutBack.transform(anim.value),
-          child: Opacity(
-            opacity: anim.value,
-            child: child,
-          ),
-        );
-      },
+    final action = await Navigator.push<String>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => TadarusEvaluationResultPage(
+          result: r,
+          ayahText: ayah.text,
+          currentAyah: ayah.ayah,
+          totalAyah: widget.surah.ayahs.length,
+        ),
+      ),
     );
+
+    if (!mounted) return;
+    if (action == 'next') {
+      _nextAyah();
+      setState(() => _recordedPath = null);
+    } else if (action == 'retry') {
+      setState(() => _recordedPath = null);
+    }
   }
 }
