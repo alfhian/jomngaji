@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../core/theme/app_design_tokens.dart';
 import '../../../services/prayer_times_service.dart';
 
 class PrayerTimesLiveCard extends StatefulWidget {
@@ -142,33 +143,42 @@ class _PrayerTimesLiveCardState extends State<PrayerTimesLiveCard> {
   @override
   Widget build(BuildContext context) {
     if (_loading) {
-      return const Center(child: CircularProgressIndicator());
-    }
-    if (_error != null) {
       return Container(
-        padding: const EdgeInsets.all(14),
+        height: 180,
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFFE2E8F0)),
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          boxShadow: AppShadows.soft,
+        ),
+        child: const Center(child: CircularProgressIndicator(strokeWidth: 3)),
+      );
+    }
+    
+    if (_error != null) {
+      return Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          boxShadow: AppShadows.soft,
+          border: Border.all(color: Colors.red.shade100),
         ),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            const Icon(Icons.error_outline_rounded, color: Colors.redAccent, size: 32),
+            const SizedBox(height: 12),
             Text(
-              'Jadwal sholat belum bisa dimuat',
-              style: GoogleFonts.poppins(fontWeight: FontWeight.w700),
+              'Gagal memuat jadwal sholat',
+              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
             ),
-            const SizedBox(height: 6),
-            Text(
-              _error ?? '',
-              style: GoogleFonts.poppins(fontSize: 12, color: Colors.black54),
-            ),
-            const SizedBox(height: 8),
-            TextButton.icon(
+            const SizedBox(height: 12),
+            ElevatedButton(
               onPressed: _load,
-              icon: const Icon(Icons.refresh_rounded),
-              label: const Text('Coba lagi'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.redAccent,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              ),
+              child: const Text('Coba Lagi'),
             ),
           ],
         ),
@@ -182,110 +192,161 @@ class _PrayerTimesLiveCardState extends State<PrayerTimesLiveCard> {
         '${left.inHours.toString().padLeft(2, '0')}:${(left.inMinutes % 60).toString().padLeft(2, '0')}';
 
     return Container(
-      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
+        color: AppColors.primary,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        boxShadow: AppShadows.medium,
         gradient: const LinearGradient(
-          colors: [Color(0xFF0F172A), Color(0xFF1E293B)],
+          colors: [Color(0xFF1E293B), Color(0xFF0F172A)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(18),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              const Icon(Icons.access_time_filled_rounded, color: Colors.white),
-              const SizedBox(width: 8),
-              Text(
-                'Waktu Sholat Hari Ini',
-                style: GoogleFonts.poppins(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 15,
-                ),
-              ),
-              const Spacer(),
-              IconButton(
-                onPressed: _load,
-                icon: const Icon(Icons.refresh_rounded, color: Colors.white70),
-                tooltip: 'Refresh jadwal',
-              ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
-            decoration: BoxDecoration(
-              color: Colors.white12,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: DropdownButtonHideUnderline(
-              child: DropdownButton<String>(
-                value: _selectedCity,
-                dropdownColor: const Color(0xFF1E293B),
-                iconEnabledColor: Colors.white70,
-                style: GoogleFonts.poppins(color: Colors.white, fontSize: 12),
-                items: PrayerTimesService.malaysiaCities.map((city) {
-                  return DropdownMenuItem(value: city, child: Text(city));
-                }).toList(),
-                onChanged: (city) {
-                  if (city != null) _onCityChanged(city);
-                },
-              ),
-            ),
-          ),
-          Text(
-            '${data.readableDate} • ${data.timezone}',
-            style: GoogleFonts.poppins(fontSize: 11.5, color: Colors.white70),
-          ),
-          const SizedBox(height: 12),
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: Colors.white12,
-              borderRadius: BorderRadius.circular(12),
-            ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 20, 12, 12),
             child: Row(
               children: [
-                Text(
-                  'Selanjutnya: ${_labelPrayer(next.prayer)} (${next.time})',
-                  style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w600),
+                const Icon(Icons.location_on_rounded, color: AppColors.accent, size: 20),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<String>(
+                      value: _selectedCity,
+                      dropdownColor: AppColors.primaryLight,
+                      iconEnabledColor: Colors.white70,
+                      isDense: true,
+                      style: GoogleFonts.plusJakartaSans(
+                        color: Colors.white,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      items: PrayerTimesService.malaysiaCities.map((city) {
+                        return DropdownMenuItem(value: city, child: Text(city));
+                      }).toList(),
+                      onChanged: (city) {
+                        if (city != null) _onCityChanged(city);
+                      },
+                    ),
+                  ),
                 ),
-                const Spacer(),
-                Text(
-                  countdown,
-                  style: GoogleFonts.poppins(
-                    color: const Color(0xFF86EFAC),
-                    fontWeight: FontWeight.w700,
+                IconButton(
+                  onPressed: _load,
+                  icon: const Icon(Icons.refresh_rounded, color: Colors.white54, size: 20),
+                ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _labelPrayer(next.prayer),
+                      style: GoogleFonts.plusJakartaSans(
+                        color: Colors.white,
+                        fontSize: 28,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                    Text(
+                      'Pukul ${next.time}',
+                      style: GoogleFonts.plusJakartaSans(
+                        color: Colors.white70,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: AppColors.accent.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                    border: Border.all(color: AppColors.accent.withOpacity(0.3)),
+                  ),
+                  child: Column(
+                    children: [
+                      Text(
+                        'Mendatang',
+                        style: GoogleFonts.plusJakartaSans(
+                          color: AppColors.accent,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                      Text(
+                        '- $countdown',
+                        style: GoogleFonts.plusJakartaSans(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: PrayerTimesService.trackedPrayers.map((p) {
-              final t = data.timings[p] ?? '--:--';
-              return Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                decoration: BoxDecoration(
-                  color: Colors.white10,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Text(
-                  '${_labelPrayer(p)} • $t',
-                  style: GoogleFonts.poppins(
-                    color: Colors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              );
-            }).toList(),
+          const SizedBox(height: 24),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.05),
+              borderRadius: const BorderRadius.only(
+                bottomLeft: Radius.circular(AppRadius.md),
+                bottomRight: Radius.circular(AppRadius.md),
+              ),
+            ),
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: PrayerTimesService.trackedPrayers.map((p) {
+                  final t = data.timings[p] ?? '--:--';
+                  final isNext = p == next.prayer;
+                  return Container(
+                    margin: const EdgeInsets.only(right: 12),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: isNext ? AppColors.accent : Colors.white.withOpacity(0.05),
+                      borderRadius: BorderRadius.circular(AppRadius.sm),
+                    ),
+                    child: Column(
+                      children: [
+                        Text(
+                          _labelPrayer(p),
+                          style: GoogleFonts.plusJakartaSans(
+                            color: isNext ? Colors.white : Colors.white70,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          t,
+                          style: GoogleFonts.plusJakartaSans(
+                            color: Colors.white,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
           ),
         ],
       ),

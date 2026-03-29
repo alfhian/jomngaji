@@ -12,6 +12,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 import '../../../core/config/api_config.dart';
+import '../../../core/theme/app_design_tokens.dart';
 import '../../../core/widgets/custom_gradient_appbar.dart';
 import '../../../features/auth/services/auth_service.dart';
 import '../../../services/progress_service.dart';
@@ -172,11 +173,11 @@ class _ExamIqraPageState extends State<ExamIqraPage> {
     setState(() {
       _answerLocked = true;
       _selectedOption = selected;
-      _feedback = isCorrect ? '✅ Benar' : '❌ Salah. Jawaban: $correct';
+      _feedback = isCorrect ? 'Luar biasa! ✅' : 'Kurang tepat. Jawaban: $correct ❌';
       if (isCorrect) _mcqCorrect++;
     });
 
-    await Future<void>.delayed(const Duration(milliseconds: 850));
+    await Future<void>.delayed(const Duration(milliseconds: 1500));
     _goNext();
   }
 
@@ -185,11 +186,11 @@ class _ExamIqraPageState extends State<ExamIqraPage> {
 
     final dir = await getTemporaryDirectory();
     final path =
-        '${dir.path}/exam_iqra_${DateTime.now().millisecondsSinceEpoch}.aac';
+        '${dir.path}/exam_iqra_${DateTime.now().millisecondsSinceEpoch}.wav';
 
     await _recorder.startRecorder(
       toFile: path,
-      codec: Codec.aacADTS,
+      codec: Codec.pcm16WAV,
       sampleRate: 16000,
       numChannels: 1,
       bitRate: 16000,
@@ -297,74 +298,84 @@ class _ExamIqraPageState extends State<ExamIqraPage> {
       _resultConfetti.play();
     }
 
-    showGeneralDialog(
+    showDialog(
       context: context,
       barrierDismissible: false,
-      barrierLabel: 'result',
-      barrierColor: Colors.black54,
-      transitionDuration: const Duration(milliseconds: 320),
-      pageBuilder: (_, __, ___) => const SizedBox.shrink(),
-      transitionBuilder: (_, anim, __, ___) {
-        final v = Curves.easeOutBack.transform(anim.value);
-        return Opacity(
-          opacity: v,
-          child: Transform.scale(
-            scale: v,
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                if (isGreat)
-                  ConfettiWidget(
+      builder: (_) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          surfaceTintColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.lg)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 16),
+              if (isGreat)
+                Align(
+                  alignment: Alignment.topCenter,
+                  child: ConfettiWidget(
                     confettiController: _resultConfetti,
                     blastDirection: -3.14 / 2,
                     numberOfParticles: 16,
                     gravity: 0.3,
-                  ),
-                Dialog(
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 22, 20, 22),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          isGreat ? 'MasyaAllah! Nilai Bagus 🌟' : 'Tes Akhir Selesai ✅',
-                          textAlign: TextAlign.center,
-                          style: GoogleFonts.poppins(
-                            fontWeight: FontWeight.w800,
-                            fontSize: 22,
-                            color: isGreat ? const Color(0xFF2F9E6E) : Colors.black87,
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        Text(
-                          'Pilihan ganda benar: $_mcqCorrect/5\n'
-                          'Pengucapan lolos: $_pronunciationPassed/5\n'
-                          'Final score: ${finalScore.toStringAsFixed(1)}%',
-                          textAlign: TextAlign.center,
-                          style: GoogleFonts.poppins(fontSize: 14),
-                        ),
-                        const SizedBox(height: 18),
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton(
-                            onPressed: () {
-                              Navigator.pop(context);
-                              Navigator.pop(context);
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF42C88A),
-                              foregroundColor: Colors.white,
-                            ),
-                            child: const Text('Kembali'),
-                          ),
-                        ),
-                      ],
-                    ),
+                    colors: const [AppColors.accent, AppColors.secondary, AppColors.gold],
                   ),
                 ),
-              ],
-            ),
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: (isGreat ? AppColors.accent : AppColors.primary).withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  isGreat ? Icons.emoji_events_rounded : Icons.assignment_turned_in_rounded,
+                  color: isGreat ? AppColors.accent : AppColors.primary,
+                  size: 64,
+                ),
+              ),
+              const SizedBox(height: 24),
+              Text(
+                isGreat ? 'MasyaAllah! Bagus 🌟' : 'Evaluasi Selesai! ✅',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.textPrimary,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Pilihan Ganda: $_mcqCorrect/5\n'
+                'Pengucapan: $_pronunciationPassed/5',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textSecondary,
+                  height: 1.5,
+                ),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                '${finalScore.toStringAsFixed(0)}%',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 48,
+                  fontWeight: FontWeight.w900,
+                  color: isGreat ? AppColors.accent : AppColors.primary,
+                ),
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    Navigator.pop(context);
+                  },
+                  child: const Text('Kembali ke Menu'),
+                ),
+              ),
+            ],
           ),
         );
       },
@@ -397,7 +408,15 @@ class _ExamIqraPageState extends State<ExamIqraPage> {
 
   void _showSnack(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
+      SnackBar(
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.all(24),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.md)),
+        content: Text(
+          message,
+          style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600),
+        ),
+      ),
     );
   }
 
@@ -406,108 +425,131 @@ class _ExamIqraPageState extends State<ExamIqraPage> {
     final progress = (_currentIndex + 1) / _questions.length;
 
     return Scaffold(
-      appBar: const CustomGradientAppBar(title: 'Tes Akhir Iqra'),
+      backgroundColor: AppColors.scaffold,
+      appBar: const CustomGradientAppBar(title: 'Evaluasi Iqra'),
       body: Stack(
         children: [
           Positioned.fill(
-            child: Image.asset(
-              'assets/images/ujian-mengaji.png',
-              fit: BoxFit.fitWidth,
-              alignment: Alignment.bottomCenter,
-            ),
-          ),
-          Positioned.fill(
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Colors.white.withOpacity(0.88),
-                    Colors.white.withOpacity(0.82),
-                    Colors.white.withOpacity(0.72),
-                  ],
-                ),
+            child: Opacity(
+              opacity: 0.15,
+              child: Image.asset(
+                'assets/images/ujian-mengaji.png',
+                fit: BoxFit.cover,
+                alignment: Alignment.center,
               ),
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.all(18),
+          SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
             child: Column(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.9),
-                    borderRadius: BorderRadius.circular(16),
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(AppRadius.md),
+                    boxShadow: AppShadows.soft,
                   ),
                   child: Column(
                     children: [
-                      LinearProgressIndicator(
-                        value: progress,
-                        minHeight: 8,
-                        borderRadius: BorderRadius.circular(16),
-                        color: const Color(0xFF42C88A),
-                        backgroundColor: Colors.grey.shade300,
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Soal ${_currentIndex + 1} dari ${_questions.length}',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: AppColors.gold.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(AppRadius.full),
+                            ),
+                            child: Text(
+                              _q.type == _ExamType.mcq ? 'Pilihan Ganda' : 'Pengucapan',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w800,
+                                color: AppColors.gold,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Soal ${_currentIndex + 1}/${_questions.length} • ${_q.type == _ExamType.mcq ? 'Pilihan Ganda' : 'Pengucapan'}',
-                        style: GoogleFonts.poppins(fontSize: 12, color: Colors.black54),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(18),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.92),
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.06),
-                        blurRadius: 12,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    children: [
-                      Text(
-                        _q.prompt,
-                        style: GoogleFonts.poppins(fontWeight: FontWeight.w700),
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        _q.arabic,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          fontSize: 42,
-                          color: Color(0xFF42C88A),
-                          fontWeight: FontWeight.bold,
+                      const SizedBox(height: 16),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(AppRadius.full),
+                        child: LinearProgressIndicator(
+                          value: progress.clamp(0, 1),
+                          minHeight: 10,
+                          backgroundColor: AppColors.scaffold,
+                          color: AppColors.accent,
                         ),
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(height: 14),
-                AnimatedOpacity(
-                  duration: const Duration(milliseconds: 220),
-                  opacity: _feedback.isEmpty ? 0 : 1,
-                  child: Text(
-                    _feedback,
-                    style: GoogleFonts.poppins(
-                      fontWeight: FontWeight.w700,
-                      color: _feedback.contains('✅') ? Colors.green : Colors.red,
+                const SizedBox(height: 32),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 24),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(AppRadius.lg),
+                    boxShadow: AppShadows.medium,
+                    border: Border.all(
+                      color: AppColors.border.withOpacity(0.5),
+                      width: 1,
                     ),
                   ),
+                  child: Column(
+                    children: [
+                      Text(
+                        _q.prompt,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      Text(
+                        _q.arabic,
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.amiri(
+                          fontSize: 48,
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.bold,
+                          height: 1.5,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                const SizedBox(height: 10),
-                Expanded(
-                  child: _q.type == _ExamType.mcq ? _buildMcqOptions() : _buildPronunciationPanel(),
-                ),
+                const SizedBox(height: 24),
+                if (_feedback.isNotEmpty)
+                  Container(
+                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
+                    decoration: BoxDecoration(
+                      color: (_feedback.contains('✅') || _feedback.contains('Luar')) ? AppColors.accent.withOpacity(0.1) : Colors.redAccent.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(AppRadius.full),
+                    ),
+                    child: Text(
+                      _feedback,
+                      style: GoogleFonts.plusJakartaSans(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 14,
+                        color: (_feedback.contains('✅') || _feedback.contains('Luar')) ? AppColors.accent : Colors.redAccent,
+                      ),
+                    ),
+                  ),
+                const SizedBox(height: 32),
+                _q.type == _ExamType.mcq ? _buildMcqOptions() : _buildPronunciationPanel(),
+                const SizedBox(height: 40),
               ],
             ),
           ),
@@ -517,85 +559,118 @@ class _ExamIqraPageState extends State<ExamIqraPage> {
   }
 
   Widget _buildMcqOptions() {
-    return ListView.separated(
-      itemCount: _q.options.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 12),
-      itemBuilder: (_, i) {
-        final opt = _q.options[i];
+    return Column(
+      children: _q.options.map((opt) {
         final selected = _selectedOption == opt;
+        final isCorrect = opt == _q.correct;
+        
+        Color bg = Colors.white;
+        Color border = AppColors.border;
+        Color text = AppColors.textPrimary;
+
+        if (_answerLocked) {
+          if (isCorrect) {
+            bg = AppColors.accent.withOpacity(0.1);
+            border = AppColors.accent;
+            text = AppColors.accent;
+          } else if (selected) {
+            bg = Colors.redAccent.withOpacity(0.1);
+            border = Colors.redAccent;
+            text = Colors.redAccent;
+          } else {
+            bg = AppColors.scaffold;
+            text = AppColors.textPlaceholder;
+          }
+        } else if (selected) {
+          border = AppColors.accent;
+        }
 
         return GestureDetector(
           onTap: () => _answerMcq(opt),
           child: AnimatedContainer(
-            duration: const Duration(milliseconds: 220),
-            padding: const EdgeInsets.symmetric(vertical: 14),
+            duration: const Duration(milliseconds: 200),
+            margin: const EdgeInsets.only(bottom: 16),
+            padding: const EdgeInsets.symmetric(vertical: 18),
             decoration: BoxDecoration(
-              color: selected ? const Color(0xFFE7FFF2) : Colors.white,
-              borderRadius: BorderRadius.circular(16),
+              color: bg,
+              borderRadius: BorderRadius.circular(AppRadius.md),
               border: Border.all(
-                color: selected ? const Color(0xFF42C88A) : Colors.grey.shade300,
+                color: border,
+                width: selected || (_answerLocked && isCorrect) ? 2 : 1,
               ),
+              boxShadow: AppShadows.soft,
             ),
             child: Center(
               child: Text(
                 opt,
-                style: GoogleFonts.poppins(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                  color: const Color(0xFF2F9E6E),
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                  color: text,
                 ),
               ),
             ),
           ),
         );
-      },
+      }).toList(),
     );
   }
 
   Widget _buildPronunciationPanel() {
     return Column(
       children: [
-        ElevatedButton.icon(
-          onPressed: _isRecording ? _stopRecording : _startRecording,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: _isRecording ? Colors.red : const Color(0xFF42C88A),
-            foregroundColor: Colors.white,
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton.icon(
+            onPressed: _isRecording ? _stopRecording : _startRecording,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _isRecording ? Colors.redAccent : AppColors.primary,
+              padding: const EdgeInsets.symmetric(vertical: 18),
+            ),
+            icon: Icon(_isRecording ? Icons.stop_rounded : Icons.mic_rounded, size: 24),
+            label: Text(_isRecording ? 'Berhenti Merekam' : 'Mulai Rekam Suara'),
           ),
-          icon: Icon(_isRecording ? Icons.stop : Icons.mic),
-          label: Text(_isRecording ? 'Stop Rekam' : 'Mulai Rekam'),
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 16),
         Row(
           children: [
             Expanded(
               child: OutlinedButton.icon(
-                onPressed: _isPlaying ? null : _playRecorded,
-                icon: const Icon(Icons.play_arrow_rounded),
+                onPressed: _isPlaying || _recordedPath == null ? null : _playRecorded,
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                ),
+                icon: const Icon(Icons.play_arrow_rounded, size: 24),
                 label: const Text('Putar'),
               ),
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: 16),
             Expanded(
               child: ElevatedButton.icon(
                 onPressed: _isEvaluating ? null : _evaluatePronunciation,
-                icon: const Icon(Icons.auto_awesome),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.accent,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                ),
+                icon: const Icon(Icons.auto_awesome_rounded, size: 24),
                 label: Text(_isEvaluating ? 'Menilai...' : 'Nilai'),
               ),
             ),
           ],
         ),
-        const SizedBox(height: 12),
-        SizedBox(
-          width: double.infinity,
-          child: ElevatedButton(
-            onPressed: _pronunciationDone ? _goNext : null,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF2F9E6E),
-              foregroundColor: Colors.white,
+        const SizedBox(height: 32),
+        if (_pronunciationDone)
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: _goNext,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                padding: const EdgeInsets.symmetric(vertical: 18),
+              ),
+              child: const Text('Lanjut ke Soal Berikutnya'),
             ),
-            child: const Text('Lanjut'),
           ),
-        ),
       ],
     );
   }

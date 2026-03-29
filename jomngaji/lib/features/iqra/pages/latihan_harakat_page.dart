@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../../core/theme/app_design_tokens.dart';
 import '../../../core/widgets/custom_gradient_appbar.dart';
 
 class LatihanHarakatPage extends StatefulWidget {
@@ -16,33 +17,7 @@ class _LatihanHarakatPageState extends State<LatihanHarakatPage> {
   static const int totalQuestionTarget = 10;
 
   final List<String> hurufList = [
-    "ب",
-    "ت",
-    "ث",
-    "ج",
-    "ح",
-    "خ",
-    "د",
-    "ذ",
-    "ر",
-    "ز",
-    "س",
-    "ش",
-    "ص",
-    "ض",
-    "ط",
-    "ظ",
-    "ع",
-    "غ",
-    "ف",
-    "ق",
-    "ك",
-    "ل",
-    "م",
-    "ن",
-    "ه",
-    "و",
-    "ي",
+    "ب", "ت", "ث", "ج", "ح", "خ", "د", "ذ", "ر", "ز", "س", "ش", "ص", "ض", "ط", "ظ", "ع", "غ", "ف", "ق", "ك", "ل", "م", "ن", "ه", "و", "ي",
   ];
 
   final Map<String, String> harakat = {
@@ -105,22 +80,32 @@ class _LatihanHarakatPageState extends State<LatihanHarakatPage> {
     messenger.showSnackBar(
       SnackBar(
         behavior: SnackBarBehavior.floating,
-        margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-        duration: const Duration(milliseconds: 900),
-        backgroundColor: benar ? const Color(0xFF2E7D32) : const Color(0xFFC62828),
-        content: Text(
-          benar
-              ? '✅ Benar! Mantap, lanjut ya!'
-              : '❌ Kurang tepat. Jawaban benar: $correctLatin ($currentHuruf$correctHarakat)',
-          style: GoogleFonts.poppins(
-            color: Colors.white,
-            fontWeight: FontWeight.w600,
-          ),
+        margin: const EdgeInsets.all(24),
+        duration: const Duration(milliseconds: 1500),
+        backgroundColor: benar ? AppColors.accent : Colors.redAccent,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.md)),
+        content: Row(
+          children: [
+            Icon(benar ? Icons.check_circle_rounded : Icons.cancel_rounded, color: Colors.white),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                benar
+                    ? 'Luar biasa! Jawabanmu benar ✨'
+                    : 'Kurang tepat. Jawaban benar: $correctLatin ($currentHuruf$correctHarakat)',
+                style: GoogleFonts.plusJakartaSans(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 14,
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
 
-    await Future<void>.delayed(const Duration(milliseconds: 850));
+    await Future<void>.delayed(const Duration(milliseconds: 1600));
     if (!mounted) return;
 
     if (_questionNumber >= totalQuestionTarget) {
@@ -141,59 +126,78 @@ class _LatihanHarakatPageState extends State<LatihanHarakatPage> {
       context: context,
       barrierDismissible: false,
       builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-        title: Text(
-          'Selesai 🎉',
-          textAlign: TextAlign.center,
-          style: GoogleFonts.poppins(fontWeight: FontWeight.w700),
-        ),
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.lg)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
-              'Skor kamu: $_correctCount/$totalQuestionTarget',
-              style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: AppColors.accent.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.emoji_events_rounded, color: AppColors.accent, size: 64),
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 24),
             Text(
-              '$percent%',
-              style: GoogleFonts.poppins(
-                fontSize: 30,
+              'Latihan Selesai!',
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 22,
                 fontWeight: FontWeight.w800,
-                color: const Color(0xFF42C88A),
+                color: AppColors.textPrimary,
               ),
             ),
+            const SizedBox(height: 8),
+            Text(
+              'Skor kamu: $_correctCount/$totalQuestionTarget',
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textSecondary,
+              ),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              '$percent%',
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 48,
+                fontWeight: FontWeight.w900,
+                color: AppColors.accent,
+              ),
+            ),
+            const SizedBox(height: 24),
           ],
         ),
         actionsAlignment: MainAxisAlignment.center,
+        actionsPadding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
         actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              Navigator.pop(context);
-            },
-            child: Text(
-              'Kembali',
-              style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton(
+              onPressed: () {
+                Navigator.pop(context);
+                Navigator.pop(context);
+              },
+              child: const Text('Kembali ke Menu'),
             ),
           ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF42C88A),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            ),
-            onPressed: () {
-              Navigator.pop(context);
-              setState(() {
-                _questionNumber = 1;
-                _correctCount = 0;
-                _streak = 0;
-              });
-              _generateNewQuestion();
-            },
-            child: Text(
-              'Main Lagi',
-              style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w600),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+                setState(() {
+                  _questionNumber = 1;
+                  _correctCount = 0;
+                  _streak = 0;
+                });
+                _generateNewQuestion();
+              },
+              child: const Text('Latihan Lagi'),
             ),
           ),
         ],
@@ -205,42 +209,44 @@ class _LatihanHarakatPageState extends State<LatihanHarakatPage> {
     final isSelected = _selectedAnswer == label;
     final isCorrectOption = label == correctLatin;
 
-    Color bg = const Color(0xFFE8FFF0);
-    Color text = const Color(0xFF42C88A);
+    Color bg = Colors.white;
+    Color text = AppColors.textPrimary;
+    Color border = AppColors.border;
     IconData? icon;
 
     if (_answered) {
       if (isCorrectOption) {
-        bg = const Color(0xFFD4F7DF);
-        text = const Color(0xFF1B8A4A);
+        bg = AppColors.accent.withOpacity(0.1);
+        text = AppColors.accent;
+        border = AppColors.accent;
         icon = Icons.check_circle_rounded;
       } else if (isSelected) {
-        bg = const Color(0xFFFFE1E1);
-        text = const Color(0xFFC62828);
+        bg = Colors.redAccent.withOpacity(0.1);
+        text = Colors.redAccent;
+        border = Colors.redAccent;
         icon = Icons.cancel_rounded;
       } else {
-        bg = Colors.grey.shade100;
-        text = Colors.grey.shade600;
+        bg = AppColors.scaffold;
+        text = AppColors.textPlaceholder;
+        border = AppColors.border.withOpacity(0.5);
       }
+    } else if (isSelected) {
+        border = AppColors.accent;
     }
 
     return GestureDetector(
       onTap: () => _checkAnswer(label),
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 220),
+        duration: const Duration(milliseconds: 200),
         curve: Curves.easeOut,
-        padding: const EdgeInsets.symmetric(vertical: 16),
+        padding: const EdgeInsets.symmetric(vertical: 20),
         decoration: BoxDecoration(
           color: bg,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 8,
-            ),
-          ],
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          boxShadow: AppShadows.soft,
           border: Border.all(
-            color: isSelected ? text.withOpacity(0.35) : Colors.transparent,
+            color: border,
+            width: isSelected || (_answered && isCorrectOption) ? 2 : 1,
           ),
         ),
         child: Column(
@@ -248,15 +254,15 @@ class _LatihanHarakatPageState extends State<LatihanHarakatPage> {
           children: [
             Text(
               label,
-              style: GoogleFonts.poppins(
-                fontSize: 26,
-                fontWeight: FontWeight.w700,
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 28,
+                fontWeight: FontWeight.w800,
                 color: text,
               ),
             ),
             if (icon != null) ...[
-              const SizedBox(height: 6),
-              Icon(icon, size: 20, color: text),
+              const SizedBox(height: 8),
+              Icon(icon, size: 24, color: text),
             ],
           ],
         ),
@@ -269,97 +275,113 @@ class _LatihanHarakatPageState extends State<LatihanHarakatPage> {
     final progress = _questionNumber / totalQuestionTarget;
 
     return Scaffold(
+      backgroundColor: AppColors.scaffold,
       appBar: const CustomGradientAppBar(title: "Latihan Harakat"),
-      body: Padding(
-        padding: const EdgeInsets.all(20),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(24),
         child: Column(
           children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    'Soal $_questionNumber/$totalQuestionTarget',
-                    style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600),
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(AppRadius.md),
+                boxShadow: AppShadows.soft,
+              ),
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Soal $_questionNumber dari $totalQuestionTarget',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: AppColors.gold.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(AppRadius.full),
+                        ),
+                        child: Text(
+                          'Streak: $_streak 🔥',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.gold,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFEAF9F0),
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: Text(
-                    'Streak: $_streak 🔥',
-                    style: GoogleFonts.poppins(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      color: const Color(0xFF2F9E6E),
+                  const SizedBox(height: 16),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(AppRadius.full),
+                    child: LinearProgressIndicator(
+                      value: progress.clamp(0, 1),
+                      minHeight: 10,
+                      backgroundColor: AppColors.scaffold,
+                      color: AppColors.accent,
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-            const SizedBox(height: 8),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(20),
-              child: LinearProgressIndicator(
-                value: progress.clamp(0, 1),
-                minHeight: 8,
-                backgroundColor: Colors.grey.shade200,
-                color: const Color(0xFF42C88A),
+            const SizedBox(height: 32),
+            Text(
+              "Pilih harakat yang benar!",
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+                color: AppColors.textPrimary,
               ),
             ),
             const SizedBox(height: 24),
-            Text(
-              "Pilih harakat yang benar!",
-              style: GoogleFonts.poppins(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: 20),
             AnimatedContainer(
-              duration: const Duration(milliseconds: 250),
-              padding: const EdgeInsets.symmetric(vertical: 30),
+              duration: const Duration(milliseconds: 300),
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 40),
               decoration: BoxDecoration(
-                color: _answered
-                    ? (_lastAnswerCorrect
-                        ? const Color(0xFFE8F9EE)
-                        : const Color(0xFFFFECEC))
-                    : const Color(0xFFF2FFF6),
-                borderRadius: BorderRadius.circular(24),
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(AppRadius.lg),
+                boxShadow: AppShadows.medium,
                 border: Border.all(
                   color: _answered
-                      ? (_lastAnswerCorrect
-                          ? const Color(0xFF42C88A).withOpacity(0.25)
-                          : Colors.red.withOpacity(0.22))
-                      : Colors.transparent,
+                      ? (_lastAnswerCorrect ? AppColors.accent : Colors.redAccent).withOpacity(0.3)
+                      : AppColors.border.withOpacity(0.5),
+                  width: 2,
                 ),
               ),
               child: Center(
                 child: Text(
                   "$currentHuruf$correctHarakat",
-                  style: const TextStyle(
-                    fontSize: 80,
+                  style: GoogleFonts.amiri(
+                    fontSize: 100,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF42C88A),
+                    color: _answered
+                        ? (_lastAnswerCorrect ? AppColors.accent : Colors.redAccent)
+                        : AppColors.primary,
                   ),
                 ),
               ),
             ),
-            const SizedBox(height: 28),
-            Expanded(
-              child: GridView.count(
-                physics: const NeverScrollableScrollPhysics(),
-                crossAxisCount: 3,
-                mainAxisSpacing: 18,
-                crossAxisSpacing: 18,
-                children: [
-                  _optionButton("A"),
-                  _optionButton("I"),
-                  _optionButton("U"),
-                ],
-              ),
+            const SizedBox(height: 32),
+            GridView.count(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              crossAxisCount: 3,
+              mainAxisSpacing: 16,
+              crossAxisSpacing: 16,
+              childAspectRatio: 0.8,
+              children: [
+                _optionButton("A"),
+                _optionButton("I"),
+                _optionButton("U"),
+              ],
             ),
           ],
         ),

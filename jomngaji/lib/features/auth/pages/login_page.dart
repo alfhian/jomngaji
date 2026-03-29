@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 import '../../../core/localization/app_localization.dart';
+import '../../../core/theme/app_design_tokens.dart';
 import '../../../features/auth/services/auth_service.dart';
 import '../../../routes/app_routes.dart';
 
@@ -46,7 +47,16 @@ class _LoginPageState extends State<LoginPage> {
       Navigator.pushReplacementNamed(context, AppRoutes.home);
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(_friendlyLoginError(e))),
+        SnackBar(
+          behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.all(24),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.md)),
+          backgroundColor: Colors.redAccent,
+          content: Text(
+            _friendlyLoginError(e),
+            style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600),
+          ),
+        ),
       );
     } finally {
       if (mounted) setState(() => isLoading = false);
@@ -86,7 +96,16 @@ class _LoginPageState extends State<LoginPage> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(_friendlyGoogleError(e))),
+        SnackBar(
+          behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.all(24),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.md)),
+          backgroundColor: Colors.redAccent,
+          content: Text(
+            _friendlyGoogleError(e),
+            style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600),
+          ),
+        ),
       );
     } finally {
       if (mounted) setState(() => isGoogleLoading = false);
@@ -96,17 +115,13 @@ class _LoginPageState extends State<LoginPage> {
   String _friendlyGoogleError(Object error) {
     final raw = error.toString();
     if (error is PlatformException && error.code == 'network_error') {
-      return 'Koneksi ke Google Play Services bermasalah (bukan API backend URL). '
-          'Cek internet, tanggal/jam otomatis, lalu coba lagi.';
+      return 'Koneksi ke Google Play Services bermasalah. Cek internet, tanggal/jam otomatis, lalu coba lagi.';
     }
     if (raw.contains('ApiException: 7') || raw.contains('network_error')) {
-      return 'Tidak bisa terhubung ke Google (ApiException: 7). '
-          'Biasanya karena jaringan/Play Services, bukan karena endpoint API aplikasi.';
+      return 'Tidak bisa terhubung ke Google (ApiException: 7).';
     }
     if (raw.contains('10')) {
-      return 'Konfigurasi OAuth Google belum valid (SHA-1 / client ID). '
-          'Pastikan packageName + SHA-1 sesuai, atau set '
-          '--dart-define=GOOGLE_WEB_CLIENT_ID=<web-client-id>.';
+      return 'Konfigurasi OAuth Google belum valid. Pastikan packageName + SHA-1 sesuai.';
     }
     return 'Google login gagal. Silakan coba lagi.';
   }
@@ -114,16 +129,10 @@ class _LoginPageState extends State<LoginPage> {
   String _friendlyLoginError(Object error) {
     final raw = error.toString();
     if (raw.contains('TimeoutException')) {
-      return 'Koneksi ke server timeout. Cek API_BASE_URL (VPS), '
-          'pastikan port terbuka, lalu coba lagi.';
+      return 'Koneksi ke server timeout. Cek internet lalu coba lagi.';
     }
     if (raw.contains('Failed host lookup') || raw.contains('SocketException')) {
-      return 'Backend tidak bisa diakses. Anda bisa set '
-          'API_BASE_URL atau API_BASE_URLS '
-          '(contoh: http://10.0.2.2:4000,http://192.168.1.141:4000,http://10.179.249.20:4000).';
-    }
-    if (raw.contains('Connection refused')) {
-      return 'Backend belum aktif. Jalankan server di port 4000 lalu coba login lagi.';
+      return 'Backend tidak bisa diakses. Cek koneksi internet anda.';
     }
     return 'Login gagal. Periksa email/password dan koneksi internet.';
   }
@@ -137,209 +146,249 @@ class _LoginPageState extends State<LoginPage> {
         return false;
       },
       child: Scaffold(
-        body: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Color(0xFFF2F7FF), Color(0xFFE8F2FF), Color(0xFFFFFFFF)],
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-            ),
-          ),
-          child: SafeArea(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
-              child: Column(
-                children: [
-                Container(
-                  width: 122,
-                  height: 122,
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF2563EB), Color(0xFF38BDF8)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(34),
-                    boxShadow: const [
-                      BoxShadow(
-                        color: Color(0x452563EB),
-                        blurRadius: 26,
-                        offset: Offset(0, 12),
-                      ),
-                    ],
-                  ),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(28),
-                    ),
-                    clipBehavior: Clip.antiAlias,
-                    child: Padding(
-                      padding: const EdgeInsets.all(10),
-                      child: Image.asset(
-                        'assets/images/icon-jomngaji.png',
-                        fit: BoxFit.contain,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 18),
+        backgroundColor: AppColors.scaffold,
+        body: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 40),
+            child: Column(
+              children: [
+                const SizedBox(height: 20),
+                _logoHeader(),
+                const SizedBox(height: 32),
                 Text(
                   l10n.text('login.welcome'),
-                  style: GoogleFonts.poppins(
+                  style: GoogleFonts.plusJakartaSans(
                     fontSize: 28,
-                    fontWeight: FontWeight.w700,
-                    color: const Color(0xFF1E293B),
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.textPrimary,
+                    letterSpacing: -0.5,
                   ),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   l10n.text('login.subtitle'),
                   textAlign: TextAlign.center,
-                  style: GoogleFonts.poppins(
+                  style: GoogleFonts.plusJakartaSans(
                     fontSize: 14,
-                    color: const Color(0xFF64748B),
+                    color: AppColors.textSecondary,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
-                const SizedBox(height: 24),
-                Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(24),
-                    boxShadow: const [
-                      BoxShadow(
-                        color: Color(0x14000000),
-                        blurRadius: 24,
-                        offset: Offset(0, 10),
-                      ),
-                    ],
-                  ),
-                  child: Form(
-                    key: _formKey,
-                    child: Column(
-                      children: [
-                        TextFormField(
-                          controller: emailController,
-                          keyboardType: TextInputType.emailAddress,
-                          autofillHints: const [AutofillHints.email],
-                          decoration: InputDecoration(
-                            prefixIcon: const Icon(Icons.email_outlined),
-                            labelText: l10n.text('login.email'),
-                            filled: true,
-                            fillColor: const Color(0xFFF8FAFC),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(14),
-                              borderSide: BorderSide.none,
-                            ),
-                          ),
-                          validator: (value) {
-                            final v = value?.trim() ?? '';
-                            if (v.isEmpty) return 'Email wajib diisi';
-                            if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(v)) {
-                              return 'Format email tidak valid';
-                            }
-                            return null;
-                          },
-                        ),
-                        const SizedBox(height: 14),
-                        TextFormField(
-                          controller: passwordController,
-                          obscureText: true,
-                          autofillHints: const [AutofillHints.password],
-                          decoration: InputDecoration(
-                            prefixIcon: const Icon(Icons.lock_outline),
-                            labelText: l10n.text('login.password'),
-                            filled: true,
-                            fillColor: const Color(0xFFF8FAFC),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(14),
-                              borderSide: BorderSide.none,
-                            ),
-                          ),
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Password wajib diisi';
-                            }
-                            if (value.length < 6) {
-                              return 'Password minimal 6 karakter';
-                            }
-                            return null;
-                          },
-                        ),
-                        const SizedBox(height: 18),
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton.icon(
-                            icon: const Icon(Icons.login),
-                            label: isLoading
-                                ? const SizedBox(
-                                    height: 16,
-                                    width: 16,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      color: Colors.white,
-                                    ),
-                                  )
-                                : Text(l10n.text('login.button')),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF2563EB),
-                              foregroundColor: Colors.white,
-                              elevation: 0,
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(14),
-                              ),
-                            ),
-                            onPressed:
-                                (isLoading || isGoogleLoading) ? null : _handleLogin,
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        SizedBox(
-                          width: double.infinity,
-                          child: OutlinedButton.icon(
-                            icon: const Icon(Icons.g_mobiledata, size: 22),
-                            label: isGoogleLoading
-                                ? const SizedBox(
-                                    height: 16,
-                                    width: 16,
-                                    child: CircularProgressIndicator(strokeWidth: 2),
-                                  )
-                                : Text(l10n.text('login.googleButton')),
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: const Color(0xFF0F172A),
-                              side: const BorderSide(color: Color(0xFFBFDBFE)),
-                              backgroundColor: const Color(0xFFF8FAFC),
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(14),
-                              ),
-                            ),
-                            onPressed: (isLoading || isGoogleLoading)
-                                ? null
-                                : _handleGoogleLogin,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 14),
-                TextButton(
-                  onPressed: () => Navigator.pushNamed(context, AppRoutes.register),
-                  child: Text(
-                    l10n.text('login.noAccount'),
-                    style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
-                  ),
-                ),
-                ],
-              ),
+                const SizedBox(height: 40),
+                _loginForm(l10n),
+                const SizedBox(height: 32),
+                _footer(l10n),
+              ],
             ),
           ),
         ),
       ),
+    );
+  }
+
+  Widget _logoHeader() {
+    return Container(
+      width: 100,
+      height: 100,
+      decoration: BoxDecoration(
+        gradient: AppGradients.primary,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        boxShadow: AppShadows.medium,
+      ),
+      child: Center(
+        child: Container(
+          width: 70,
+          height: 70,
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(AppRadius.sm),
+          ),
+          child: Image.asset(
+            'assets/images/icon-jomngaji.png',
+            fit: BoxFit.contain,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _loginForm(AppLocalization l10n) {
+    return Form(
+      key: _formKey,
+      child: Column(
+        children: [
+          _buildTextField(
+            controller: emailController,
+            label: l10n.text('login.email'),
+            icon: Icons.email_rounded,
+            keyboardType: TextInputType.emailAddress,
+            validator: (value) {
+              final v = value?.trim() ?? '';
+              if (v.isEmpty) return 'Email wajib diisi';
+              if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(v)) {
+                return 'Format email tidak valid';
+              }
+              return null;
+            },
+          ),
+          const SizedBox(height: 20),
+          _buildTextField(
+            controller: passwordController,
+            label: l10n.text('login.password'),
+            icon: Icons.lock_rounded,
+            obscureText: true,
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Password wajib diisi';
+              }
+              if (value.length < 6) {
+                return 'Password minimal 6 karakter';
+              }
+              return null;
+            },
+          ),
+          const SizedBox(height: 32),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: (isLoading || isGoogleLoading) ? null : _handleLogin,
+              child: isLoading
+                  ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                    )
+                  : Text(l10n.text('login.button')),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              const Expanded(child: Divider(color: AppColors.border)),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Text(
+                  "atau lanjut dengan",
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 12,
+                    color: AppColors.textPlaceholder,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              const Expanded(child: Divider(color: AppColors.border)),
+            ],
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              icon: isGoogleLoading
+                  ? const SizedBox.shrink()
+                  : const Icon(Icons.g_mobiledata_rounded, size: 28),
+              label: isGoogleLoading
+                  ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : Text(l10n.text('login.googleButton')),
+              onPressed: (isLoading || isGoogleLoading) ? null : _handleGoogleLogin,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+    required IconData icon,
+    bool obscureText = false,
+    TextInputType? keyboardType,
+    String? Function(String?)? validator,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+            color: AppColors.textPrimary,
+          ),
+        ),
+        const SizedBox(height: 8),
+        TextFormField(
+          controller: controller,
+          obscureText: obscureText,
+          keyboardType: keyboardType,
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
+            color: AppColors.textPrimary,
+          ),
+          decoration: InputDecoration(
+            prefixIcon: Icon(icon, color: AppColors.primary, size: 20),
+            hintText: "Masukkan ${label.toLowerCase()}",
+            hintStyle: GoogleFonts.plusJakartaSans(
+              color: AppColors.textPlaceholder,
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+            ),
+            filled: true,
+            fillColor: Colors.white,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              borderSide: const BorderSide(color: AppColors.border),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              borderSide: const BorderSide(color: AppColors.border),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              borderSide: const BorderSide(color: Colors.redAccent),
+            ),
+          ),
+          validator: validator,
+        ),
+      ],
+    );
+  }
+
+  Widget _footer(AppLocalization l10n) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text(
+          l10n.text('login.noAccount'),
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 14,
+            color: AppColors.textSecondary,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        TextButton(
+          onPressed: () => Navigator.pushNamed(context, AppRoutes.register),
+          child: Text(
+            "Daftar Sekarang",
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 14,
+              fontWeight: FontWeight.w800,
+              color: AppColors.primary,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../../core/theme/app_design_tokens.dart';
 import '../../../core/widgets/custom_gradient_appbar.dart';
 import '../../../routes/app_routes.dart';
 import '../../../models/surah.dart';
@@ -60,82 +61,103 @@ class _TadarusMenuPageState extends State<TadarusMenuPage> {
     });
   }
 
-  void _onSearchPressed() {
-    FocusScope.of(context).unfocus();
-    _applyFilter();
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF9FAFB),
-      appBar: const CustomGradientAppBar(title: "Tadarus"),
+      backgroundColor: AppColors.scaffold,
+      appBar: const CustomGradientAppBar(title: "Tadarus AI"),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
-          : Padding(
-              padding: const EdgeInsets.all(20),
+          : SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _progressCard(),
-                  const SizedBox(height: 16),
-                  _searchRow(),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 24),
+                  _searchBar(),
+                  const SizedBox(height: 24),
                   _lastActivityCard(),
+                  const SizedBox(height: 32),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        "Daftar Surah",
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      Text(
+                        "${_filteredSurahs.length} Surah",
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
                   const SizedBox(height: 16),
-                  Text("Daftar Surah",
-                      style: GoogleFonts.poppins(
-                          fontSize: 15, fontWeight: FontWeight.w700)),
-                  const SizedBox(height: 10),
-                  Expanded(child: _surahList(context)),
+                  _surahList(),
                 ],
               ),
             ),
     );
   }
 
-  // ——— Widgets ———
-
   Widget _progressCard() {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFFE7FFF2),
-        borderRadius: BorderRadius.circular(16),
+        gradient: AppGradients.accent,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        boxShadow: AppShadows.medium,
       ),
       child: Row(
         children: [
           Container(
-            width: 44,
-            height: 44,
+            padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: const Color(0xFF42C88A),
-              borderRadius: BorderRadius.circular(12),
+              color: Colors.white.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(AppRadius.sm),
             ),
-            child: const Icon(Icons.menu_book_rounded, color: Colors.white),
+            child: const Icon(Icons.auto_stories_rounded, color: Colors.white, size: 28),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text("Lanjutkan Khatam Al-Qur’an",
-                    style: GoogleFonts.poppins(
-                        fontSize: 15, fontWeight: FontWeight.w600)),
-                const SizedBox(height: 8),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: LinearProgressIndicator(
-                    value: 0.05,
-                    minHeight: 8,
-                    backgroundColor: Colors.grey.shade300,
-                    color: const Color(0xFF42C88A),
+                Text(
+                  "Lanjutkan Tadarus",
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
                   ),
                 ),
                 const SizedBox(height: 6),
-                Text("Checkpoint 1",
-                    style: GoogleFonts.poppins(
-                        fontSize: 12, color: Colors.black54)),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(AppRadius.full),
+                  child: LinearProgressIndicator(
+                    value: 0.05,
+                    minHeight: 8,
+                    backgroundColor: Colors.white24,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  "Checkpoint: Juz 1",
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white.withOpacity(0.8),
+                  ),
+                ),
               ],
             ),
           ),
@@ -144,124 +166,181 @@ class _TadarusMenuPageState extends State<TadarusMenuPage> {
     );
   }
 
-  Widget _searchRow() {
-    return Row(
-      children: [
-        Expanded(
-          child: TextField(
-            controller: _searchCtrl,
-            decoration: InputDecoration(
-              hintText: "Cari Surah",
-              hintStyle: GoogleFonts.poppins(fontSize: 14),
-              prefixIcon: const Icon(Icons.search),
-              filled: true,
-              fillColor: Colors.white,
-              contentPadding: const EdgeInsets.symmetric(vertical: 12),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
-                borderSide: BorderSide.none,
-              ),
-            ),
-          ),
+  Widget _searchBar() {
+    return Container(
+      decoration: BoxDecoration(
+        boxShadow: AppShadows.soft,
+      ),
+      child: TextField(
+        controller: _searchCtrl,
+        style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600, fontSize: 14),
+        decoration: InputDecoration(
+          hintText: "Cari surah atau nomor...",
+          prefixIcon: const Icon(Icons.search_rounded, color: AppColors.textPlaceholder),
+          suffixIcon: _searchCtrl.text.isNotEmpty
+              ? IconButton(
+                  icon: const Icon(Icons.close_rounded, size: 18),
+                  onPressed: () => _searchCtrl.clear(),
+                )
+              : null,
         ),
-        const SizedBox(width: 10),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-          decoration: BoxDecoration(
-            color: const Color(0xFF42C88A),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Text(_ayatRangeLabel,
-              style: GoogleFonts.poppins(
-                  fontSize: 13,
-                  color: Colors.white,
-                  fontWeight: FontWeight.w600)),
-        ),
-        const SizedBox(width: 10),
-        ElevatedButton(
-          onPressed: _onSearchPressed,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF42C88A),
-            foregroundColor: Colors.white,
-            padding:
-                const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12)),
-          ),
-          child: Text("Cari Surah",
-              style: GoogleFonts.poppins(
-                  fontSize: 13, fontWeight: FontWeight.w600)),
-        ),
-      ],
+      ),
     );
   }
 
   Widget _lastActivityCard() {
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 6)
-        ],
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: AppColors.border.withOpacity(0.5)),
+        boxShadow: AppShadows.soft,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text("Aktivitas Terakhir",
-              style: GoogleFonts.poppins(
-                  fontSize: 15, fontWeight: FontWeight.w600)),
-          const SizedBox(height: 8),
-          Text("Terakhir Dibaca: $_lastRead",
-              style: GoogleFonts.poppins(fontSize: 13)),
-          Text("Terakhir Dilafalkan: $_lastRecited",
-              style: GoogleFonts.poppins(fontSize: 13)),
+          Row(
+            children: [
+              const Icon(Icons.history_rounded, size: 20, color: AppColors.accent),
+              const SizedBox(width: 10),
+              Text(
+                "Aktivitas Terakhir",
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          _activityItem("Terakhir Dibaca", _lastRead, Icons.chrome_reader_mode_rounded),
+          const SizedBox(height: 12),
+          _activityItem("Terakhir Dilafalkan", _lastRecited, Icons.mic_none_rounded),
         ],
       ),
     );
   }
 
-  Widget _surahList(BuildContext context) {
+  Widget _activityItem(String label, String value, IconData icon) {
+    return Row(
+      children: [
+        Icon(icon, size: 16, color: AppColors.textSecondary),
+        const SizedBox(width: 8),
+        Text(
+          "$label: ",
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+            color: AppColors.textSecondary,
+          ),
+        ),
+        Text(
+          value,
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+            color: AppColors.textPrimary,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _surahList() {
     return ListView.builder(
+      padding: EdgeInsets.zero,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
       itemCount: _filteredSurahs.length,
       itemBuilder: (context, index) {
         final s = _filteredSurahs[index];
         return GestureDetector(
           onTap: () {
-            Navigator.pushNamed(
-              context,
-              AppRoutes.tadarus,
-              arguments: s,
-            );
+            Navigator.pushNamed(context, AppRoutes.tadarus, arguments: s);
           },
           child: Container(
-            margin: const EdgeInsets.only(bottom: 14),
+            margin: const EdgeInsets.only(bottom: 16),
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(14),
-              boxShadow: [
-                BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 6)
-              ],
+              borderRadius: BorderRadius.circular(AppRadius.md),
+              boxShadow: AppShadows.soft,
+              border: Border.all(color: AppColors.border.withOpacity(0.3)),
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child: Row(
               children: [
-                Text(s.name,
-                    style: GoogleFonts.poppins(
-                        fontSize: 16, fontWeight: FontWeight.w700)),
-                const SizedBox(height: 4),
-                Text("${s.ayahCount} Ayat",
-                    style: GoogleFonts.poppins(
-                        fontSize: 13, color: Colors.black54)),
-                const SizedBox(height: 8),
-                LinearProgressIndicator(
-                  value: s.progress,
-                  backgroundColor: Colors.grey.shade300,
-                  color: const Color(0xFF42C88A),
-                  minHeight: 6,
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: AppColors.scaffold,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Center(
+                    child: Text(
+                      s.number.toString(),
+                      style: GoogleFonts.plusJakartaSans(
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.accent,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
                 ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        s.name,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          Text(
+                            "${s.ayahCount} Ayat",
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 12,
+                              color: AppColors.textSecondary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Icon(Icons.circle, size: 4, color: AppColors.textPlaceholder.withOpacity(0.5)),
+                          const SizedBox(width: 8),
+                          Text(
+                            "Progres: ${(s.progress * 100).toInt()}%",
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 12,
+                              color: AppColors.accent,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(4),
+                        child: LinearProgressIndicator(
+                          value: s.progress,
+                          backgroundColor: AppColors.scaffold,
+                          color: AppColors.accent,
+                          minHeight: 6,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 12),
+                const Icon(Icons.chevron_right_rounded, color: AppColors.textPlaceholder),
               ],
             ),
           ),

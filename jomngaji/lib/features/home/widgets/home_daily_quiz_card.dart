@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../core/theme/app_design_tokens.dart';
 import '../data/daily_quiz_bank.dart';
 
 class HomeDailyQuizCard extends StatefulWidget {
@@ -82,7 +83,15 @@ class _HomeDailyQuizCardState extends State<HomeDailyQuizCard> {
   @override
   Widget build(BuildContext context) {
     if (_loading || _quiz == null) {
-      return const Center(child: CircularProgressIndicator());
+      return Container(
+        height: 200,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          boxShadow: AppShadows.soft,
+        ),
+        child: const Center(child: CircularProgressIndicator(strokeWidth: 3)),
+      );
     }
 
     final q = _quiz!;
@@ -90,147 +99,162 @@ class _HomeDailyQuizCardState extends State<HomeDailyQuizCard> {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(24),
         color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF2F9E6E).withOpacity(0.16),
-            blurRadius: 18,
-            offset: const Offset(0, 10),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        boxShadow: AppShadows.medium,
+        border: Border.all(color: AppColors.border.withOpacity(0.5)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+            padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFF42C88A), Color(0xFF2F9E6E)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
+              color: AppColors.accent.withOpacity(0.05),
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(AppRadius.md),
+                topRight: Radius.circular(AppRadius.md),
               ),
-              borderRadius: BorderRadius.circular(16),
             ),
             child: Row(
               children: [
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
-                    shape: BoxShape.circle,
+                    color: AppColors.accent.withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Icon(Icons.auto_awesome_rounded, color: Colors.white, size: 18),
+                  child: const Icon(Icons.psychology_rounded, color: AppColors.accent, size: 22),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Daily Quiz',
-                        style: GoogleFonts.poppins(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 14,
+                        'Quiz Harian',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 15,
+                          color: AppColors.textPrimary,
                         ),
                       ),
                       Text(
                         q.category,
-                        style: GoogleFonts.poppins(
-                          color: Colors.white.withOpacity(0.92),
-                          fontWeight: FontWeight.w500,
-                          fontSize: 11.5,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textSecondary,
                         ),
                       ),
                     ],
                   ),
                 ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(999),
+                if (_answered)
+                  const Icon(Icons.check_circle_rounded, color: AppColors.accent, size: 20),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  q.question,
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                    height: 1.5,
                   ),
-                  child: Text(
-                    _answered ? 'Done' : '1 soal',
-                    style: GoogleFonts.poppins(
-                      color: Colors.white,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
+                ),
+                const SizedBox(height: 20),
+                ...q.options.map((opt) {
+                  final selected = _selected == opt;
+                  final correctOpt = _answered && opt == q.answer;
+                  final wrongSelected = _answered && selected && opt != q.answer;
+
+                  Color bg = Colors.white;
+                  Color border = AppColors.border;
+                  Color textColor = AppColors.textPrimary;
+                  
+                  if (correctOpt) {
+                    bg = AppColors.accent.withOpacity(0.1);
+                    border = AppColors.accent;
+                    textColor = AppColors.accent;
+                  } else if (wrongSelected) {
+                    bg = Colors.red.withOpacity(0.05);
+                    border = Colors.redAccent;
+                    textColor = Colors.redAccent;
+                  } else if (_answered && !selected) {
+                    bg = AppColors.scaffold;
+                    textColor = AppColors.textSecondary.withOpacity(0.6);
+                  }
+
+                  return GestureDetector(
+                    onTap: () => _answer(opt),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      width: double.infinity,
+                      margin: const EdgeInsets.only(bottom: 12),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                      decoration: BoxDecoration(
+                        color: bg,
+                        borderRadius: BorderRadius.circular(AppRadius.sm),
+                        border: Border.all(color: border, width: 1.5),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              opt,
+                              style: GoogleFonts.plusJakartaSans(
+                                fontWeight: FontWeight.w700,
+                                fontSize: 14,
+                                color: textColor,
+                              ),
+                            ),
+                          ),
+                          if (correctOpt)
+                            const Icon(Icons.check_circle_rounded, color: AppColors.accent, size: 18),
+                          if (wrongSelected)
+                            const Icon(Icons.cancel_rounded, color: Colors.redAccent, size: 18),
+                        ],
+                      ),
                     ),
+                  );
+                }),
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppColors.scaffold,
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.info_outline_rounded, size: 16, color: AppColors.textSecondary),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          _answered
+                              ? 'Terima kasih sudah menjawab! Nantikan kuis baru besok.'
+                              : 'Jawab kuis harian untuk mengasah pemahamanmu.',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 11,
+                            color: AppColors.textSecondary,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 12),
-          Text(
-            q.question,
-            style: GoogleFonts.poppins(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: const Color(0xFF0F172A),
-            ),
-          ),
-          const SizedBox(height: 12),
-          ...q.options.map((opt) {
-            final selected = _selected == opt;
-            final correctOpt = _answered && opt == q.answer;
-            final wrongSelected = _answered && selected && opt != q.answer;
-
-            Color bg = Colors.white;
-            Color border = Colors.grey.shade300;
-            if (correctOpt) {
-              bg = const Color(0xFFD9F8E5);
-              border = const Color(0xFF2F9E6E);
-            } else if (wrongSelected) {
-              bg = const Color(0xFFFFE2E2);
-              border = const Color(0xFFD84343);
-            }
-
-            return GestureDetector(
-              onTap: () => _answer(opt),
-              child: Container(
-                width: double.infinity,
-                margin: const EdgeInsets.only(bottom: 10),
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
-                decoration: BoxDecoration(
-                  color: bg,
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: border, width: 1.1),
-                ),
-                child: Text(
-                  opt,
-                  style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
-                ),
-              ),
-            );
-          }),
-          const SizedBox(height: 8),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF8FAFC),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFFE2E8F0)),
-            ),
-            child: Text(
-              _answered
-                  ? (_isCorrect
-                      ? '✅ Benar! Soal baru akan terbuka besok.'
-                      : '❌ Belum tepat. Soal baru terbuka besok (${tomorrow.day}/${tomorrow.month}).')
-                  : 'Jawab sekarang, lalu kembali lagi besok untuk soal baru.',
-              style: GoogleFonts.poppins(
-                fontSize: 12,
-                color: const Color(0xFF475569),
-              ),
-            ),
-          )
         ],
       ),
     );

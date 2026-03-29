@@ -10,6 +10,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 import '../../../core/config/api_config.dart';
+import '../../../core/theme/app_design_tokens.dart';
 import '../data/hijaiyah_data.dart';
 import '../../../core/widgets/custom_gradient_appbar.dart';
 import '../../../services/hijaiyah_service.dart';
@@ -63,13 +64,14 @@ class _LatihanPengucapanPageState extends State<LatihanPengucapanPage> {
     await _recorder.setSubscriptionDuration(const Duration(milliseconds: 500));
     await _player.openPlayer();
 
-    setState(() => _recorderReady = true);
+    if (mounted) setState(() => _recorderReady = true);
   }
 
   @override
   void dispose() {
     _recorder.closeRecorder();
     _player.closePlayer();
+    _api.dispose();
     super.dispose();
   }
 
@@ -81,7 +83,7 @@ class _LatihanPengucapanPageState extends State<LatihanPengucapanPage> {
 
     final dir = await getTemporaryDirectory();
     final path =
-        "${dir.path}/latihan_${_currentIndex}_${DateTime.now().millisecondsSinceEpoch}.wav";
+        "${dir.path}/latihan_${widget.lessonId}_${_currentIndex}_${DateTime.now().millisecondsSinceEpoch}.wav";
 
     await _recorder.startRecorder(
       toFile: path,
@@ -144,15 +146,7 @@ class _LatihanPengucapanPageState extends State<LatihanPengucapanPage> {
         lessonId: widget.lessonId,
       );
 
-      print(json);
-
       final result = EvaluationResult.fromJson(json);
-
-      print('=== PARSED EVALUATION RESULT ===');
-      print('score: ${result.score}');
-      print('feedback: ${result.feedback}');
-      print('errors: ${result.errors}');
-
       await _handleEvaluationResult(result);
     } catch (e) {
       _showError("Gagal evaluasi: $e");
@@ -163,16 +157,18 @@ class _LatihanPengucapanPageState extends State<LatihanPengucapanPage> {
 
   Future<void> _handleEvaluationResult(EvaluationResult r) async {
     final score = r.score.clamp(0, 100);
+    final passed = score >= 50;
+    
     Color scoreColor;
     String label;
     String emoji;
 
     if (score >= 90) {
-      scoreColor = const Color(0xFF42C88A);
+      scoreColor = AppColors.accent;
       label = "MasyaAllah!";
       emoji = "🌟";
     } else if (score >= 75) {
-      scoreColor = const Color(0xFF5FB3F3);
+      scoreColor = AppColors.secondary;
       label = "Bagus!";
       emoji = "👍";
     } else if (score >= 50) {
@@ -185,176 +181,82 @@ class _LatihanPengucapanPageState extends State<LatihanPengucapanPage> {
       emoji = "⚠️";
     }
 
-    SystemSound.play(SystemSoundType.alert);
-
-    showGeneralDialog(
+    await showDialog(
       context: context,
-      barrierDismissible: true,
-      barrierLabel: "score",
-      barrierColor: Colors.black54,
-      transitionDuration: const Duration(milliseconds: 280),
-      pageBuilder: (_, __, ___) {
-        return Center(
-          child: Material(
-            color: Colors.transparent,
-            child: Container(
-              width: MediaQuery.of(context).size.width * 0.85,
-              padding: const EdgeInsets.all(24),
+      barrierDismissible: false,
+      builder: (_) => AlertDialog(
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.lg)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(22),
-                boxShadow: const [
-                  BoxShadow(
-                    blurRadius: 30,
-                    color: Colors.black26,
-                  ),
-                ],
+                color: scoreColor.withOpacity(0.1),
+                shape: BoxShape.circle,
               ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    "$emoji  $label",
-                    style: GoogleFonts.poppins(
-                      fontSize: 21,
-                      fontWeight: FontWeight.w700,
-                      color: scoreColor,
-                    ),
-                  ),
-                  const SizedBox(height: 22),
-                  TweenAnimationBuilder<double>(
-                    tween: Tween(begin: 0.75, end: 1),
-                    duration: const Duration(milliseconds: 700),
-                    curve: Curves.elasticOut,
-                    builder: (_, scale, child) {
-                      return Transform.scale(scale: scale, child: child);
-                    },
-                    child: SizedBox(
-                      width: 150,
-                      height: 150,
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          Container(
-                            width: 150,
-                            height: 150,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              gradient: RadialGradient(
-                                colors: [
-                                  scoreColor.withOpacity(0.25),
-                                  Colors.transparent,
-                                ],
-                              ),
-                            ),
-                          ),
-                          if (score >= 50)
-                            const Positioned(
-                              top: 6,
-                              right: 12,
-                              child: Icon(
-                                Icons.auto_awesome_rounded,
-                                color: Color(0xFFFFC107),
-                                size: 22,
-                              ),
-                            ),
-                          SizedBox(
-                            width: 130,
-                            height: 130,
-                            child: CircularProgressIndicator(
-                              value: score / 100,
-                              strokeWidth: 12,
-                              backgroundColor: Colors.grey.shade200,
-                              valueColor: AlwaysStoppedAnimation<Color>(scoreColor),
-                            ),
-                          ),
-                          Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                "$score",
-                                style: GoogleFonts.poppins(
-                                  fontSize: 40,
-                                  fontWeight: FontWeight.bold,
-                                  color: scoreColor,
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                "Skor",
-                                style: GoogleFonts.poppins(
-                                  fontSize: 12,
-                                  color: Colors.grey.shade600,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  Text(
-                    r.feedback,
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.poppins(
-                      fontSize: 14,
-                      height: 1.6,
-                      color: Colors.grey.shade700,
-                    ),
-                  ),
-                  // if (r.errors.isNotEmpty) ...[
-                  //   const SizedBox(height: 16),
-                  //   ...r.errors.map(
-                  //     (e) => Padding(
-                  //       padding: const EdgeInsets.only(top: 4),
-                  //       child: Row(
-                  //         mainAxisAlignment: MainAxisAlignment.center,
-                  //         children: [
-                  //           const Icon(Icons.error_outline, size: 16, color: Colors.redAccent),
-                  //           const SizedBox(width: 6),
-                  //           Flexible(
-                  //             child: Text(
-                  //               e,
-                  //               textAlign: TextAlign.center,
-                  //               style: GoogleFonts.poppins(fontSize: 13, color: Colors.redAccent),
-                  //             ),
-                  //           ),
-                  //         ],
-                  //       ),
-                  //     ),
-                  //   ),
-                  // ],
-                  const SizedBox(height: 26),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 44,
-                    child: ElevatedButton(
-                      onPressed: () => Navigator.pop(context),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: scoreColor,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                      ),
-                      child: Text(
-                        "Tutup",
-                        style: GoogleFonts.poppins(fontWeight: FontWeight.w600, color: Colors.white),
-                      ),
-                    ),
-                  ),
-                ],
+              child: Icon(
+                passed ? Icons.check_circle_rounded : Icons.replay_circle_filled_rounded,
+                color: scoreColor,
+                size: 64,
               ),
             ),
-          ),
-        );
-      },
-      transitionBuilder: (_, anim, __, child) {
-        return Transform.scale(
-          scale: Curves.easeOutBack.transform(anim.value),
-          child: Opacity(opacity: anim.value, child: child),
-        );
-      },
+            const SizedBox(height: 24),
+            Text(
+              "$emoji  $label",
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 22,
+                fontWeight: FontWeight.w800,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Skor Pengucapan',
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textSecondary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              '$score',
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 48,
+                fontWeight: FontWeight.w900,
+                color: scoreColor,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              r.feedback,
+              textAlign: TextAlign.center,
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 13,
+                color: AppColors.textSecondary,
+                fontWeight: FontWeight.w500,
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: scoreColor,
+                ),
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Tutup'),
+              ),
+            ),
+          ],
+        ),
+      ),
     ).then((_) {
-      // Jika skor >=50, lanjut ke huruf berikutnya
       if (score >= 50 && _currentIndex < widget.hurufList.length - 1) {
         setState(() => _currentIndex++);
       } else if (_currentIndex == widget.hurufList.length - 1 && score >= 50) {
@@ -372,15 +274,13 @@ class _LatihanPengucapanPageState extends State<LatihanPengucapanPage> {
       );
     } catch (e) {
       if (mounted) {
-        _showError('Progress belum tersimpan sempurna: $e');
+        _showError('Progress belum tersimpan: $e');
       }
     }
 
     try {
       await HijaiyahService.unlockLesson(widget.lessonId + 1);
-    } catch (_) {
-      // best effort: lesson berikutnya bisa jadi belum ada / premium policy server
-    }
+    } catch (_) {}
 
     if (!mounted) return;
     Navigator.of(context).pop();
@@ -394,7 +294,12 @@ class _LatihanPengucapanPageState extends State<LatihanPengucapanPage> {
 
   void _showError(String msg) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(msg)),
+      SnackBar(
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.all(24),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.md)),
+        content: Text(msg),
+      ),
     );
   }
 
@@ -402,34 +307,53 @@ class _LatihanPengucapanPageState extends State<LatihanPengucapanPage> {
   Widget _infoCard() {
     final current = widget.hurufList[_currentIndex];
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            current.color.withOpacity(0.22),
-            current.color.withOpacity(0.08),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(16),
+        color: AppColors.primary.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: AppColors.primary.withOpacity(0.1)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            "Latih pelafalan huruf hijaiyah ini dengan rekaman. Ulangi sampai pengucapan makin stabil.",
-            style: GoogleFonts.poppins(fontSize: 13, height: 1.45),
+          Row(
+            children: [
+              const Icon(Icons.info_rounded, color: AppColors.primary, size: 24),
+              const SizedBox(width: 12),
+              Text(
+                "Instruksi Latihan",
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 10),
-          const Divider(height: 1),
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
           Text(
-            "Target saat ini: ${current.latin} (${current.nama})",
-            style: GoogleFonts.poppins(
+            "Rekam suaramu saat mengucapkan huruf di bawah ini. Ulangi sampai pengucapanmu dinilai baik oleh AI.",
+            style: GoogleFonts.plusJakartaSans(
               fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: const Color(0xFF1F2937),
+              height: 1.5,
+              color: AppColors.textSecondary,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: current.color.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+            ),
+            child: Text(
+              "Target: ${current.latin} (${current.nama})",
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textPrimary,
+              ),
             ),
           ),
         ],
@@ -438,77 +362,88 @@ class _LatihanPengucapanPageState extends State<LatihanPengucapanPage> {
   }
 
   Widget _hurufTabs() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: List.generate(widget.hurufList.length, (i) {
-        final active = i == _currentIndex;
-        return GestureDetector(
-          onTap: () {
-            if (_isRecording) return;
-            setState(() => _currentIndex = i);
-          },
-          child: Container(
-            margin: const EdgeInsets.all(4),
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-            decoration: BoxDecoration(
-              color: active ? const Color(0xFF42C88A) : Colors.white,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: active ? Colors.transparent : const Color(0xFFE2E8F0),
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: List.generate(widget.hurufList.length, (i) {
+          final active = i == _currentIndex;
+          return GestureDetector(
+            onTap: () {
+              if (_isRecording) return;
+              setState(() => _currentIndex = i);
+            },
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              margin: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              decoration: BoxDecoration(
+                color: active ? AppColors.accent : Colors.white,
+                borderRadius: BorderRadius.circular(AppRadius.full),
+                boxShadow: active ? AppShadows.soft : null,
+                border: Border.all(
+                  color: active ? AppColors.accent : AppColors.border,
+                ),
+              ),
+              child: Text(
+                widget.hurufList[i].latin,
+                style: GoogleFonts.plusJakartaSans(
+                  color: active ? Colors.white : AppColors.textSecondary,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 13,
+                ),
               ),
             ),
-            child: Text(
-              widget.hurufList[i].latin,
-              style: GoogleFonts.poppins(
-                color: active ? Colors.white : const Color(0xFF334155),
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        );
-      }),
+          );
+        }),
+      ),
     );
   }
 
   Widget _hurufPreview(HijaiyahData data) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 40),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
-        boxShadow: const [BoxShadow(color: Color(0x14000000), blurRadius: 12)],
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        boxShadow: AppShadows.medium,
+        border: Border.all(color: AppColors.border.withOpacity(0.5)),
       ),
       child: Column(
         children: [
           Container(
-            width: 112,
-            height: 112,
+            padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [data.color.withOpacity(0.96), data.color.withOpacity(0.70)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(30),
+              color: data.color.withOpacity(0.1),
+              shape: BoxShape.circle,
             ),
-            child: Center(
-              child: Text(
-                data.huruf,
-                style: const TextStyle(
-                  fontSize: 62,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                  height: 1,
-                ),
+            child: Text(
+              data.huruf,
+              style: GoogleFonts.amiri(
+                fontSize: 80,
+                fontWeight: FontWeight.bold,
+                color: AppColors.primary,
               ),
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 24),
+          Text(
+            data.nama,
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 20,
+              fontWeight: FontWeight.w800,
+              color: AppColors.textPrimary,
+            ),
+          ),
           Text(
             data.latin,
-            style: GoogleFonts.poppins(fontSize: 20, fontWeight: FontWeight.bold),
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 14,
+              color: AppColors.textSecondary,
+              fontWeight: FontWeight.w600,
+            ),
           ),
-          Text(data.nama, style: GoogleFonts.poppins(color: Colors.black54)),
         ],
       ),
     );
@@ -520,24 +455,29 @@ class _LatihanPengucapanPageState extends State<LatihanPengucapanPage> {
         children: [
           GestureDetector(
             onTap: _isRecording ? _stopRecording : _startRecording,
-            child: Container(
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
               width: 88,
               height: 88,
               decoration: BoxDecoration(
-                color: _isRecording ? Colors.red : const Color(0xFF42C88A),
+                color: _isRecording ? Colors.redAccent : AppColors.primary,
                 shape: BoxShape.circle,
+                boxShadow: AppShadows.medium,
               ),
               child: Icon(
                 _isRecording ? Icons.stop_rounded : Icons.mic_rounded,
                 color: Colors.white,
-                size: 36,
+                size: 40,
               ),
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 16),
           Text(
-            _isRecording ? "Sedang merekam..." : "Tap untuk rekam",
-            style: GoogleFonts.poppins(),
+            _isRecording ? "Sedang Merekam..." : "Tekan untuk Merekam",
+            style: GoogleFonts.plusJakartaSans(
+              fontWeight: FontWeight.w700,
+              color: _isRecording ? Colors.redAccent : AppColors.textPrimary,
+            ),
           ),
         ],
       ),
@@ -555,35 +495,44 @@ class _LatihanPengucapanPageState extends State<LatihanPengucapanPage> {
 
     return Column(
       children: [
-        FilledButton.icon(
-          onPressed: _isPlaying ? null : _playRecorded,
-          icon: Icon(
-            _isPlaying ? Icons.graphic_eq_rounded : Icons.play_arrow_rounded,
-          ),
-          label: Text(_isPlaying ? "Memutar..." : "Putar Rekaman"),
-        ),
-        const SizedBox(height: 8),
-        FilledButton.icon(
-          onPressed: _isEvaluating ? null : _onEvaluate,
-          icon: _isEvaluating
-              ? const SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: Colors.white,
-                  ),
-                )
-              : const Icon(Icons.auto_awesome_rounded),
-          label: Text(_isEvaluating ? "Menilai..." : "Nilai Pengucapan"),
-          style: FilledButton.styleFrom(backgroundColor: const Color(0xFF42C88A)),
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: _isPlaying ? null : _playRecorded,
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                ),
+                icon: Icon(
+                  _isPlaying ? Icons.graphic_eq_rounded : Icons.play_arrow_rounded,
+                  size: 24,
+                ),
+                label: Text(_isPlaying ? "Memutar..." : "Putar"),
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: ElevatedButton.icon(
+                onPressed: _isEvaluating ? null : _onEvaluate,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.accent,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                ),
+                icon: const Icon(Icons.auto_awesome_rounded, size: 24),
+                label: Text(_isEvaluating ? "Menilai..." : "Nilai"),
+              ),
+            ),
+          ],
         ),
         if (_currentIndex < widget.hurufList.length - 1) ...[
-          const SizedBox(height: 8),
-          OutlinedButton.icon(
-            onPressed: _nextLetter,
-            icon: const Icon(Icons.navigate_next_rounded),
-            label: const Text("Huruf Berikutnya"),
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            child: TextButton.icon(
+              onPressed: _nextLetter,
+              icon: const Icon(Icons.navigate_next_rounded),
+              label: const Text("Lewati ke Huruf Berikutnya"),
+            ),
           ),
         ],
       ],
@@ -592,22 +541,48 @@ class _LatihanPengucapanPageState extends State<LatihanPengucapanPage> {
 
   Widget _progressBar() {
     final progress = (_currentIndex + 1) / widget.hurufList.length;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        LinearProgressIndicator(
-          value: progress,
-          minHeight: 8,
-          borderRadius: BorderRadius.circular(99),
-          backgroundColor: const Color(0xFFE2E8F0),
-          color: const Color(0xFF42C88A),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          "Latihan ${_currentIndex + 1}/${widget.hurufList.length}",
-          style: GoogleFonts.poppins(fontSize: 12),
-        ),
-      ],
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        boxShadow: AppShadows.soft,
+      ),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                "Progres Pelajaran",
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              Text(
+                "${_currentIndex + 1}/${widget.hurufList.length}",
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.accent,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(AppRadius.full),
+            child: LinearProgressIndicator(
+              value: progress,
+              minHeight: 10,
+              backgroundColor: AppColors.scaffold,
+              color: AppColors.accent,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -616,31 +591,26 @@ class _LatihanPengucapanPageState extends State<LatihanPengucapanPage> {
     final current = widget.hurufList[_currentIndex];
 
     return Scaffold(
+      backgroundColor: AppColors.scaffold,
       appBar: CustomGradientAppBar(title: widget.lessonTitle),
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color(0xFFF7F9FF), Color(0xFFEFF7FF)],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          ),
-        ),
-        child: ListView(
-          padding: const EdgeInsets.all(20),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(24),
+        child: Column(
           children: [
             _infoCard(),
-            const SizedBox(height: 12),
+            const SizedBox(height: 24),
             _progressBar(),
+            const SizedBox(height: 32),
             if (widget.hurufList.length > 1) ...[
-              const SizedBox(height: 10),
               _hurufTabs(),
+              const SizedBox(height: 24),
             ],
-            const SizedBox(height: 14),
             _hurufPreview(current),
-            const SizedBox(height: 16),
+            const SizedBox(height: 40),
             _recordControls(),
-            const SizedBox(height: 14),
+            const SizedBox(height: 32),
             _playbackAndEvaluateButtons(),
+            const SizedBox(height: 40),
           ],
         ),
       ),
