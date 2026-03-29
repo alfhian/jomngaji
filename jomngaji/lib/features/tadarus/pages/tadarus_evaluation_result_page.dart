@@ -107,8 +107,8 @@ class TadarusEvaluationResultPage extends StatelessWidget {
         TextSpan(
           text: ayahText,
           style: GoogleFonts.amiri(
-            fontSize: 38,
-            height: 1.9,
+            fontSize: 46,
+            height: 1.95,
             color: AppColors.textPrimary,
           ),
         ),
@@ -141,8 +141,8 @@ class TadarusEvaluationResultPage extends StatelessWidget {
       return TextSpan(
         text: ayahText[i],
         style: GoogleFonts.amiri(
-          fontSize: 38,
-          height: 1.9,
+          fontSize: 46,
+          height: 1.95,
           color: active ? Colors.redAccent : AppColors.textPrimary,
           fontWeight: active ? FontWeight.w700 : FontWeight.w500,
         ),
@@ -204,7 +204,7 @@ class TadarusEvaluationResultPage extends StatelessWidget {
               padding: const EdgeInsets.all(16),
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                   decoration: BoxDecoration(
                     color: const Color(0xFFECF8F2),
                     borderRadius: BorderRadius.circular(8),
@@ -212,13 +212,13 @@ class TadarusEvaluationResultPage extends StatelessWidget {
                   child: Text(
                     'Koreksi pelafalan didukung teknologi AI',
                     style: GoogleFonts.plusJakartaSans(
-                      fontSize: 12,
+                      fontSize: 13,
                       color: const Color(0xFF3E9A73),
-                      fontWeight: FontWeight.w600,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                 ),
-                const SizedBox(height: 22),
+                const SizedBox(height: 34),
                 Directionality(
                   textDirection: TextDirection.rtl,
                   child: RichText(
@@ -226,21 +226,65 @@ class TadarusEvaluationResultPage extends StatelessWidget {
                     text: TextSpan(children: _highlightedAyahSpans()),
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 28),
                 if (result.errors.isNotEmpty)
-                  ...result.errors.take(2).map(
-                        (e) => Padding(
-                          padding: const EdgeInsets.only(bottom: 6),
-                          child: Text(
-                            '• $e',
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFF5F5),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: const Color(0xFFFFD0D0)),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Detail Kesalahan',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.redAccent,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        ...result.errors.take(3).map(
+                              (e) => Padding(
+                                padding: const EdgeInsets.only(bottom: 7),
+                                child: Text(
+                                  '• $e',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 14,
+                                    color: score <= 35 ? Colors.redAccent : Colors.orange.shade700,
+                                    fontWeight: FontWeight.w600,
+                                    height: 1.35,
+                                  ),
+                                ),
+                              ),
+                            ),
+                      ],
+                    ),
+                  ),
+                const SizedBox(height: 18),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: AppColors.border.withOpacity(0.5)),
+                  ),
+                  child: Text(
+                    'Jumlah issue terdeteksi: ${result.issueDetails.length}. '
+                    'Fokus dulu memperbaiki huruf berwarna merah sebelum lanjut ayat berikutnya.',
                     style: GoogleFonts.plusJakartaSans(
-                      fontSize: 12,
-                      color: score <= 35 ? Colors.redAccent : Colors.orange.shade700,
+                      fontSize: 13.5,
+                      height: 1.45,
+                      color: AppColors.textSecondary,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                        ),
-                      ),
+                ),
               ],
             ),
           ),
