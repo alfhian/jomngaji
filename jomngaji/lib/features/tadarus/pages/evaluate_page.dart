@@ -583,7 +583,10 @@ class _EvaluatePageState extends State<EvaluatePage> {
             color: Colors.transparent,
             child: Container(
               width: MediaQuery.of(context).size.width * 0.85,
-              padding: const EdgeInsets.all(24),
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.of(context).size.height * 0.82,
+              ),
+              padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(22),
@@ -594,9 +597,10 @@ class _EvaluatePageState extends State<EvaluatePage> {
                   ),
                 ],
               ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
                   Text(
                     "$emoji  $label",
                     style: GoogleFonts.poppins(
@@ -606,19 +610,19 @@ class _EvaluatePageState extends State<EvaluatePage> {
                     ),
                   ),
 
-                  const SizedBox(height: 22),
+                  const SizedBox(height: 16),
 
                   // ===== SCORE RING (FIXED & LEBIH LEGA) =====
                   SizedBox(
-                    width: 150,
-                    height: 150,
+                    width: 124,
+                    height: 124,
                     child: Stack(
                       alignment: Alignment.center,
                       children: [
                         // Glow (lebih besar dari ring)
                         Container(
-                          width: 150,
-                          height: 150,
+                          width: 124,
+                          height: 124,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             gradient: RadialGradient(
@@ -632,8 +636,8 @@ class _EvaluatePageState extends State<EvaluatePage> {
 
                         // Progress ring (lebih kecil)
                         SizedBox(
-                          width: 130,
-                          height: 130,
+                          width: 108,
+                          height: 108,
                           child: CircularProgressIndicator(
                             value: score / 100,
                             strokeWidth: 12,
@@ -650,7 +654,7 @@ class _EvaluatePageState extends State<EvaluatePage> {
                             Text(
                               "$score",
                               style: GoogleFonts.poppins(
-                                fontSize: 40,
+                                fontSize: 34,
                                 fontWeight: FontWeight.bold,
                                 color: scoreColor,
                               ),
@@ -669,7 +673,7 @@ class _EvaluatePageState extends State<EvaluatePage> {
                     ),
                   ),
 
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 14),
 
                   // ===== DESKRIPSI =====
                   Text(
@@ -760,7 +764,7 @@ class _EvaluatePageState extends State<EvaluatePage> {
                     ),
                   ],
 
-                  const SizedBox(height: 26),
+                  const SizedBox(height: 18),
 
                   SizedBox(
                     width: double.infinity,
@@ -783,6 +787,7 @@ class _EvaluatePageState extends State<EvaluatePage> {
                     ),
                   ),
                 ],
+              ),
               ),
             ),
           ),

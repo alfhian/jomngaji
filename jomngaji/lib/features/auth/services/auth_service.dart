@@ -64,6 +64,42 @@ class AuthService {
     );
   }
 
+  static Future<http.Response> _getWithBaseUrlFallback({
+    required String path,
+    Map<String, String>? headers,
+  }) async {
+    Object? lastError;
+    final prefs = await SharedPreferences.getInstance();
+    final preferred = prefs.getString(_keyPreferredBaseUrl);
+
+    final baseUrls = [...ApiConfig.baseUrls];
+    if (preferred != null && baseUrls.contains(preferred)) {
+      baseUrls
+        ..remove(preferred)
+        ..insert(0, preferred);
+    }
+
+    for (final base in baseUrls) {
+      final url = '$base${path.startsWith('/') ? path : '/$path'}';
+      try {
+        final response =
+            await http.get(Uri.parse(url), headers: headers).timeout(_requestTimeout);
+        await prefs.setString(_keyPreferredBaseUrl, base);
+        return response;
+      } catch (e) {
+        if (_isNetworkError(e)) {
+          lastError = e;
+          continue;
+        }
+        rethrow;
+      }
+    }
+    throw Exception(
+      'Semua API_BASE_URL gagal diakses. '
+      'Pastikan backend aktif dan IP benar. Detail: $lastError',
+    );
+  }
+
   static Future<bool> isLoggedIn() async {
     final prefs = await SharedPreferences.getInstance();
     final hasToken = (await _secureStorage.read(key: _keyAccessToken) ?? '')
@@ -84,7 +120,30 @@ class AuthService {
 
   static Future<bool> isPremiumUser() async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getBool(_keyIsPremium) ?? false;
+    final cached = prefs.getBool(_keyIsPremium) ?? false;
+
+    try {
+      final headers = await authHeaders();
+      final res = await _getWithBaseUrlFallback(
+        path: '/premium/status',
+        headers: headers,
+      );
+
+      if (res.statusCode == 200) {
+        final json = jsonDecode(res.body) as Map<String, dynamic>;
+        final value = json['is_premium'];
+        final isPremium = value == true ||
+            value == 1 ||
+            value?.toString() == '1' ||
+            value?.toString().toLowerCase() == 'true';
+        await prefs.setBool(_keyIsPremium, isPremium);
+        return isPremium;
+      }
+    } catch (_) {
+      // fallback ke cache jika API tidak bisa diakses
+    }
+
+    return cached;
   }
 
   static Future<String?> getAccessToken() async {

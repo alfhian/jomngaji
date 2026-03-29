@@ -413,9 +413,9 @@ class _TadarusDetailPageState extends State<TadarusDetailPage> {
                 alignment: Alignment.center,
                 children: [
                   Icon(
-                    Icons.brightness_7_outlined,
-                    size: 34,
-                    color: AppColors.accent.withOpacity(0.85),
+                    Icons.filter_vintage_outlined,
+                    size: 32,
+                    color: AppColors.accent.withOpacity(0.78),
                   ),
                   Text(
                     _toArabicIndicNumber(ayah.ayah),
