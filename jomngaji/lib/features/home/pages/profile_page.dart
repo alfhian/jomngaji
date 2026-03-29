@@ -10,6 +10,7 @@ import '../../../core/widgets/custom_gradient_appbar.dart';
 import '../../../core/widgets/premium_upgrade_dialog.dart';
 import '../../../routes/app_routes.dart';
 import '../../auth/services/auth_service.dart';
+import '../../../services/prayer_reminder_service.dart';
 import '../widgets/app_bottom_nav.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -34,13 +35,87 @@ class _ProfilePageState extends State<ProfilePage> {
   int _tilawahScore = 0;
   int _tahfidzScore = 0;
   bool _isPremium = false;
+  bool _prayerReminderEnabled = false;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadProfileProgress();
+      _loadPrayerReminderStatus();
     });
+  }
+
+  Future<void> _loadPrayerReminderStatus() async {
+    final enabled = await PrayerReminderService.isEnabled();
+    if (!mounted) return;
+    setState(() => _prayerReminderEnabled = enabled);
+  }
+
+  Future<void> _togglePrayerReminder(bool value) async {
+    try {
+      if (value) {
+        await PrayerReminderService.enableDefaultReminders();
+      } else {
+        await PrayerReminderService.disableReminders();
+      }
+      if (!mounted) return;
+      setState(() => _prayerReminderEnabled = value);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            value
+                ? 'Pengingat sholat aktif. Notifikasi harian telah dijadwalkan.'
+                : 'Pengingat sholat dimatikan.',
+          ),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Gagal mengatur pengingat sholat: $e')),
+      );
+    }
+  }
+
+  Widget _prayerReminderCard() {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.notifications_active_rounded, color: Color(0xFF16A34A)),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Pengingat Waktu Sholat',
+                  style: GoogleFonts.poppins(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              Switch.adaptive(
+                value: _prayerReminderEnabled,
+                activeColor: const Color(0xFF16A34A),
+                onChanged: _togglePrayerReminder,
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Aktifkan notifikasi untuk Subuh, Dzuhur, Ashar, Maghrib, dan Isya setiap hari.',
+            style: GoogleFonts.poppins(fontSize: 12, color: Colors.black54),
+          ),
+        ],
+      ),
+    );
   }
 
   double _normalizeProgress(dynamic value) {
@@ -491,7 +566,10 @@ class _ProfilePageState extends State<ProfilePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.scaffold,
-      appBar: CustomGradientAppBar(title: context.l10n.text('profile.title')),
+      appBar: CustomGradientAppBar(
+        title: context.l10n.text('profile.title'),
+        onBack: () => Navigator.pushReplacementNamed(context, AppRoutes.home),
+      ),
       extendBody: true,
       bottomNavigationBar: const AppBottomNav(currentIndex: 3),
       body: _loading
@@ -570,6 +648,8 @@ class _ProfilePageState extends State<ProfilePage> {
                   _planCard(),
                   const SizedBox(height: 12),
                   _languageCard(),
+                  const SizedBox(height: 12),
+                  _prayerReminderCard(),
                   const SizedBox(height: 12),
                   SizedBox(
                     width: double.infinity,

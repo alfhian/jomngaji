@@ -23,6 +23,8 @@ class TadarusDetailPage extends StatefulWidget {
 }
 
 class _TadarusDetailPageState extends State<TadarusDetailPage> {
+  static const String _tadarusAudioBaseUrl =
+      'https://everyayah.com/data/Alafasy_128kbps';
   Surah? surah;
   double progressValue = 0.0;
 
@@ -108,8 +110,12 @@ class _TadarusDetailPageState extends State<TadarusDetailPage> {
     }
 
     final s = surah!.number.toString().padLeft(3, '0');
-    final a = (index + 1).toString().padLeft(3, '0');
-    final asset = 'assets/audio/tadarus/$s$a.mp3';
+    final primaryIndex = index + 1;
+    final fallbackIndex = primaryIndex + 1;
+    final candidates = <String>[
+      '$_tadarusAudioBaseUrl/$s${primaryIndex.toString().padLeft(3, '0')}.mp3',
+      '$_tadarusAudioBaseUrl/$s${fallbackIndex.toString().padLeft(3, '0')}.mp3',
+    ];
 
     try {
       _isSwitchingTrack = true;
@@ -121,7 +127,19 @@ class _TadarusDetailPageState extends State<TadarusDetailPage> {
 
       if (_playingIndex != index) {
         await _player.stop();
-        await _player.setAsset(asset);
+        Object? lastError;
+        for (final url in candidates) {
+          try {
+            await _player.setUrl(url);
+            lastError = null;
+            break;
+          } catch (e) {
+            lastError = e;
+          }
+        }
+        if (lastError != null) {
+          throw lastError;
+        }
       }
 
       if (!mounted) return;
@@ -325,7 +343,7 @@ class _TadarusDetailPageState extends State<TadarusDetailPage> {
         border: Border.all(color: const Color(0xFFBDEFD6)),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
             surah.name,
@@ -409,15 +427,18 @@ class _TadarusDetailPageState extends State<TadarusDetailPage> {
             ],
           ),
           const SizedBox(height: 12),
-          Directionality(
-            textDirection: TextDirection.rtl,
-            child: Text(
-              ayah.text,
-              textAlign: TextAlign.right,
-              style: GoogleFonts.amiri(
-                fontSize: 29,
-                height: 1.9,
-                color: const Color(0xFF0F172A),
+          Align(
+            alignment: Alignment.centerRight,
+            child: Directionality(
+              textDirection: TextDirection.rtl,
+              child: Text(
+                ayah.text,
+                textAlign: TextAlign.right,
+                style: GoogleFonts.amiri(
+                  fontSize: 29,
+                  height: 1.9,
+                  color: const Color(0xFF0F172A),
+                ),
               ),
             ),
           ),

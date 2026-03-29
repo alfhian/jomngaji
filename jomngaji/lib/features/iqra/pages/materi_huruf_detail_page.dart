@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../../core/theme/app_design_tokens.dart';
 import '../../../core/widgets/custom_gradient_appbar.dart';
 import '../data/hijaiyah_data.dart';
 import 'detail_huruf_hijaiyah_page.dart';
@@ -21,22 +22,26 @@ class MateriHurufDetailPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.scaffold,
       appBar: CustomGradientAppBar(title: lessonTitle),
       body: ListView(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(24),
         children: [
           _header(),
-
-          const SizedBox(height: 25),
-
-          _sectionTitle("Huruf dalam materi ini"),
-          const SizedBox(height: 12),
-
+          const SizedBox(height: 32),
+          Text(
+            "Huruf dalam Materi Ini",
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 17,
+              fontWeight: FontWeight.w800,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 16),
           ...hurufList.map((h) => _hurufCard(context, h)),
-
-          const SizedBox(height: 30),
-
-          _buttonLatihanSuara(context), // <<-- PAKAI CONTEXT
+          const SizedBox(height: 32),
+          _buttonLatihanSuara(context),
+          const SizedBox(height: 40),
         ],
       ),
     );
@@ -44,42 +49,41 @@ class MateriHurufDetailPage extends StatelessWidget {
 
   Widget _header() {
     return Container(
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFFEFF8F3),
-        borderRadius: BorderRadius.circular(22),
+        color: AppColors.primary.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: AppColors.primary.withOpacity(0.1)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            "Ringkasan Materi",
-            style: GoogleFonts.poppins(
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-            ),
+          Row(
+            children: [
+              const Icon(Icons.auto_stories_rounded, color: AppColors.primary, size: 24),
+              const SizedBox(width: 12),
+              Text(
+                "Ringkasan Materi",
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
           Text(
             "Pada pelajaran ini kamu akan mempelajari huruf $lessonTitle, "
             "cara membacanya, perbedaannya, serta bentuk sambungannya.",
-            style: GoogleFonts.poppins(
+            style: GoogleFonts.plusJakartaSans(
               height: 1.5,
-              fontSize: 14,
-              color: Colors.black87,
+              fontSize: 13,
+              color: AppColors.textSecondary,
+              fontWeight: FontWeight.w500,
             ),
           )
         ],
-      ),
-    );
-  }
-
-  Widget _sectionTitle(String t) {
-    return Text(
-      t,
-      style: GoogleFonts.poppins(
-        fontSize: 18,
-        fontWeight: FontWeight.bold,
       ),
     );
   }
@@ -108,51 +112,60 @@ class MateriHurufDetailPage extends StatelessWidget {
         );
       },
       child: Container(
+        margin: const EdgeInsets.only(bottom: 16),
         padding: const EdgeInsets.all(16),
-        margin: const EdgeInsets.only(bottom: 14),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(22),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.06),
-              blurRadius: 6,
-              offset: const Offset(0, 3),
-            )
-          ],
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          boxShadow: AppShadows.soft,
+          border: Border.all(color: AppColors.border.withOpacity(0.5)),
         ),
         child: Row(
           children: [
             Container(
-              height: 60,
-              width: 60,
+              height: 56,
+              width: 56,
               decoration: BoxDecoration(
-                color: data.color,
-                borderRadius: BorderRadius.circular(16),
+                color: data.color.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(14),
               ),
               child: Center(
                 child: Text(
                   data.huruf,
-                  style: const TextStyle(
-                    fontSize: 40,
+                  style: GoogleFonts.amiri(
+                    fontSize: 32,
                     fontWeight: FontWeight.bold,
-                    color: Colors.black87,
+                    color: AppColors.textPrimary,
                   ),
                 ),
               ),
             ),
             const SizedBox(width: 16),
             Expanded(
-              child: Text(
-                data.nama,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    data.nama,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    "Lihat detail & bentuk sambung",
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 12,
+                      color: AppColors.textSecondary,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
               ),
             ),
-            const Icon(Icons.chevron_right_rounded,
-                size: 28, color: Colors.black26)
+            const Icon(Icons.chevron_right_rounded, color: AppColors.textPlaceholder)
           ],
         ),
       ),
@@ -160,31 +173,23 @@ class MateriHurufDetailPage extends StatelessWidget {
   }
 
   Widget _buttonLatihanSuara(BuildContext context) {
-    return ElevatedButton.icon(
-      style: ElevatedButton.styleFrom(
-        backgroundColor: const Color(0xFF42C88A),
-        foregroundColor: Colors.white,
-        padding: const EdgeInsets.symmetric(vertical: 14),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-      ),
-      onPressed: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => LatihanPengucapanPage(
-              lessonId: lessonId, // ✅ BUKAN widget.lessonId
-              lessonTitle: lessonTitle,
-              hurufList: hurufList,
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton.icon(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => LatihanPengucapanPage(
+                lessonId: lessonId,
+                lessonTitle: lessonTitle,
+                hurufList: hurufList,
+              ),
             ),
-          ),
-        );
-      },
-      icon: const Icon(Icons.mic, size: 22),
-      label: const Text(
-        "Latihan Pengucapan",
-        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+          );
+        },
+        icon: const Icon(Icons.mic_rounded, size: 24),
+        label: const Text("Mulai Latihan Pengucapan"),
       ),
     );
   }

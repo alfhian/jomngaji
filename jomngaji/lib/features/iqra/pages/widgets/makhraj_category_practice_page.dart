@@ -9,6 +9,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 import '../../../../core/config/api_config.dart';
+import '../../../../core/theme/app_design_tokens.dart';
 import '../../../../core/widgets/custom_gradient_appbar.dart';
 
 class MakhrajLetter {
@@ -94,11 +95,11 @@ class _MakhrajCategoryPracticePageState extends State<MakhrajCategoryPracticePag
 
     final dir = await getTemporaryDirectory();
     final path =
-        '${dir.path}/makhraj_${widget.title}_${_currentIndex}_${DateTime.now().millisecondsSinceEpoch}.aac';
+        '${dir.path}/makhraj_${widget.title}_${_currentIndex}_${DateTime.now().millisecondsSinceEpoch}.wav';
 
     await _recorder.startRecorder(
       toFile: path,
-      codec: Codec.aacADTS,
+      codec: Codec.pcm16WAV,
       sampleRate: 16000,
       numChannels: 1,
       bitRate: 16000,
@@ -163,31 +164,59 @@ class _MakhrajCategoryPracticePageState extends State<MakhrajCategoryPracticePag
   Future<void> _showScoreDialog(EvaluationResult r) async {
     final score = r.score.clamp(0, 100);
     final passed = score >= 50;
+    final scoreColor = passed ? AppColors.accent : Colors.orange;
 
     await showDialog(
       context: context,
+      barrierDismissible: false,
       builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text(
-          passed ? 'Lolos ✅' : 'Coba Lagi 💪',
-          textAlign: TextAlign.center,
-          style: GoogleFonts.poppins(
-            fontWeight: FontWeight.w700,
-            color: passed ? Colors.green : Colors.orange,
-          ),
-        ),
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.lg)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: scoreColor.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                passed ? Icons.check_circle_rounded : Icons.replay_circle_filled_rounded,
+                color: scoreColor,
+                size: 64,
+              ),
+            ),
+            const SizedBox(height: 24),
             Text(
-              'Skor: $score',
-              style: GoogleFonts.poppins(
-                fontSize: 28,
+              passed ? 'Lolos! ✨' : 'Coba Lagi 💪',
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 22,
                 fontWeight: FontWeight.w800,
-                color: widget.primaryColor,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Skor Pengucapan',
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textSecondary,
               ),
             ),
             const SizedBox(height: 8),
+            Text(
+              '$score',
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 48,
+                fontWeight: FontWeight.w900,
+                color: scoreColor,
+              ),
+            ),
+            const SizedBox(height: 16),
             Text(
               r.feedback.isEmpty
                   ? (passed
@@ -195,16 +224,26 @@ class _MakhrajCategoryPracticePageState extends State<MakhrajCategoryPracticePag
                       : 'Ulangi lagi dengan pengucapan lebih jelas.')
                   : r.feedback,
               textAlign: TextAlign.center,
-              style: GoogleFonts.poppins(fontSize: 13),
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 13,
+                color: AppColors.textSecondary,
+                fontWeight: FontWeight.w500,
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: scoreColor,
+                ),
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Tutup'),
+              ),
             ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Tutup', style: GoogleFonts.poppins()),
-          ),
-        ],
       ),
     );
 
@@ -222,38 +261,69 @@ class _MakhrajCategoryPracticePageState extends State<MakhrajCategoryPracticePag
       context: context,
       barrierDismissible: false,
       builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-        title: Text(
-          'Latihan Selesai 🎉',
-          style: GoogleFonts.poppins(fontWeight: FontWeight.w700),
-          textAlign: TextAlign.center,
-        ),
-        content: Text(
-          'Semua huruf di kategori ${widget.title} sudah dievaluasi dan tersimpan.',
-          textAlign: TextAlign.center,
-          style: GoogleFonts.poppins(fontSize: 14),
-        ),
-        actionsAlignment: MainAxisAlignment.center,
-        actions: [
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              Navigator.pop(context);
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: widget.primaryColor),
-            child: Text(
-              'Kembali',
-              style: GoogleFonts.poppins(color: Colors.white),
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.lg)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: AppColors.accent.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.emoji_events_rounded, color: AppColors.accent, size: 64),
             ),
-          ),
-        ],
+            const SizedBox(height: 24),
+            Text(
+              'Latihan Selesai! 🎉',
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 22,
+                fontWeight: FontWeight.w800,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Semua huruf di kategori ${widget.title} sudah dievaluasi dengan baik.',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 14,
+                color: AppColors.textSecondary,
+                fontWeight: FontWeight.w500,
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 32),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  Navigator.pop(context);
+                },
+                child: const Text('Kembali ke Menu'),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   void _showSnack(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
+      SnackBar(
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.all(24),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.md)),
+        content: Text(
+          message,
+          style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600),
+        ),
+      ),
     );
   }
 
@@ -262,119 +332,162 @@ class _MakhrajCategoryPracticePageState extends State<MakhrajCategoryPracticePag
     final current = widget.letters[_currentIndex];
 
     return Scaffold(
+      backgroundColor: AppColors.scaffold,
       appBar: CustomGradientAppBar(title: widget.title),
-      body: ListView(
-        padding: const EdgeInsets.all(18),
-        children: [
-          Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: widget.primaryColor.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(14),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(AppRadius.md),
+                border: Border.all(color: AppColors.primary.withOpacity(0.1)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.info_rounded, color: AppColors.primary, size: 24),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Text(
+                      widget.info,
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 13,
+                        height: 1.5,
+                        color: AppColors.textPrimary,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
-            child: Text(
-              widget.info,
-              style: GoogleFonts.poppins(fontSize: 13, height: 1.35),
+            const SizedBox(height: 32),
+            Text(
+              "Pilih Huruf",
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 16,
+                fontWeight: FontWeight.w800,
+                color: AppColors.textPrimary,
+              ),
             ),
-          ),
-          const SizedBox(height: 14),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: List.generate(widget.letters.length, (i) {
-              final active = i == _currentIndex;
-              return ChoiceChip(
-                selected: active,
-                onSelected: (_) => setState(() => _currentIndex = i),
-                selectedColor: widget.primaryColor.withOpacity(0.24),
-                label: Text(widget.letters[i].nama),
-              );
-            }),
-          ),
-          const SizedBox(height: 18),
-          Container(
-            padding: const EdgeInsets.symmetric(vertical: 28),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.07),
-                  blurRadius: 8,
-                  offset: const Offset(0, 3),
-                )
-              ],
+            const SizedBox(height: 16),
+            Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              children: List.generate(widget.letters.length, (i) {
+                final active = i == _currentIndex;
+                return ChoiceChip(
+                  selected: active,
+                  onSelected: (_) => setState(() => _currentIndex = i),
+                  selectedColor: AppColors.accent,
+                  backgroundColor: Colors.white,
+                  checkmarkColor: Colors.white,
+                  labelStyle: GoogleFonts.plusJakartaSans(
+                    color: active ? Colors.white : AppColors.textSecondary,
+                    fontWeight: active ? FontWeight.w700 : FontWeight.w600,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                    side: BorderSide(
+                      color: active ? AppColors.accent : AppColors.border,
+                    ),
+                  ),
+                  label: Text(widget.letters[i].nama),
+                );
+              }),
             ),
-            child: Column(
+            const SizedBox(height: 32),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 48),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(AppRadius.lg),
+                boxShadow: AppShadows.medium,
+                border: Border.all(color: AppColors.border.withOpacity(0.5)),
+              ),
+              child: Column(
+                children: [
+                  Text(
+                    current.huruf,
+                    style: GoogleFonts.amiri(
+                      fontSize: 100,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    current.nama,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 32),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: _isRecording ? _stopRecording : _startRecording,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _isRecording ? Colors.redAccent : AppColors.primary,
+                  padding: const EdgeInsets.symmetric(vertical: 18),
+                ),
+                icon: Icon(_isRecording ? Icons.stop_rounded : Icons.mic_rounded, size: 24),
+                label: Text(
+                  _isRecording ? 'Berhenti Merekam' : 'Mulai Rekam Suara',
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Row(
               children: [
-                Text(
-                  current.huruf,
-                  style: TextStyle(
-                    fontSize: 80,
-                    fontWeight: FontWeight.bold,
-                    color: widget.primaryColor,
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: _isPlaying || _recordedPaths[_currentIndex] == null ? null : _playRecorded,
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                    ),
+                    icon: const Icon(Icons.play_arrow_rounded, size: 24),
+                    label: const Text('Putar'),
                   ),
                 ),
-                const SizedBox(height: 6),
-                Text(
-                  current.nama,
-                  style: GoogleFonts.poppins(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
+                const SizedBox(width: 16),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: _isEvaluating ? null : _evaluate,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.accent,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                    ),
+                    icon: const Icon(Icons.auto_awesome_rounded, size: 24),
+                    label: Text(
+                      _isEvaluating ? 'Menilai...' : 'Nilai',
+                    ),
                   ),
                 ),
               ],
             ),
-          ),
-          const SizedBox(height: 18),
-          ElevatedButton.icon(
-            onPressed: _isRecording ? _stopRecording : _startRecording,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: _isRecording ? Colors.red : widget.primaryColor,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-            ),
-            icon: Icon(_isRecording ? Icons.stop : Icons.mic),
-            label: Text(
-              _isRecording ? 'Stop Rekam' : 'Mulai Rekam',
-              style: GoogleFonts.poppins(fontWeight: FontWeight.w700),
-            ),
-          ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: _isPlaying ? null : _playRecorded,
-                  icon: const Icon(Icons.play_arrow_rounded),
-                  label: Text('Putar', style: GoogleFonts.poppins()),
+            const SizedBox(height: 24),
+            Center(
+              child: Text(
+                'Latihan ini akan membantu akurasi pengucapanmu.',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 12,
+                  color: AppColors.textPlaceholder,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: ElevatedButton.icon(
-                  onPressed: _isEvaluating ? null : _evaluate,
-                  icon: const Icon(Icons.auto_awesome_rounded),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF2F9E6E),
-                    foregroundColor: Colors.white,
-                  ),
-                  label: Text(
-                    _isEvaluating ? 'Menilai...' : 'Nilai',
-                    style: GoogleFonts.poppins(),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Semua evaluasi kategori ini disimpan ke lesson_id 999.',
-            textAlign: TextAlign.center,
-            style: GoogleFonts.poppins(fontSize: 12, color: Colors.black54),
-          ),
-        ],
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:tabler_icons/tabler_icons.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/localization/app_localization.dart';
+import '../../../core/theme/app_design_tokens.dart';
 import '../../../core/widgets/premium_upgrade_dialog.dart';
 import '../../../routes/app_routes.dart';
 
@@ -12,47 +14,50 @@ class CategoryList extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final categories = [
-      (l10n.text('category.iqra'), TablerIcons.book_2, AppRoutes.iqraDasar),
-      (l10n.text('category.tajwid'), TablerIcons.microphone, AppRoutes.tajwidDasar),
-      (l10n.text('category.tilawah'), TablerIcons.wave_sine, AppRoutes.tilawahMenu),
-      (l10n.text('category.tahfidz'), TablerIcons.moon_stars, AppRoutes.tahfidzMenu),
+      (l10n.text('category.iqra'), TablerIcons.book_2, AppRoutes.iqraDasar, AppColors.accent),
+      (l10n.text('category.tajwid'), TablerIcons.microphone, AppRoutes.tajwidDasar, AppColors.secondary),
+      (l10n.text('category.tilawah'), TablerIcons.wave_sine, AppRoutes.tilawahMenu, Colors.orange),
+      (l10n.text('category.tahfidz'), TablerIcons.moon_stars, AppRoutes.tahfidzMenu, Colors.purple),
     ];
 
     return GridView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 12),
+      padding: EdgeInsets.zero,
       physics: const NeverScrollableScrollPhysics(),
       shrinkWrap: true,
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
-        mainAxisSpacing: 14,
-        crossAxisSpacing: 14,
-        childAspectRatio: 1.15,
+        mainAxisSpacing: 16,
+        crossAxisSpacing: 16,
+        childAspectRatio: 1.1,
       ),
       itemCount: categories.length,
       itemBuilder: (context, i) {
-        final (title, icon, route) = categories[i];
-        return _stampCard(
+        final (title, icon, route, color) = categories[i];
+        return _categoryCard(
           context,
           title: title,
           icon: icon,
           route: route,
+          color: color,
         );
       },
     );
   }
 
-  // ⭐ STAMP CARD DENGAN BACKGROUND IMAGE
-  Widget _stampCard(
+  Widget _categoryCard(
     BuildContext context, {
     required String title,
     required IconData icon,
+    required Color color,
     String? route,
   }) {
+    final isPremium = route == AppRoutes.tilawahMenu || route == AppRoutes.tahfidzMenu;
+
     return GestureDetector(
       onTap: route == null
           ? null
           : () async {
-              if (route == AppRoutes.tilawahMenu || route == AppRoutes.tahfidzMenu) {
+              if (isPremium) {
                 await runWithPremiumGate(
                   context,
                   featureName: title,
@@ -63,67 +68,69 @@ class CategoryList extends StatelessWidget {
               Navigator.pushNamed(context, route);
             },
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20),
-
-          // ⭐ Background Image
-          image: const DecorationImage(
-            image: AssetImage("assets/images/grid_stamp_background.png"),
-            fit: BoxFit.cover,
-          ),
-
-          // ⭐ Border stamp
-          border: Border.all(
-            color: Colors.black.withOpacity(0.4),
-            width: 1.4,
-          ),
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          boxShadow: AppShadows.soft,
+          border: Border.all(color: AppColors.border.withOpacity(0.5)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ICON
-            Icon(
-              icon,
-              size: 36,
-              color: const Color(0xFF42C88A),
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.12),
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+              ),
+              child: Icon(
+                icon,
+                size: 28,
+                color: color,
+              ),
             ),
-
             const Spacer(),
-
-            // TITLE
             Text(
               title,
-              style: const TextStyle(
+              style: GoogleFonts.plusJakartaSans(
                 fontWeight: FontWeight.w700,
                 fontSize: 15,
-                color: Colors.black87,
-                height: 1.2,
+                color: AppColors.textPrimary,
+                letterSpacing: -0.3,
               ),
             ),
-            if (route == AppRoutes.tilawahMenu || route == AppRoutes.tahfidzMenu) ...[
-              const SizedBox(height: 6),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                decoration: BoxDecoration(
-                  color: Colors.amber.shade100,
-                  borderRadius: BorderRadius.circular(99),
-                ),
-                child: const Text(
-                  'PRO',
-                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 10),
-                ),
-              ),
-            ],
-
             const SizedBox(height: 4),
-
-            // Garis stempel kecil
-            Container(
-              height: 2,
-              width: 40,
-              color: const Color(0xFF42C88A),
-            )
+            Row(
+              children: [
+                Text(
+                  isPremium ? 'Premium Content' : 'Mulai Belajar',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+                if (isPremium) ...[
+                  const SizedBox(width: 6),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: AppColors.gold.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: const Text(
+                      'PRO',
+                      style: TextStyle(
+                        color: AppColors.gold,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 9,
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
           ],
         ),
       ),

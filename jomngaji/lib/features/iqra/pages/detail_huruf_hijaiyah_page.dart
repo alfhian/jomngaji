@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:audioplayers/audioplayers.dart'; // Import audioplayers
-import 'package:google_fonts/google_fonts.dart'; // Import google_fonts
+import 'package:audioplayers/audioplayers.dart';
+import 'package:google_fonts/google_fonts.dart';
+import '../../../core/theme/app_design_tokens.dart';
 import '../../../core/widgets/custom_gradient_appbar.dart';
 
 class DetailHurufHijaiyahPage extends StatelessWidget {
@@ -18,15 +19,12 @@ class DetailHurufHijaiyahPage extends StatelessWidget {
   final String tanwinKasrah;
   final String tanwinDhammah;
 
-  // Inisialisasi player
   final AudioPlayer player = AudioPlayer();
 
-  // Function untuk memutar audio
   void playAudio(String file) {
     player.play(AssetSource(file));
   }
 
-  // Constructor dengan parameter yang dibutuhkan
   DetailHurufHijaiyahPage({
     super.key,
     required this.huruf,
@@ -46,213 +44,217 @@ class DetailHurufHijaiyahPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.scaffold,
       appBar: const CustomGradientAppBar(title: "Detail Huruf Hijaiyah"),
-      body: Padding(
-        padding: const EdgeInsets.all(20),
-        child: ListView(
-          children: [
-            const SizedBox(height: 10),
-
-            // ================================
-            // HURUF BESAR
-            // ================================
-            Center(
-              child: Container(
-                height: 150,
-                width: 150,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF2FFF6),
-                  borderRadius: BorderRadius.circular(28),
-                ),
-                child: Center(
-                  child: Text(
-                    huruf,
-                    style: const TextStyle(
-                      fontSize: 90,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF42C88A),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 20),
-
-            // Nama huruf
-            Center(
-              child: Text(
-                nama,
-                style: GoogleFonts.cairo(
-                  fontSize: 26,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 6),
-
-            // Cara baca
-            Center(
-              child: Text(
-                "Cara baca: $caraBaca",
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: Colors.black54,
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 30),
-
-            // ================================
-            // 1. Bentuk Sambung
-            // ================================
-            _title("Bentuk Sambung"),
-
-            const SizedBox(height: 12),
-            _rowText("Awal", awal),
-            const SizedBox(height: 8),
-            _rowText("Tengah", tengah),
-            const SizedBox(height: 8),
-            _rowText("Akhir", akhir),
-
-            const SizedBox(height: 30),
-
-            // ================================
-            // 2. Harakat Dasar
-            // ================================
-            _title("Harakat Dasar"),
-            const SizedBox(height: 12),
-
-            _harakatCard("Fathah", fathah, "A", const Color(0xFFFFF9C4)),
-            _harakatCard("Kasrah", kasrah, "I", const Color(0xFFE1F5FE)),
-            _harakatCard("Dhammah", dhammah, "U", const Color(0xFFE1BEE7)),
-
-            const SizedBox(height: 30),
-
-            // ================================
-            // 3. Tanwin
-            // ================================
-            _title("Tanwin"),
-            const SizedBox(height: 12),
-
-            _harakatCard("Tanwin Fathah", tanwinFathah, "AN", const Color(0xFFFFE0B2)),
-            _harakatCard("Tanwin Kasrah", tanwinKasrah, "IN", const Color(0xFFB2EBF2)),
-            _harakatCard("Tanwin Dhammah", tanwinDhammah, "UN", const Color(0xFFD1C4E9)),
-
-            const SizedBox(height: 40),
-          ],
-        ),
+      body: ListView(
+        padding: const EdgeInsets.all(24),
+        children: [
+          _headerHuruf(),
+          const SizedBox(height: 32),
+          _sectionTitle("Bentuk Sambung"),
+          const SizedBox(height: 16),
+          _rowSambung("Huruf Awal", awal),
+          _rowSambung("Huruf Tengah", tengah),
+          _rowSambung("Huruf Akhir", akhir),
+          const SizedBox(height: 32),
+          _sectionTitle("Harakat Dasar"),
+          const SizedBox(height: 16),
+          _harakatGrid([
+            _HarakatData("Fathah (A)", fathah, "A", AppColors.accent),
+            _HarakatData("Kasrah (I)", kasrah, "I", AppColors.secondary),
+            _HarakatData("Dhammah (U)", dhammah, "U", Colors.orange),
+          ]),
+          const SizedBox(height: 32),
+          _sectionTitle("Tanwin"),
+          const SizedBox(height: 16),
+          _harakatGrid([
+            _HarakatData("Fathah (AN)", tanwinFathah, "AN", Colors.redAccent),
+            _HarakatData("Kasrah (IN)", tanwinKasrah, "IN", Colors.blueAccent),
+            _HarakatData("Dhammah (UN)", tanwinDhammah, "UN", Colors.purpleAccent),
+          ]),
+          const SizedBox(height: 40),
+        ],
       ),
     );
   }
 
-  // Judul section (Bentuk Sambung, Harakat Dasar, dll)
-  Widget _title(String text) {
-    return Text(
-      text,
-      style: GoogleFonts.poppins(
-        fontSize: 20,
-        fontWeight: FontWeight.w700,
-        color: const Color(0xFF42C88A),
+  Widget _headerHuruf() {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 40),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        boxShadow: AppShadows.medium,
+        border: Border.all(color: AppColors.border.withOpacity(0.5)),
       ),
-    );
-  }
-
-  // Row untuk menampilkan bentuk sambung huruf
-  Widget _rowText(String label, String value) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(label, style: const TextStyle(fontSize: 16)),
-        Text(
-          value,
-          style: const TextStyle(
-            fontSize: 32,
-            fontWeight: FontWeight.bold,
-            color: Color(0xFF42C88A),
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: AppColors.accent.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Text(
+              huruf,
+              style: GoogleFonts.amiri(
+                fontSize: 80,
+                fontWeight: FontWeight.bold,
+                color: AppColors.primary,
+              ),
+            ),
           ),
-        ),
-      ],
+          const SizedBox(height: 24),
+          Text(
+            nama,
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 24,
+              fontWeight: FontWeight.w800,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            "Cara baca: $caraBaca",
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 14,
+              color: AppColors.textSecondary,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
-  // Row untuk menampilkan harakat
-  Widget _harakatRow(String label, String symbol, String latin) {
-    return GestureDetector(
-      onTap: () {
-        // Memutar audio harakat saat ditekan
-        playAudio("audio/harakat/$symbol.mp3");
+  Widget _sectionTitle(String title) {
+    return Text(
+      title,
+      style: GoogleFonts.plusJakartaSans(
+        fontSize: 17,
+        fontWeight: FontWeight.w800,
+        color: AppColors.textPrimary,
+      ),
+    );
+  }
+
+  Widget _rowSambung(String label, String value) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        boxShadow: AppShadows.soft,
+        border: Border.all(color: AppColors.border.withOpacity(0.5)),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textSecondary,
+            ),
+          ),
+          Text(
+            value,
+            style: GoogleFonts.amiri(
+              fontSize: 32,
+              fontWeight: FontWeight.bold,
+              color: AppColors.primary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _harakatGrid(List<_HarakatData> items) {
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 1,
+        mainAxisExtent: 80,
+        mainAxisSpacing: 12,
+      ),
+      itemCount: items.length,
+      itemBuilder: (context, index) {
+        final item = items[index];
+        return GestureDetector(
+          onTap: () => playAudio("audio/harakat/${item.arab}.mp3"),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(AppRadius.md),
+              boxShadow: AppShadows.soft,
+              border: Border.all(color: AppColors.border.withOpacity(0.5)),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 4,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: item.color,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Text(
+                      item.label,
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                  ],
+                ),
+                Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      item.arab,
+                      style: GoogleFonts.amiri(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.primary,
+                        height: 1,
+                      ),
+                    ),
+                    Text(
+                      item.latin,
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.textPlaceholder,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
       },
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
-        decoration: BoxDecoration(
-          color: const Color(0xFFF6FFF6),
-          borderRadius: BorderRadius.circular(14),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(label, style: const TextStyle(fontSize: 16)),
-            Column(
-              children: [
-                Text(
-                  symbol,
-                  style: const TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF42C88A),
-                  ),
-                ),
-                Text(
-                  latin,
-                  style: const TextStyle(fontSize: 12, color: Colors.black54),
-                )
-              ],
-            )
-          ],
-        ),
-      ),
     );
   }
+}
 
-  // ======================
-  // HARAKAT CARD
-  // ======================
-  Widget _harakatCard(String label, String arab, String latin, Color color) {
-    return GestureDetector(
-      onTap: () => playAudio("audio/harakat/$arab.mp3"),
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 18),
-        decoration: BoxDecoration(
-          color: color,
-          borderRadius: BorderRadius.circular(22),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(label, style: GoogleFonts.poppins(fontSize: 16)),
-            Column(
-              children: [
-                Text(
-                  arab,
-                  style: const TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF42C88A),
-                  ),
-                ),
-                Text(
-                  latin,
-                  style: const TextStyle(fontSize: 12, color: Colors.black54),
-                )
-              ],
-            )
-          ],
-        ),
-      ),
-    );
-  }
+class _HarakatData {
+  final String label;
+  final String arab;
+  final String latin;
+  final Color color;
+
+  _HarakatData(this.label, this.arab, this.latin, this.color);
 }

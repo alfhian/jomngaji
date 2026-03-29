@@ -3,6 +3,8 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../../core/theme/app_design_tokens.dart';
+import '../../../core/widgets/custom_gradient_appbar.dart';
 import '../../../core/widgets/premium_upgrade_dialog.dart';
 import '../../../services/suku_kata_service.dart';
 
@@ -129,24 +131,37 @@ class _LatihanSukuKataPageState extends State<LatihanSukuKataPage>
       wrongAnim.forward(from: 0);
     }
 
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          behavior: SnackBarBehavior.floating,
-          margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-          duration: const Duration(milliseconds: 850),
-          backgroundColor: benar ? const Color(0xFF2E7D32) : const Color(0xFFC62828),
-          content: Text(
-            benar
-                ? '✅ Benar! Streak kamu $_streak'
-                : '❌ Salah. Jawaban benar: ${current.latin}',
-            style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w600),
-          ),
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.hideCurrentSnackBar();
+    messenger.showSnackBar(
+      SnackBar(
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.all(24),
+        duration: const Duration(milliseconds: 1500),
+        backgroundColor: benar ? AppColors.accent : Colors.redAccent,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.md)),
+        content: Row(
+          children: [
+            Icon(benar ? Icons.check_circle_rounded : Icons.cancel_rounded, color: Colors.white),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                benar
+                    ? 'Luar biasa! Streak kamu $_streak 🔥'
+                    : 'Kurang tepat. Jawaban benar: ${current.latin}',
+                style: GoogleFonts.plusJakartaSans(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 14,
+                ),
+              ),
+            ),
+          ],
         ),
-      );
+      ),
+    );
 
-    await Future.delayed(const Duration(milliseconds: 720));
+    await Future.delayed(const Duration(milliseconds: 1600));
 
     if (_questionIndex >= _sessionQuestions.length - 1) {
       await _finishLevel();
@@ -189,44 +204,43 @@ class _LatihanSukuKataPageState extends State<LatihanSukuKataPage>
   Widget _resultDialog(double score, int xpGain, int total) {
     final passed = score >= _passScore;
     final scoreInt = score.round();
-    final scoreColor = passed ? const Color(0xFF42C88A) : Colors.redAccent;
-    final label = passed ? 'Lolos' : 'Perlu Latihan';
+    final scoreColor = passed ? AppColors.accent : Colors.redAccent;
+    final label = passed ? 'Lolos!' : 'Perlu Latihan';
     final emoji = passed ? '🎉' : '⚠️';
 
     return Dialog(
       insetPadding: const EdgeInsets.symmetric(horizontal: 30),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(26)),
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(20, 22, 20, 20),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(26),
-        ),
+      backgroundColor: Colors.white,
+      surfaceTintColor: Colors.white,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.lg)),
+      child: Padding(
+        padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
               '$emoji  $label',
-              style: GoogleFonts.poppins(
+              style: GoogleFonts.plusJakartaSans(
                 fontSize: 22,
-                fontWeight: FontWeight.w700,
+                fontWeight: FontWeight.w800,
                 color: scoreColor,
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 24),
             SizedBox(
-              width: 126,
-              height: 126,
+              width: 140,
+              height: 140,
               child: Stack(
                 alignment: Alignment.center,
                 children: [
                   SizedBox(
-                    width: 108,
-                    height: 108,
+                    width: 120,
+                    height: 120,
                     child: CircularProgressIndicator(
                       value: score / 100,
-                      strokeWidth: 10,
-                      backgroundColor: Colors.grey.shade200,
+                      strokeWidth: 12,
+                      strokeCap: StrokeCap.round,
+                      backgroundColor: AppColors.scaffold,
                       valueColor: AlwaysStoppedAnimation<Color>(scoreColor),
                     ),
                   ),
@@ -235,61 +249,60 @@ class _LatihanSukuKataPageState extends State<LatihanSukuKataPage>
                     children: [
                       Text(
                         '$scoreInt',
-                        style: GoogleFonts.poppins(
-                          fontSize: 34,
-                          fontWeight: FontWeight.w700,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 40,
+                          fontWeight: FontWeight.w900,
                           color: scoreColor,
                         ),
                       ),
                       Text(
-                        'Skor',
-                        style: GoogleFonts.poppins(fontSize: 11, color: Colors.black54),
+                        'SKOR',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.textPlaceholder,
+                          letterSpacing: 1.2,
+                        ),
                       ),
                     ],
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 24),
             Text(
               'Benar: $_correctCount dari $total • +$xpGain XP',
-              style: GoogleFonts.poppins(fontSize: 13, color: Colors.black87),
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textPrimary,
+              ),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 12),
             Text(
               passed
-                  ? 'Level berikutnya otomatis terbuka ✅'
+                  ? 'Selamat! Level berikutnya telah terbuka.'
                   : 'Butuh minimal ${_passScore.toInt()}% untuk membuka level berikutnya.',
               textAlign: TextAlign.center,
-              style: GoogleFonts.poppins(
-                fontSize: 12.5,
-                color: Colors.black54,
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 13,
+                color: AppColors.textSecondary,
+                fontWeight: FontWeight.w500,
               ),
             ),
-            const SizedBox(height: 18),
-            GestureDetector(
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.pop(context);
-              },
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: scoreColor,
-                  borderRadius: BorderRadius.circular(14),
+            const SizedBox(height: 32),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: scoreColor,
                 ),
-                child: Center(
-                  child: Text(
-                    'Tutup',
-                    style: GoogleFonts.poppins(
-                      fontSize: 15,
-                      color: Colors.white,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
+                onPressed: () {
+                  Navigator.pop(context);
+                  Navigator.pop(context);
+                },
+                child: const Text('Tutup'),
               ),
             ),
           ],
@@ -303,67 +316,67 @@ class _LatihanSukuKataPageState extends State<LatihanSukuKataPage>
     final isCorrect = label.toUpperCase() == current.latin.toUpperCase();
     final isSelected = _selectedOption == label;
 
-    Color bg = const Color(0xFFE8FFF0);
-    Color border = const Color(0xFF50D1A0);
-    Color text = const Color(0xFF42C88A);
+    Color bg = Colors.white;
+    Color border = AppColors.border;
+    Color text = AppColors.textPrimary;
     IconData? icon;
 
     if (_lockedAnswer) {
       if (isCorrect) {
-        bg = const Color(0xFFD9F8E5);
-        border = const Color(0xFF1E915B);
-        text = const Color(0xFF1E915B);
+        bg = AppColors.accent.withOpacity(0.1);
+        border = AppColors.accent;
+        text = AppColors.accent;
         icon = Icons.check_circle_rounded;
       } else if (isSelected) {
-        bg = const Color(0xFFFFE2E2);
-        border = const Color(0xFFD84343);
-        text = const Color(0xFFD84343);
+        bg = Colors.redAccent.withOpacity(0.1);
+        border = Colors.redAccent;
+        text = Colors.redAccent;
         icon = Icons.cancel_rounded;
       } else {
-        bg = Colors.white.withOpacity(0.75);
-        border = Colors.grey.shade300;
-        text = Colors.grey.shade600;
+        bg = AppColors.scaffold;
+        border = AppColors.border.withOpacity(0.5);
+        text = AppColors.textPlaceholder;
       }
+    } else if (isSelected) {
+      border = AppColors.accent;
     }
 
     return ScaleTransition(
-      scale: Tween(begin: 1.0, end: 1.08).animate(
+      scale: Tween(begin: 1.0, end: 1.05).animate(
         CurvedAnimation(
-          parent: isSelected && _lockedAnswer && isCorrect ? correctAnim : wrongAnim,
+          parent: isSelected && _lockedAnswer && isCorrect ? correctAnim : (isSelected && _lockedAnswer && !isCorrect ? wrongAnim : AlwaysStoppedAnimation(0)),
           curve: Curves.easeOutBack,
         ),
       ),
       child: GestureDetector(
         onTap: () => _checkAnswer(label),
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 220),
-          padding: const EdgeInsets.symmetric(vertical: 14),
+          duration: const Duration(milliseconds: 200),
+          margin: const EdgeInsets.only(bottom: 16),
+          padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 24),
           decoration: BoxDecoration(
             color: bg,
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: border, width: 1.2),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 8,
-                offset: const Offset(0, 3),
-              ),
-            ],
+            borderRadius: BorderRadius.circular(AppRadius.md),
+            border: Border.all(
+              color: border,
+              width: isSelected || (_lockedAnswer && isCorrect) ? 2 : 1,
+            ),
+            boxShadow: AppShadows.soft,
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
                 label,
-                style: GoogleFonts.poppins(
-                  fontSize: 23,
-                  fontWeight: FontWeight.w700,
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800,
                   color: text,
                 ),
               ),
               if (icon != null) ...[
-                const SizedBox(width: 8),
-                Icon(icon, color: text, size: 20),
+                const SizedBox(width: 12),
+                Icon(icon, color: text, size: 24),
               ],
             ],
           ),
@@ -376,20 +389,19 @@ class _LatihanSukuKataPageState extends State<LatihanSukuKataPage>
   Widget build(BuildContext context) {
     if (_loading) {
       return const Scaffold(
+        backgroundColor: AppColors.scaffold,
         body: Center(child: CircularProgressIndicator()),
       );
     }
 
     if (_sessionQuestions.isEmpty) {
       return Scaffold(
-        appBar: AppBar(
-          title: Text(widget.level.title, style: GoogleFonts.poppins()),
-          backgroundColor: const Color(0xFF50D1A0),
-        ),
+        backgroundColor: AppColors.scaffold,
+        appBar: CustomGradientAppBar(title: widget.level.title),
         body: Center(
           child: Text(
             'Belum ada soal untuk level ini.',
-            style: GoogleFonts.poppins(fontSize: 15),
+            style: GoogleFonts.plusJakartaSans(color: AppColors.textSecondary),
           ),
         ),
       );
@@ -397,119 +409,106 @@ class _LatihanSukuKataPageState extends State<LatihanSukuKataPage>
 
     final current = _sessionQuestions[_questionIndex];
     final options = _optionsFor(current);
+    final progress = (_questionIndex + 1) / _sessionQuestions.length;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.level.title, style: GoogleFonts.poppins()),
-        backgroundColor: const Color(0xFF50D1A0),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.fromLTRB(22, 18, 22, 16),
+      backgroundColor: AppColors.scaffold,
+      appBar: CustomGradientAppBar(title: widget.level.title),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(24),
         child: Column(
           children: [
-            Row(
-              children: [
-                Expanded(
-                  child: LinearProgressIndicator(
-                    value: (_questionIndex + 1) / _sessionQuestions.length,
-                    minHeight: 8,
-                    borderRadius: BorderRadius.circular(16),
-                    color: const Color(0xFF42C88A),
-                    backgroundColor: Colors.grey.shade200,
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Text(
-                  '${_questionIndex + 1}/${_sessionQuestions.length}',
-                  style: GoogleFonts.poppins(fontWeight: FontWeight.w700),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Streak: $_streak 🔥',
-                  style: GoogleFonts.poppins(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: const Color(0xFF2F9E6E),
-                  ),
-                ),
-                Text(
-                  'Best: $_bestStreak',
-                  style: GoogleFonts.poppins(
-                    fontSize: 12,
-                    color: Colors.black54,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
             Container(
-              padding: const EdgeInsets.symmetric(vertical: 36),
+              padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: const Color(0xFFF1FFF6),
-                borderRadius: BorderRadius.circular(28),
-                boxShadow: [
-                  BoxShadow(
-                    blurRadius: 10,
-                    color: Colors.black.withOpacity(0.06),
-                    offset: const Offset(0, 4),
-                  )
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(AppRadius.md),
+                boxShadow: AppShadows.soft,
+              ),
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Soal ${_questionIndex + 1} dari ${_sessionQuestions.length}',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: AppColors.gold.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(AppRadius.full),
+                        ),
+                        child: Text(
+                          'Streak: $_streak 🔥',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.gold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(AppRadius.full),
+                    child: LinearProgressIndicator(
+                      value: progress.clamp(0, 1),
+                      minHeight: 10,
+                      backgroundColor: AppColors.scaffold,
+                      color: AppColors.accent,
+                    ),
+                  ),
                 ],
+              ),
+            ),
+            const SizedBox(height: 32),
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 40),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(AppRadius.lg),
+                boxShadow: AppShadows.medium,
+                border: Border.all(
+                  color: _lockedAnswer
+                      ? (_selectedOption?.toUpperCase() == current.latin.toUpperCase() ? AppColors.accent : Colors.redAccent).withOpacity(0.3)
+                      : AppColors.border.withOpacity(0.5),
+                  width: 2,
+                ),
               ),
               child: Center(
                 child: Text(
                   current.arabic,
-                  style: const TextStyle(
-                    fontSize: 90,
+                  style: GoogleFonts.amiri(
+                    fontSize: 100,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF42C88A),
+                    color: _lockedAnswer
+                        ? (_selectedOption?.toUpperCase() == current.latin.toUpperCase() ? AppColors.accent : Colors.redAccent)
+                        : AppColors.primary,
                   ),
                 ),
+              ),
+            ),
+            const SizedBox(height: 32),
+            Text(
+              "Pilih bacaan latin yang tepat",
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 16,
+                fontWeight: FontWeight.w800,
+                color: AppColors.textPrimary,
               ),
             ),
             const SizedBox(height: 20),
-            Expanded(
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.fromLTRB(14, 18, 14, 14),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(24),
-                  image: const DecorationImage(
-                    image: AssetImage('assets/images/background-mengaji.png'),
-                    fit: BoxFit.cover,
-                  ),
-                ),
-                child: Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(18),
-                    color: Colors.white.withOpacity(0.82),
-                  ),
-                  child: Column(
-                    children: [
-                      Text(
-                        'Pilih bacaan latin yang tepat',
-                        style: GoogleFonts.poppins(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      ...options
-                          .map((opt) => Padding(
-                                padding: const EdgeInsets.only(bottom: 12),
-                                child: _buildOption(opt),
-                              ))
-                          .toList(),
-                    ],
-                  ),
-                ),
-              ),
-            ),
+            ...options.map((opt) => _buildOption(opt)),
+            const SizedBox(height: 20),
           ],
         ),
       ),

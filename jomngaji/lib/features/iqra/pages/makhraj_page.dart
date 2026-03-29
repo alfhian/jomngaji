@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../../core/theme/app_design_tokens.dart';
 import 'halqiy_page.dart';
 import 'khaysyum_page.dart';
 import 'lisani_page.dart';
@@ -22,24 +23,28 @@ class _MakhrajPageState extends State<MakhrajPage> {
       subtitle: 'Huruf: ء هـ',
       icon: Icons.record_voice_over_rounded,
       pageBuilder: (_) => const HalqiyPage(),
+      color: AppColors.accent,
     ),
     _MakhrajItem(
       title: 'Lisani (Lidah)',
       subtitle: 'Huruf: ت د ط ظ ل ر',
       icon: Icons.forum_rounded,
       pageBuilder: (_) => const LisaniPage(),
+      color: AppColors.secondary,
     ),
     _MakhrajItem(
       title: 'Syafawi (Bibir)',
       subtitle: 'Huruf: ف ب م',
       icon: Icons.mic_rounded,
       pageBuilder: (_) => const SyafawiPage(),
+      color: Colors.orange,
     ),
     _MakhrajItem(
       title: 'Khaysyum (Rongga Hidung)',
       subtitle: 'Huruf: ن (ghunnah)',
       icon: Icons.graphic_eq_rounded,
       pageBuilder: (_) => const KhaysyumPage(),
+      color: Colors.purple,
     ),
   ];
 
@@ -48,126 +53,151 @@ class _MakhrajPageState extends State<MakhrajPage> {
     final progress = _items.isEmpty ? 0.0 : _visited.length / _items.length;
 
     return Scaffold(
-      extendBodyBehindAppBar: true,
-      appBar: null,
-      body: ListView(
-        children: [
-          _heroSection(context),
-          const SizedBox(height: 18),
-          _descriptionSection(),
-          const SizedBox(height: 18),
-          _progressSection(progress),
-          const SizedBox(height: 18),
-          _makhrajInfoCard(),
-          const SizedBox(height: 18),
-          _makhrajCards(context),
-          const SizedBox(height: 28),
+      backgroundColor: AppColors.scaffold,
+      body: CustomScrollView(
+        slivers: [
+          _sliverAppBar(context),
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _progressSection(progress),
+                  const SizedBox(height: 32),
+                  _makhrajInfoCard(),
+                  const SizedBox(height: 32),
+                  Text(
+                    "Kategori Makhraj",
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  _makhrajCards(context),
+                  const SizedBox(height: 32),
+                  _tipCard(),
+                  const SizedBox(height: 40),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _heroSection(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: const BorderRadius.only(
-          bottomLeft: Radius.circular(32),
-          bottomRight: Radius.circular(32),
-        ),
-        image: const DecorationImage(
-          image: AssetImage('assets/images/hijaiyah_banner_2.png'),
-          fit: BoxFit.cover,
-        ),
-      ),
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: const BorderRadius.only(
-            bottomLeft: Radius.circular(32),
-            bottomRight: Radius.circular(32),
-          ),
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Colors.black.withOpacity(0.05),
-              Colors.black.withOpacity(0.42),
-            ],
+  Widget _sliverAppBar(BuildContext context) {
+    return SliverAppBar(
+      expandedHeight: 220,
+      pinned: true,
+      elevation: 0,
+      backgroundColor: AppColors.primary,
+      flexibleSpace: FlexibleSpaceBar(
+        title: Text(
+          "Makhraj Huruf",
+          style: GoogleFonts.plusJakartaSans(
+            fontWeight: FontWeight.w800,
+            fontSize: 18,
+            color: Colors.white,
           ),
         ),
-        padding: const EdgeInsets.fromLTRB(20, 60, 20, 36),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        background: Stack(
+          fit: StackFit.expand,
           children: [
-            GestureDetector(
-              onTap: () => Navigator.pop(context),
-              child: Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.25),
-                  shape: BoxShape.circle,
+            Image.asset(
+              "assets/images/hijaiyah_banner_2.png",
+              fit: BoxFit.cover,
+            ),
+            Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.black.withOpacity(0.3),
+                    AppColors.primary.withOpacity(0.7),
+                  ],
                 ),
-                child: const Icon(Icons.arrow_back, color: Colors.white, size: 20),
               ),
             ),
-            const SizedBox(height: 24),
-            Text(
-              'Latihan Pengucapan',
-              style: GoogleFonts.poppins(
-                color: Colors.white.withOpacity(0.9),
-                fontSize: 17,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'Makhraj Huruf\nHijaiyah',
-              style: GoogleFonts.poppins(
-                color: Colors.white,
-                fontSize: 31,
-                height: 1.2,
-                fontWeight: FontWeight.w800,
+            Positioned(
+              bottom: 60,
+              left: 24,
+              right: 24,
+              child: Text(
+                'Latihan Pengucapan\nHijaiyah yang Tepat',
+                style: GoogleFonts.plusJakartaSans(
+                  color: Colors.white.withOpacity(0.9),
+                  fontSize: 24,
+                  fontWeight: FontWeight.w800,
+                  height: 1.2,
+                ),
               ),
             ),
           ],
         ),
       ),
-    );
-  }
-
-  Widget _descriptionSection() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Text(
-        'Belajar kategori makhraj seperti Halqiy, Lisani, Syafawi, dan Khaysyum agar pengucapan huruf lebih tepat.',
-        style: GoogleFonts.poppins(fontSize: 14, color: Colors.black87),
+      leading: IconButton(
+        icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
+        onPressed: () => Navigator.pop(context),
       ),
     );
   }
 
   Widget _progressSection(double progress) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        boxShadow: AppShadows.soft,
+        border: Border.all(color: AppColors.border.withOpacity(0.5)),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Progress Eksplorasi Makhraj',
-            style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                "Progres Eksplorasi",
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              Text(
+                "${(progress * 100).toInt()}%",
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.accent,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
           ClipRRect(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppRadius.full),
             child: LinearProgressIndicator(
               value: progress,
-              minHeight: 8,
-              backgroundColor: Colors.grey.shade300,
-              color: const Color(0xFF50D1A0),
+              backgroundColor: AppColors.scaffold,
+              minHeight: 10,
+              color: AppColors.accent,
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 10),
           Text(
-            '${_visited.length}/${_items.length} kategori dibuka',
-            style: GoogleFonts.poppins(fontSize: 12, color: Colors.black54),
+            "${_visited.length}/${_items.length} kategori makhraj telah dibuka.",
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 11,
+              color: AppColors.textSecondary,
+              fontWeight: FontWeight.w500,
+            ),
           ),
         ],
       ),
@@ -175,137 +205,142 @@ class _MakhrajPageState extends State<MakhrajPage> {
   }
 
   Widget _makhrajInfoCard() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: const Color(0xFFFFF8E6),
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: const Color(0xFFFFECB3)),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                const Icon(Icons.record_voice_over_rounded, color: Color(0xFF8D6E63)),
-                const SizedBox(width: 8),
-                Text(
-                  'Apa itu Makhraj?',
-                  style: GoogleFonts.poppins(
-                    fontWeight: FontWeight.w700,
-                    color: const Color(0xFF6D4C41),
-                  ),
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: AppColors.gold.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: AppColors.gold.withOpacity(0.2)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.info_rounded, color: AppColors.gold, size: 24),
+              const SizedBox(width: 12),
+              Text(
+                'Apa itu Makhraj?',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.textPrimary,
                 ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Makhraj adalah tempat keluarnya huruf saat diucapkan (contoh: tenggorokan, lidah, bibir, dan rongga hidung). '
-              'Pilih kategori di bawah untuk masuk ke halaman latihan khusus masing-masing.',
-              style: GoogleFonts.poppins(
-                fontSize: 13,
-                height: 1.45,
-                color: Colors.black87,
               ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Makhraj adalah tempat keluarnya huruf saat diucapkan, seperti dari tenggorokan, lidah, bibir, atau rongga hidung. Penguasaan makhraj sangat penting agar bacaan Al-Quran lebih tartil dan benar.',
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 13,
+              height: 1.5,
+              color: AppColors.textSecondary,
+              fontWeight: FontWeight.w500,
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
   Widget _makhrajCards(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Column(
-        children: [
-          ...List.generate(_items.length, (i) {
-            final item = _items[i];
-            final opened = _visited.contains(i);
+    return Column(
+      children: List.generate(_items.length, (i) {
+        final item = _items[i];
+        final opened = _visited.contains(i);
 
-            return GestureDetector(
-              onTap: () {
-                setState(() => _visited.add(i));
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: item.pageBuilder),
-                );
-              },
-              child: Container(
-                margin: const EdgeInsets.only(bottom: 12),
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: opened ? const Color(0xFFE7FFF2) : Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: opened ? const Color(0xFF50D1A0) : Colors.grey.shade300,
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    CircleAvatar(
-                      backgroundColor: opened
-                          ? const Color(0xFF50D1A0)
-                          : Colors.grey.shade300,
-                      child: Icon(item.icon, color: Colors.white, size: 20),
-                    ),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            item.title,
-                            style: GoogleFonts.poppins(
-                              fontWeight: FontWeight.w600,
-                              fontSize: 14,
-                            ),
-                          ),
-                          const SizedBox(height: 3),
-                          Text(
-                            item.subtitle,
-                            style: GoogleFonts.poppins(
-                              fontSize: 12,
-                              color: Colors.black54,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Icon(
-                      opened ? Icons.play_circle_fill_rounded : Icons.chevron_right_rounded,
-                      color: opened ? const Color(0xFF50D1A0) : Colors.black45,
-                    ),
-                  ],
-                ),
-              ),
+        return GestureDetector(
+          onTap: () {
+            setState(() => _visited.add(i));
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: item.pageBuilder),
             );
-          }),
-          const SizedBox(height: 10),
-          Container(
-            width: double.infinity,
+          },
+          child: Container(
+            margin: const EdgeInsets.only(bottom: 16),
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(22),
-              image: const DecorationImage(
-                image: AssetImage('assets/images/background-mengaji.png'),
-                fit: BoxFit.cover,
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(AppRadius.md),
+              boxShadow: AppShadows.soft,
+              border: Border.all(
+                color: opened ? item.color.withOpacity(0.3) : AppColors.border.withOpacity(0.5),
+                width: opened ? 1.5 : 1,
               ),
             ),
-            child: Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(16),
-                color: Colors.white.withOpacity(0.84),
-              ),
-              child: Text(
-                'Tip: mulai dari Halqiy lalu lanjut Lisani → Syafawi → Khaysyum agar urutan latihan lebih terstruktur.',
-                style: GoogleFonts.poppins(
-                  fontSize: 13,
-                  color: Colors.black87,
+            child: Row(
+              children: [
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: item.color.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Center(
+                    child: Icon(item.icon, color: item.color, size: 24),
+                  ),
                 ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        item.title,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 15,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        item.subtitle,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 12,
+                          color: AppColors.textSecondary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(
+                  opened ? Icons.check_circle_rounded : Icons.chevron_right_rounded,
+                  color: opened ? AppColors.accent : AppColors.textPlaceholder,
+                ),
+              ],
+            ),
+          ),
+        );
+      }),
+    );
+  }
+
+  Widget _tipCard() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: AppGradients.primary,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        boxShadow: AppShadows.medium,
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.lightbulb_rounded, color: AppColors.gold, size: 32),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Text(
+              'Tips: Mulailah dari Halqiy (Tenggorokan) agar urutan latihan lebih terstruktur.',
+              style: GoogleFonts.plusJakartaSans(
+                color: Colors.white.withOpacity(0.9),
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                height: 1.4,
               ),
             ),
           ),
@@ -320,11 +355,13 @@ class _MakhrajItem {
   final String subtitle;
   final IconData icon;
   final WidgetBuilder pageBuilder;
+  final Color color;
 
   const _MakhrajItem({
     required this.title,
     required this.subtitle,
     required this.icon,
     required this.pageBuilder,
+    required this.color,
   });
 }

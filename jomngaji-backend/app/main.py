@@ -3,14 +3,24 @@ load_dotenv()
 
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Query, Depends
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 from datetime import datetime, timedelta
 from app.services.auth_service import get_db
 from auth import create_access_token, get_current_user
 
 import os
+import logging
+import httpx
 
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
+_raw_google_client_ids = os.getenv("GOOGLE_CLIENT_IDS", "")
+GOOGLE_CLIENT_IDS = [
+    cid.strip() for cid in _raw_google_client_ids.split(",") if cid.strip()
+]
+if GOOGLE_CLIENT_ID and GOOGLE_CLIENT_ID not in GOOGLE_CLIENT_IDS:
+    GOOGLE_CLIENT_IDS.append(GOOGLE_CLIENT_ID)
+
+logger = logging.getLogger("jomngaji.api")
 _raw_cors_origins = os.getenv(
     "CORS_ALLOW_ORIGINS",
     "http://localhost:3000,http://127.0.0.1:3000,http://10.0.2.2:4000,https://jomngaji.com,https://api.jomngaji.com",
@@ -35,7 +45,7 @@ def _load_google_auth_libs():
 # =========================
 # Utils
 # =========================
-from app.utils.audio_utils import save_upload, ensure_wav
+from app.utils.audio_utils import AudioConversionError, save_upload, ensure_wav
 
 # =========================
 # AI Services (General)
@@ -113,6 +123,11 @@ from app.services.quiz_service import (
 from app.services.tadarus_asr_service import transcribe_tadarus
 from app.services.tadarus_service import evaluate_tadarus
 from app.services.tadarus_evaluation_service import evaluate_and_save_tadarus
+from app.services.doa_api_service import (
+    fetch_doa_items,
+    get_doa_item,
+    validate_audio_proxy_url,
+)
 
 from app.services.auth_service import (
     register_user,
@@ -268,14 +283,38 @@ def google_login(token: str = Form(...)):
                 detail="Dependency google-auth belum terpasang.",
             )
 
-        if not GOOGLE_CLIENT_ID:
-            raise HTTPException(status_code=500, detail="GOOGLE_CLIENT_ID belum diset")
+        if not GOOGLE_CLIENT_IDS:
+            raise HTTPException(
+                status_code=500,
+                detail="GOOGLE_CLIENT_ID/GOOGLE_CLIENT_IDS belum diset",
+            )
+
+        token = token.strip()
+        if token.count(".") != 2:
+            raise HTTPException(
+                status_code=401,
+                detail=(
+                    "Google token bukan ID token JWT. "
+                    "Pastikan aplikasi mengirim idToken (bukan accessToken)."
+                ),
+            )
 
         idinfo = google_id_token.verify_oauth2_token(
             token,
             google_requests.Request(),
-            GOOGLE_CLIENT_ID,
+            None,
         )
+
+        token_audience = str(idinfo.get("aud", "")).strip()
+        if token_audience not in GOOGLE_CLIENT_IDS:
+            raise HTTPException(
+                status_code=401,
+                detail=(
+                    "Google token audience tidak valid. "
+                    f"aud={token_audience}. "
+                    "Pastikan GOOGLE_CLIENT_ID/GOOGLE_CLIENT_IDS sesuai."
+                ),
+            )
 
         google_id = idinfo["sub"]
         email = idinfo["email"]
@@ -302,8 +341,12 @@ def google_login(token: str = Form(...)):
 
     except HTTPException:
         raise
-    except Exception:
-        raise HTTPException(status_code=401, detail="Google login gagal")
+    except Exception as e:
+        logger.exception("Google login gagal: %s", e)
+        raise HTTPException(
+            status_code=401,
+            detail=f"Google login gagal: {e}",
+        )
 
 
 # @app.get("/hijaiyah/lessons")
@@ -481,6 +524,69 @@ def get_ayah(surah_number: int, ayah_number: int):
 
 
 # =========================
+# DOA API (REMOTE SOURCE + AUDIO PROXY)
+# =========================
+@app.get("/doa")
+def list_doa(
+    refresh: bool = Query(False),
+    source_url: str | None = Query(None),
+):
+    try:
+        items = fetch_doa_items(force_refresh=refresh, source_url=source_url)
+        return {"count": len(items), "items": items}
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"Gagal mengambil data doa: {e}")
+
+
+@app.get("/doa/{doa_id}")
+def get_doa(
+    doa_id: str,
+    source_url: str | None = Query(None),
+):
+    try:
+        item = get_doa_item(doa_id, source_url=source_url)
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"Gagal mengambil data doa: {e}")
+
+    if not item:
+        raise HTTPException(status_code=404, detail="Doa tidak ditemukan")
+    return item
+
+
+@app.get("/doa/audio/proxy")
+def proxy_doa_audio(url: str = Query(..., description="URL audio doa yang akan di-proxy")):
+    try:
+        validate_audio_proxy_url(url)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    try:
+        with httpx.stream(
+            "GET",
+            url,
+            timeout=30.0,
+            follow_redirects=True,
+            headers={"User-Agent": "jomngaji-backend/1.0"},
+        ) as resp:
+            if resp.status_code >= 400:
+                raise HTTPException(
+                    status_code=502,
+                    detail=f"Gagal mengambil audio dari sumber (status {resp.status_code})",
+                )
+
+            media_type = resp.headers.get("content-type", "audio/mpeg")
+            return StreamingResponse(
+                resp.iter_bytes(),
+                media_type=media_type,
+                headers={"Cache-Control": "public, max-age=3600"},
+            )
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"Gagal proxy audio doa: {e}")
+
+
+# =========================
 # GLOBAL TADARUS PROGRESS
 # =========================
 @app.get("/tadarus/global-progress")
@@ -516,8 +622,13 @@ async def evaluate(
     # =============================
     # AUDIO → TEXT (ASR)
     # =============================
-    path = ensure_wav(save_upload(audio))
-    transcript = transcribe_audio(path)
+    try:
+        path = ensure_wav(save_upload(audio))
+        transcript = transcribe_audio(path)
+    except AudioConversionError as e:
+        raise HTTPException(status_code=503, detail=str(e))
+    except RuntimeError as e:
+        raise HTTPException(status_code=503, detail=str(e))
 
     # =============================
     # TAJWID (GLOBAL)
@@ -662,6 +773,10 @@ async def evaluate_tajwid_endpoint(
             "suggestions": result["suggestions"],
         }
 
+    except AudioConversionError as e:
+        raise HTTPException(status_code=503, detail=str(e))
+    except RuntimeError as e:
+        raise HTTPException(status_code=503, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -703,6 +818,10 @@ async def evaluate_tilawah_endpoint(
             "suggestions": result["suggestions"],
         }
 
+    except AudioConversionError as e:
+        raise HTTPException(status_code=503, detail=str(e))
+    except RuntimeError as e:
+        raise HTTPException(status_code=503, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -744,6 +863,10 @@ async def evaluate_tahfidz_endpoint(
             "suggestions": result["suggestions"],
         }
 
+    except AudioConversionError as e:
+        raise HTTPException(status_code=503, detail=str(e))
+    except RuntimeError as e:
+        raise HTTPException(status_code=503, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -779,6 +902,10 @@ async def evaluate_tadarus_endpoint(
             "suggestions": suggestions,
         }
 
+    except AudioConversionError as e:
+        raise HTTPException(status_code=503, detail=str(e))
+    except RuntimeError as e:
+        raise HTTPException(status_code=503, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -814,6 +941,10 @@ async def evaluate_tadarus_audio_endpoint(
 
     except HTTPException:
         raise
+    except AudioConversionError as e:
+        raise HTTPException(status_code=503, detail=str(e))
+    except RuntimeError as e:
+        raise HTTPException(status_code=503, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

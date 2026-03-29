@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -8,6 +9,7 @@ import '../../../core/config/api_config.dart';
 class AuthService {
   static String get baseUrl => ApiConfig.baseUrl;
   static const _secureStorage = FlutterSecureStorage();
+  static const Duration _requestTimeout = Duration(seconds: 12);
 
   static const _keyIsLoggedIn = 'isLoggedIn';
   static const _keyAccessToken = 'access_token';
@@ -17,7 +19,9 @@ class AuthService {
   static const _keyPreferredBaseUrl = 'preferred_base_url';
 
   static bool _isNetworkError(Object error) {
-    return error is SocketException || error is http.ClientException;
+    return error is SocketException ||
+        error is http.ClientException ||
+        error is TimeoutException;
   }
 
   static Future<http.Response> _postWithBaseUrlFallback({
@@ -43,7 +47,7 @@ class AuthService {
           Uri.parse(url),
           headers: headers,
           body: body,
-        );
+        ).timeout(_requestTimeout);
         await prefs.setString(_keyPreferredBaseUrl, base);
         return response;
       } catch (e) {

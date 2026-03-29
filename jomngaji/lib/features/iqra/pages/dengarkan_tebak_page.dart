@@ -8,6 +8,8 @@ import 'package:flutter_sound/flutter_sound.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:path_provider/path_provider.dart';
 
+import '../../../core/theme/app_design_tokens.dart';
+import '../../../core/widgets/custom_gradient_appbar.dart';
 import '../../../services/progress_service.dart';
 
 class DengarkanTebakPage extends StatefulWidget {
@@ -149,24 +151,37 @@ class _DengarkanTebakPageState extends State<DengarkanTebakPage> {
       await ProgressService.saveXP(xp + 5);
     }
 
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          behavior: SnackBarBehavior.floating,
-          margin: const EdgeInsets.fromLTRB(16, 0, 16, 14),
-          duration: const Duration(milliseconds: 850),
-          backgroundColor: isCorrect ? const Color(0xFF2E7D32) : const Color(0xFFC62828),
-          content: Text(
-            isCorrect
-                ? 'Mantap! +5 XP | Streak: $_streak'
-                : 'Jawaban yang benar: ${_question["arab"]}',
-            style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w600),
-          ),
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.hideCurrentSnackBar();
+    messenger.showSnackBar(
+      SnackBar(
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.all(24),
+        duration: const Duration(milliseconds: 1500),
+        backgroundColor: isCorrect ? AppColors.accent : Colors.redAccent,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.md)),
+        content: Row(
+          children: [
+            Icon(isCorrect ? Icons.check_circle_rounded : Icons.cancel_rounded, color: Colors.white),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                isCorrect
+                    ? 'Luar biasa! +5 XP | Streak: $_streak 🔥'
+                    : 'Kurang tepat. Jawaban benar: ${_question["arab"]}',
+                style: GoogleFonts.plusJakartaSans(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 14,
+                ),
+              ),
+            ),
+          ],
         ),
-      );
+      ),
+    );
 
-    await Future.delayed(const Duration(milliseconds: 760));
+    await Future.delayed(const Duration(milliseconds: 1600));
     if (!mounted) return;
 
     if (_currentQuestionIndex >= _totalQuestion) {
@@ -179,81 +194,101 @@ class _DengarkanTebakPageState extends State<DengarkanTebakPage> {
   }
 
   void _showResultDialog() {
+    final percent = ((_correctCount / _totalQuestion) * 100).round();
+    
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (_) {
-        final percent = ((_correctCount / _totalQuestion) * 100).round();
-        return Dialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 24, 20, 22),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  _correctCount >= 7 ? 'Keren! Pendengaran Tajam 👂' : 'Bagus, lanjut latihan ya! ✨',
-                  style: GoogleFonts.poppins(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w800,
-                    color: const Color(0xFF2F9E6E),
-                  ),
-                  textAlign: TextAlign.center,
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          surfaceTintColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.lg)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: AppColors.accent.withOpacity(0.1),
+                  shape: BoxShape.circle,
                 ),
-                const SizedBox(height: 10),
-                Text(
-                  'Benar: $_correctCount/$_totalQuestion\nSkor: $percent%\nBest streak: $_bestStreak',
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.poppins(fontSize: 15),
+                child: const Icon(Icons.emoji_events_rounded, color: AppColors.accent, size: 64),
+              ),
+              const SizedBox(height: 24),
+              Text(
+                _correctCount >= 7 ? 'Luar Biasa! ✨' : 'Latihan Selesai!',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.textPrimary,
                 ),
-                const SizedBox(height: 16),
-                Text(
-                  'Saran: gunakan headset + ulang 2x audio sebelum menjawab untuk naikkan akurasi.',
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.poppins(fontSize: 12, color: Colors.black54),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Benar: $_correctCount/$_totalQuestion\nBest streak: $_bestStreak',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textSecondary,
                 ),
-                const SizedBox(height: 20),
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () {
-                          Navigator.pop(context);
-                          Navigator.pop(context);
-                        },
-                        child: Text('Kembali', style: GoogleFonts.poppins()),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF42C88A),
-                        ),
-                        onPressed: () {
-                          Navigator.pop(context);
-                          setState(() {
-                            _currentQuestionIndex = 1;
-                            _correctCount = 0;
-                            _streak = 0;
-                            _bestStreak = 0;
-                          });
-                          _generateQuestion();
-                        },
-                        child: Text(
-                          'Main Lagi',
-                          style: GoogleFonts.poppins(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
+              ),
+              const SizedBox(height: 20),
+              Text(
+                '$percent%',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 48,
+                  fontWeight: FontWeight.w900,
+                  color: AppColors.accent,
                 ),
-              ],
-            ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Saran: gunakan headset dan dengarkan audio dengan seksama untuk hasil maksimal.',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 12,
+                  color: AppColors.textPlaceholder,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(height: 12),
+            ],
           ),
+          actionsAlignment: MainAxisAlignment.center,
+          actionsPadding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+          actions: [
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  Navigator.pop(context);
+                },
+                child: const Text('Kembali ke Menu'),
+              ),
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  setState(() {
+                    _currentQuestionIndex = 1;
+                    _correctCount = 0;
+                    _streak = 0;
+                    _bestStreak = 0;
+                  });
+                  _generateQuestion();
+                },
+                child: const Text('Main Lagi'),
+              ),
+            ),
+          ],
         );
       },
     );
@@ -263,60 +298,60 @@ class _DengarkanTebakPageState extends State<DengarkanTebakPage> {
     final isCorrect = opt == _question["arab"];
     final isSelected = opt == _selectedOption;
 
-    Color bg = const Color(0xFFE8FFF0);
-    Color border = const Color(0xFF50D1A0);
-    Color text = const Color(0xFF42C88A);
+    Color bg = Colors.white;
+    Color border = AppColors.border;
+    Color text = AppColors.textPrimary;
     IconData? icon;
 
     if (_lockedAnswer) {
       if (isCorrect) {
-        bg = const Color(0xFFD9F8E5);
-        border = const Color(0xFF1E915B);
-        text = const Color(0xFF1E915B);
+        bg = AppColors.accent.withOpacity(0.1);
+        border = AppColors.accent;
+        text = AppColors.accent;
         icon = Icons.check_circle_rounded;
       } else if (isSelected) {
-        bg = const Color(0xFFFFE2E2);
-        border = const Color(0xFFD84343);
-        text = const Color(0xFFD84343);
+        bg = Colors.redAccent.withOpacity(0.1);
+        border = Colors.redAccent;
+        text = Colors.redAccent;
         icon = Icons.cancel_rounded;
       } else {
-        bg = Colors.white.withOpacity(0.75);
-        border = Colors.grey.shade300;
-        text = Colors.grey.shade600;
+        bg = AppColors.scaffold;
+        border = AppColors.border.withOpacity(0.5);
+        text = AppColors.textPlaceholder;
       }
+    } else if (isSelected) {
+      border = AppColors.accent;
     }
 
     return GestureDetector(
       onTap: () => _checkAnswer(opt),
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 220),
-        padding: const EdgeInsets.symmetric(vertical: 16),
+        duration: const Duration(milliseconds: 200),
+        margin: const EdgeInsets.only(bottom: 16),
+        padding: const EdgeInsets.symmetric(vertical: 20),
         decoration: BoxDecoration(
           color: bg,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: border, width: 1.2),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 8,
-              offset: const Offset(0, 3),
-            ),
-          ],
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          border: Border.all(
+            color: border,
+            width: isSelected || (_lockedAnswer && isCorrect) ? 2 : 1,
+          ),
+          boxShadow: AppShadows.soft,
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
               opt,
-              style: GoogleFonts.poppins(
-                fontSize: 28,
-                fontWeight: FontWeight.w700,
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 32,
+                fontWeight: FontWeight.w800,
                 color: text,
               ),
             ),
             if (icon != null) ...[
-              const SizedBox(width: 8),
-              Icon(icon, color: text, size: 20),
+              const SizedBox(width: 12),
+              Icon(icon, color: text, size: 28),
             ],
           ],
         ),
@@ -329,10 +364,8 @@ class _DengarkanTebakPageState extends State<DengarkanTebakPage> {
     final progress = _currentQuestionIndex / _totalQuestion;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Dengarkan & Tebak', style: GoogleFonts.poppins()),
-        backgroundColor: const Color(0xFF50D1A0),
-      ),
+      backgroundColor: AppColors.scaffold,
+      appBar: const CustomGradientAppBar(title: 'Dengarkan & Tebak'),
       body: SafeArea(
         child: Stack(
           children: [
@@ -342,141 +375,121 @@ class _DengarkanTebakPageState extends State<DengarkanTebakPage> {
                 confettiController: _confettiController,
                 blastDirection: -pi / 2,
                 gravity: 0.35,
-                colors: const [Colors.green, Colors.blue, Colors.orange],
+                colors: const [AppColors.accent, AppColors.secondary, AppColors.gold],
                 emissionFrequency: 0.1,
                 numberOfParticles: 12,
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(22, 18, 22, 16),
+            SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
               child: Column(
                 children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: LinearProgressIndicator(
-                          value: progress,
-                          minHeight: 8,
-                          borderRadius: BorderRadius.circular(16),
-                          color: const Color(0xFF42C88A),
-                          backgroundColor: Colors.grey.shade200,
+                  Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                      boxShadow: AppShadows.soft,
+                    ),
+                    child: Column(
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Soal $_currentQuestionIndex dari $_totalQuestion',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: AppColors.gold.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(AppRadius.full),
+                              ),
+                              child: Text(
+                                'Streak: $_streak 🔥',
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppColors.gold,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                      ),
-                      const SizedBox(width: 10),
-                      Text(
-                        '$_currentQuestionIndex/$_totalQuestion',
-                        style: GoogleFonts.poppins(fontWeight: FontWeight.w700),
-                      ),
-                    ],
+                        const SizedBox(height: 16),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(AppRadius.full),
+                          child: LinearProgressIndicator(
+                            value: progress.clamp(0, 1),
+                            minHeight: 10,
+                            backgroundColor: AppColors.scaffold,
+                            color: AppColors.accent,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  const SizedBox(height: 12),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Streak: $_streak 🔥',
-                        style: GoogleFonts.poppins(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
-                          color: const Color(0xFF2F9E6E),
-                        ),
-                      ),
-                      Text(
-                        'Best: $_bestStreak',
-                        style: GoogleFonts.poppins(
-                          fontSize: 12,
-                          color: Colors.black54,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 18),
+                  const SizedBox(height: 32),
                   GestureDetector(
                     onTap: _playAudio,
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 250),
                       width: double.infinity,
-                      padding: const EdgeInsets.symmetric(vertical: 18),
+                      padding: const EdgeInsets.symmetric(vertical: 40),
                       decoration: BoxDecoration(
-                        color: _isPlaying
-                            ? const Color(0xFFD9F8E5)
-                            : const Color(0xFFEAF9F0),
-                        borderRadius: BorderRadius.circular(20),
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(AppRadius.lg),
+                        boxShadow: AppShadows.medium,
                         border: Border.all(
-                          color: const Color(0xFF42C88A).withOpacity(0.4),
+                          color: _isPlaying ? AppColors.accent : AppColors.border.withOpacity(0.5),
+                          width: 2,
                         ),
                       ),
-                      child: Row(
+                      child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(
-                            _isPlaying ? Icons.graphic_eq_rounded : Icons.volume_up_rounded,
-                            color: const Color(0xFF2F9E6E),
-                            size: 30,
+                          Container(
+                            padding: const EdgeInsets.all(20),
+                            decoration: BoxDecoration(
+                              color: (_isPlaying ? AppColors.accent : AppColors.primary).withOpacity(0.1),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              _isPlaying ? Icons.graphic_eq_rounded : Icons.volume_up_rounded,
+                              color: _isPlaying ? AppColors.accent : AppColors.primary,
+                              size: 48,
+                            ),
                           ),
-                          const SizedBox(width: 10),
+                          const SizedBox(height: 20),
                           Text(
-                            _isPlaying ? 'Memutar audio...' : 'Dengarkan suara',
-                            style: GoogleFonts.poppins(
-                              fontSize: 20,
-                              fontWeight: FontWeight.w700,
-                              color: const Color(0xFF2F9E6E),
+                            _isPlaying ? 'Memutar Audio...' : 'Tekan untuk Mendengar',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w800,
+                              color: _isPlaying ? AppColors.accent : AppColors.textPrimary,
                             ),
                           ),
                         ],
                       ),
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 32),
                   Text(
-                    _feedback,
-                    style: GoogleFonts.poppins(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      color: _feedback.contains('Benar')
-                          ? const Color(0xFF2E7D32)
-                          : const Color(0xFFC62828),
+                    "Tebak huruf yang kamu dengar",
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.textPrimary,
                     ),
                   ),
-                  const SizedBox(height: 12),
-                  Expanded(
-                    child: Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.fromLTRB(14, 18, 14, 14),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(24),
-                        image: const DecorationImage(
-                          image: AssetImage('assets/images/background-mengaji.png'),
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                      child: Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(18),
-                          color: Colors.white.withOpacity(0.82),
-                        ),
-                        child: Column(
-                          children: [
-                            Text(
-                              'Tebak huruf berdasarkan audio',
-                              style: GoogleFonts.poppins(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            ...options
-                                .map((opt) => Padding(
-                                      padding: const EdgeInsets.only(bottom: 12),
-                                      child: _buildOption(opt),
-                                    ))
-                                .toList(),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
+                  const SizedBox(height: 20),
+                  ...options.map((opt) => _buildOption(opt)),
+                  const SizedBox(height: 20),
                 ],
               ),
             ),

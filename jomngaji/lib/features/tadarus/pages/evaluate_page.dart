@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_sound/flutter_sound.dart';
 import 'package:just_audio/just_audio.dart' as ja;
+import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:audio_session/audio_session.dart';
@@ -29,6 +30,8 @@ class EvaluatePage extends StatefulWidget {
 }
 
 class _EvaluatePageState extends State<EvaluatePage> {
+  static const String _tadarusAudioBaseUrl =
+      'https://everyayah.com/data/Alafasy_128kbps';
   // ================= AYAH =================
   late int _currentAyahIndex;
   int? _playingIndex;
@@ -111,27 +114,58 @@ class _EvaluatePageState extends State<EvaluatePage> {
   }
 
   // ================= AUDIO =================
-  String _assetPath(int index) {
+  String _audioCode(int index) {
     final s = widget.surah.number.toString().padLeft(3, '0');
-    final a = index.toString().padLeft(3, '0');
-    return 'assets/audio/tadarus/$s$a.mp3';
+    final audioIndex = index + 1;
+    final a = audioIndex.toString().padLeft(3, '0');
+    return '$s$a';
+  }
+
+  List<String> _audioUrlCandidates(int index) {
+    final baseCode = _audioCode(index);
+    final surah = baseCode.substring(0, 3);
+    final ayah = int.tryParse(baseCode.substring(3)) ?? 0;
+    final fallback = (ayah + 1).toString().padLeft(3, '0');
+    return [
+      '$_tadarusAudioBaseUrl/$baseCode.mp3',
+      '$_tadarusAudioBaseUrl/$surah$fallback.mp3',
+    ];
   }
 
   Future<void> _playAyahAudio(int index) async {
     if (index < 0 || index >= widget.surah.ayahs.length) return;
 
-    final assetPath = _assetPath(index);
+    try {
+      if (_playingIndex == index && _player.playing) {
+        await _player.pause();
+        return;
+      }
 
-    if (_playingIndex == index && _player.playing) {
-      await _player.pause();
-      return;
+      await _player.stop();
+
+      Object? lastError;
+      for (final url in _audioUrlCandidates(index)) {
+        try {
+          await _player.setUrl(url);
+          lastError = null;
+          break;
+        } catch (e) {
+          lastError = e;
+        }
+      }
+
+      if (lastError != null) {
+        throw lastError;
+      }
+
+      setState(() => _playingIndex = index);
+      await _player.play();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Audio ayat tidak bisa diputar: $e')),
+      );
     }
-
-    await _player.stop();
-    await _player.setAsset(assetPath);
-
-    setState(() => _playingIndex = index);
-    await _player.play();
   }
 
   void _nextAyah() {
@@ -154,11 +188,11 @@ class _EvaluatePageState extends State<EvaluatePage> {
 
     final dir = await getTemporaryDirectory();
     final path =
-        "${dir.path}/rec_${DateTime.now().millisecondsSinceEpoch}.aac";
+        "${dir.path}/rec_${DateTime.now().millisecondsSinceEpoch}.wav";
 
     await _recorder.startRecorder(
       toFile: path,
-      codec: Codec.aacADTS,
+      codec: Codec.pcm16WAV,
       sampleRate: 16000,
       numChannels: 1,
       bitRate: 16000,
@@ -182,7 +216,7 @@ class _EvaluatePageState extends State<EvaluatePage> {
     setState(() => _isEvaluating = true);
 
     try {
-      final refPath = await _copyAsset(_assetPath(_currentAyahIndex));
+      final refPath = await _downloadReferenceAudio(_currentAyahIndex);
 
       final json = await _api.evaluateTadarusAudio(
         surah: widget.surah.number,
@@ -199,11 +233,29 @@ class _EvaluatePageState extends State<EvaluatePage> {
     }
   }
 
-  Future<String> _copyAsset(String asset) async {
-    final data = await rootBundle.load(asset);
+  Future<String> _downloadReferenceAudio(int index) async {
+    http.Response? response;
+    Object? lastError;
+    for (final url in _audioUrlCandidates(index)) {
+      try {
+        final res = await http.get(Uri.parse(url));
+        if (res.statusCode == 200) {
+          response = res;
+          break;
+        }
+        lastError = 'HTTP ${res.statusCode}';
+      } catch (e) {
+        lastError = e;
+      }
+    }
+
+    if (response == null) {
+      throw Exception('Gagal download audio referensi. Detail: $lastError');
+    }
+
     final dir = await getTemporaryDirectory();
-    final file = File('${dir.path}/${asset.split('/').last}');
-    await file.writeAsBytes(data.buffer.asUint8List());
+    final file = File('${dir.path}/${_audioCode(index)}.mp3');
+    await file.writeAsBytes(response.bodyBytes);
     return file.path;
   }
 

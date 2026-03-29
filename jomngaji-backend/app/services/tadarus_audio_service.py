@@ -5,7 +5,7 @@ import numpy as np
 from fastapi import UploadFile
 from difflib import SequenceMatcher
 
-from app.utils.audio_utils import save_upload, ensure_wav
+from app.utils.audio_utils import AudioConversionError, save_upload, ensure_wav
 from app.services.tadarus_asr_service import transcribe_tadarus
 from app.services.tadarus_service import evaluate_tadarus, get_score_band
 
@@ -175,12 +175,25 @@ def evaluate_audio_only(
     print("\n========== [TADARUS EVALUATION] ==========")
 
     user_path = ensure_wav(save_upload(user_audio))
-    ref_path = ensure_wav(save_upload(reference_audio))
+    ref_raw_path = save_upload(reference_audio)
+    ref_path = ref_raw_path
+    reference_conversion_unavailable = False
 
-    audio_data = load_audio_16k(user_path)
-    if not is_valid_audio(audio_data):
-        print("[INVALID AUDIO]")
-        return {"valid": False, "reason": "invalid_audio"}
+    try:
+        ref_path = ensure_wav(ref_raw_path)
+    except AudioConversionError as exc:
+        reference_conversion_unavailable = True
+        print(f"[REFERENCE CONVERSION FALLBACK] {exc}")
+
+    try:
+        audio_data = load_audio_16k(user_path)
+        if not is_valid_audio(audio_data):
+            print("[INVALID AUDIO]")
+            return {"valid": False, "reason": "invalid_audio"}
+    except Exception as exc:
+        # Jangan gagalkan evaluasi tadarus jika stack audio embedding tidak siap.
+        # Tetap lanjutkan penilaian berbasis teks (ASR).
+        print(f"[AUDIO VALIDATION FALLBACK] {exc}")
 
     # =========================
     # ASR
@@ -192,7 +205,15 @@ def evaluate_audio_only(
     print(f"[USER TEXT] {user_text}")
 
     ayat_score = ayat_similarity(ayat_text, user_text) * 100
-    audio_score = audio_similarity(ref_path, user_path) * 100
+    audio_model_unavailable = False
+    try:
+        if reference_conversion_unavailable:
+            raise RuntimeError("Reference audio conversion unavailable")
+        audio_score = audio_similarity(ref_path, user_path) * 100
+    except Exception as exc:
+        audio_model_unavailable = True
+        print(f"[AUDIO MODEL FALLBACK] {exc}")
+        audio_score = ayat_score
 
     # Detail kesalahan pengucapan huruf dari evaluator tadarus
     text_scores, text_issues, text_suggestions = evaluate_tadarus(ayat_text, user_text)
@@ -211,6 +232,15 @@ def evaluate_audio_only(
     print(f"[FINAL] {final_score}")
     print("===================================\n")
 
+    fallback_note = (
+        [
+            "Penilaian kemiripan audio sedang tidak tersedia di server, "
+            "sementara skor akhir menggunakan penilaian teks bacaan."
+        ]
+        if audio_model_unavailable
+        else []
+    )
+
     return {
         "valid": True,
         "texts": {
@@ -226,5 +256,5 @@ def evaluate_audio_only(
             "audio_band": get_score_band(int(audio_score)),
         },
         "issues": text_issues,
-        "suggestions": text_suggestions,
+        "suggestions": [*text_suggestions, *fallback_note],
     }
