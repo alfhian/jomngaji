@@ -7,6 +7,7 @@ import 'package:http/http.dart' as http;
 import 'package:just_audio/just_audio.dart';
 
 import '../../../core/config/api_config.dart';
+import '../../../core/theme/app_design_tokens.dart';
 import '../../../core/widgets/custom_gradient_appbar.dart';
 import '../../../models/surah.dart';
 import '../../auth/services/auth_service.dart';
@@ -240,10 +241,10 @@ class _TadarusDetailPageState extends State<TadarusDetailPage> {
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF4F7FC),
+      backgroundColor: AppColors.scaffold,
       appBar: const CustomGradientAppBar(title: 'Tadarus AI'),
       body: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(20),
         child: Column(
           children: [
             _headerCard(surah!),
@@ -334,28 +335,28 @@ class _TadarusDetailPageState extends State<TadarusDetailPage> {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFFE9FFF3), Color(0xFFDFF6FF)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFBDEFD6)),
+        gradient: AppGradients.accent,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        boxShadow: AppShadows.medium,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
             surah.name,
-            style: GoogleFonts.poppins(
+            style: GoogleFonts.plusJakartaSans(
               fontSize: 18,
-              fontWeight: FontWeight.w700,
+              fontWeight: FontWeight.w800,
+              color: Colors.white,
             ),
           ),
           const SizedBox(height: 6),
           Text(
             'Surah ke-${surah.number}, ${surah.ayahs.length} ayat',
-            style: GoogleFonts.poppins(fontSize: 13, color: const Color(0xFF334155)),
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 13,
+              color: Colors.white.withOpacity(0.9),
+            ),
           ),
           const SizedBox(height: 10),
           ClipRRect(
@@ -363,14 +364,18 @@ class _TadarusDetailPageState extends State<TadarusDetailPage> {
             child: LinearProgressIndicator(
               value: progressValue,
               minHeight: 9,
-              backgroundColor: Colors.grey.shade300,
-              color: const Color(0xFF42C88A),
+              backgroundColor: Colors.white.withOpacity(0.35),
+              color: Colors.white,
             ),
           ),
           const SizedBox(height: 6),
           Text(
             '${(progressValue * 100).toStringAsFixed(0)}% selesai',
-            style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600),
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: Colors.white,
+            ),
           ),
         ],
       ),
@@ -382,18 +387,12 @@ class _TadarusDetailPageState extends State<TadarusDetailPage> {
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isActive ? const Color(0xFFE8FFF4) : Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        color: isActive ? const Color(0xFFF2FAFF) : Colors.white,
+        borderRadius: BorderRadius.circular(AppRadius.md),
         border: Border.all(
-          color: isActive ? const Color(0xFF86E0B3) : const Color(0xFFE2E8F0),
+          color: isActive ? AppColors.accent.withOpacity(0.35) : AppColors.border.withOpacity(0.6),
         ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        boxShadow: AppShadows.soft,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -401,17 +400,17 @@ class _TadarusDetailPageState extends State<TadarusDetailPage> {
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF0F172A),
+                  color: AppColors.accent.withOpacity(0.12),
                   borderRadius: BorderRadius.circular(999),
                 ),
                 child: Text(
                   'Ayat ${ayah.ayah}',
-                  style: GoogleFonts.poppins(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 12,
+                  style: GoogleFonts.plusJakartaSans(
+                    color: AppColors.accent,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 11,
                   ),
                 ),
               ),
@@ -421,7 +420,7 @@ class _TadarusDetailPageState extends State<TadarusDetailPage> {
                 icon: Icon(
                   isActive && _player.playing ? Icons.pause_circle : Icons.play_circle,
                   size: 30,
-                  color: const Color(0xFF2FBF84),
+                  color: AppColors.accent,
                 ),
               ),
             ],
@@ -446,9 +445,10 @@ class _TadarusDetailPageState extends State<TadarusDetailPage> {
             const SizedBox(height: 10),
             Text(
               ayah.transliteration!,
-              style: GoogleFonts.notoSerif(
+              style: GoogleFonts.plusJakartaSans(
                 fontStyle: FontStyle.italic,
-                color: Colors.black87,
+                color: AppColors.accent,
+                fontWeight: FontWeight.w600,
               ),
             ),
           ],
@@ -456,8 +456,8 @@ class _TadarusDetailPageState extends State<TadarusDetailPage> {
             const SizedBox(height: 8),
             Text(
               ayah.translation!,
-              style: GoogleFonts.poppins(
-                color: const Color(0xFF334155),
+              style: GoogleFonts.plusJakartaSans(
+                color: AppColors.textSecondary,
                 height: 1.5,
               ),
             ),

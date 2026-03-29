@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../../core/theme/app_design_tokens.dart';
+import '../../../core/widgets/custom_gradient_appbar.dart';
 import '../../../models/doa.dart';
 import '../../../routes/app_routes.dart';
 import '../../home/widgets/app_bottom_nav.dart';
@@ -12,116 +14,81 @@ class DoaMenuPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF6FCF9),
+      backgroundColor: AppColors.scaffold,
+      appBar: const CustomGradientAppBar(title: 'Doa Harian'),
       extendBody: true,
       bottomNavigationBar: const AppBottomNav(currentIndex: 2),
-      body: SafeArea(
-        child: CustomScrollView(
-          slivers: [
-            SliverToBoxAdapter(child: _heroSection(context)),
-            SliverToBoxAdapter(child: _summaryCard()),
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(16, 18, 16, 90),
-              sliver: SliverList.builder(
-                itemCount: doaList.length,
-                itemBuilder: (context, index) {
-                  final doa = doaList[index];
-                  return _doaCard(context, doa, index);
-                },
-              ),
+      body: ListView(
+        padding: const EdgeInsets.fromLTRB(24, 20, 24, 96),
+        children: [
+          _heroCard(),
+          const SizedBox(height: 24),
+          Text(
+            'Kumpulan Doa',
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 17,
+              fontWeight: FontWeight.w800,
+              color: AppColors.textPrimary,
             ),
-          ],
-        ),
+          ),
+          const SizedBox(height: 16),
+          ...List.generate(doaList.length, (index) {
+            final doa = doaList[index];
+            return _doaCard(context, doa, index);
+          }),
+        ],
       ),
     );
   }
 
-  Widget _heroSection(BuildContext context) {
+  Widget _heroCard() {
     return Container(
-      margin: const EdgeInsets.fromLTRB(16, 14, 16, 0),
-      padding: const EdgeInsets.fromLTRB(16, 18, 16, 22),
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(26),
         gradient: const LinearGradient(
-          colors: [Color(0xFF128A64), Color(0xFF3CCF95)],
+          colors: [Color(0xFF0EA77C), AppColors.accent],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          InkWell(
-            onTap: () => Navigator.pushReplacementNamed(context, AppRoutes.home),
-            borderRadius: BorderRadius.circular(99),
-            child: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(Icons.arrow_back, color: Colors.white),
-            ),
-          ),
-          const SizedBox(height: 20),
-          Text(
-            'Doa Harian',
-            style: GoogleFonts.poppins(
-              color: Colors.white,
-              fontWeight: FontWeight.w800,
-              fontSize: 30,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            'Baca, pahami, dan amalkan doa-doa pilihan setiap hari.',
-            style: GoogleFonts.poppins(
-              color: Colors.white.withOpacity(0.9),
-              fontSize: 13,
-              height: 1.5,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _summaryCard() {
-    return Container(
-      margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 14,
-            offset: const Offset(0, 5),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        boxShadow: AppShadows.medium,
       ),
       child: Row(
         children: [
-          Container(
-            width: 42,
-            height: 42,
-            decoration: BoxDecoration(
-              color: const Color(0xFFE3F9EF),
-              borderRadius: BorderRadius.circular(12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Doa Harian\nLebih Terstruktur ✨',
+                  style: GoogleFonts.plusJakartaSans(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                    height: 1.3,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  '${doaList.length} doa dengan teks Arab, latin, dan arti.',
+                  style: GoogleFonts.plusJakartaSans(
+                    color: Colors.white.withOpacity(0.9),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
             ),
-            child: const Icon(Icons.auto_stories_rounded, color: Color(0xFF1E9A71)),
           ),
           const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              '${doaList.length} doa siap dipelajari lengkap dengan teks Arab, latin, dan arti.',
-              style: GoogleFonts.poppins(
-                fontSize: 12.5,
-                color: Colors.black87,
-                height: 1.45,
-              ),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.2),
+              shape: BoxShape.circle,
             ),
+            child: const Icon(Icons.menu_book_rounded, color: Colors.white, size: 32),
           ),
         ],
       ),
@@ -131,53 +98,48 @@ class DoaMenuPage extends StatelessWidget {
   Widget _doaCard(BuildContext context, Doa doa, int index) {
     return InkWell(
       onTap: () => Navigator.pushNamed(context, AppRoutes.doaDetail, arguments: doa),
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: BorderRadius.circular(AppRadius.md),
       child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(14),
+        margin: const EdgeInsets.only(bottom: 14),
+        padding: const EdgeInsets.all(18),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: const Color(0xFFDDF5EA)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.04),
-              blurRadius: 8,
-              offset: const Offset(0, 3),
-            ),
-          ],
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          boxShadow: AppShadows.soft,
+          border: Border.all(color: AppColors.border.withOpacity(0.5)),
         ),
         child: Row(
           children: [
             Container(
-              width: 40,
-              height: 40,
+              width: 42,
+              height: 42,
               decoration: BoxDecoration(
-                color: const Color(0xFFE7FFF2),
-                borderRadius: BorderRadius.circular(12),
+                color: AppColors.accent.withOpacity(0.12),
+                borderRadius: BorderRadius.circular(AppRadius.sm),
               ),
               alignment: Alignment.center,
               child: Text(
                 '${index + 1}',
-                style: GoogleFonts.poppins(
-                  color: const Color(0xFF168A66),
-                  fontWeight: FontWeight.w700,
+                style: GoogleFonts.plusJakartaSans(
+                  color: AppColors.accent,
+                  fontWeight: FontWeight.w800,
                 ),
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 14),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     doa.title,
-                    style: GoogleFonts.poppins(
+                    style: GoogleFonts.plusJakartaSans(
                       fontWeight: FontWeight.w700,
                       fontSize: 14,
+                      color: AppColors.textPrimary,
                     ),
                   ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: 4),
                   Directionality(
                     textDirection: TextDirection.rtl,
                     child: Text(
@@ -186,8 +148,8 @@ class DoaMenuPage extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       textAlign: TextAlign.right,
                       style: GoogleFonts.amiri(
-                        fontSize: 17,
-                        color: Colors.black87,
+                        fontSize: 18,
+                        color: AppColors.textPrimary,
                       ),
                     ),
                   ),
@@ -195,7 +157,7 @@ class DoaMenuPage extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 8),
-            const Icon(Icons.chevron_right_rounded, color: Color(0xFF1E9A71), size: 28),
+            const Icon(Icons.chevron_right_rounded, color: AppColors.textPlaceholder, size: 26),
           ],
         ),
       ),
