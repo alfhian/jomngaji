@@ -178,10 +178,16 @@ class _EvaluatePageState extends State<EvaluatePage> {
   }
 
   Future<void> _initRecorder() async {
-    await Permission.microphone.request();
-    await Permission.storage.request();
-
-    if (!await Permission.microphone.isGranted) return;
+    final micStatus = await Permission.microphone.request();
+    if (!micStatus.isGranted) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Izin mikrofon belum diberikan. Aktifkan izin mikrofon untuk merekam.'),
+        ),
+      );
+      return;
+    }
 
     await _recorder.openRecorder();
     setState(() => _recorderReady = true);
@@ -263,7 +269,11 @@ class _EvaluatePageState extends State<EvaluatePage> {
 
   // ================= RECORD =================
   Future<void> _startRecording() async {
-    if (!_recorderReady || _isRecording) return;
+    if (_isRecording) return;
+    if (!_recorderReady) {
+      await _initRecorder();
+      if (!_recorderReady) return;
+    }
 
     await _player.stop();
 
@@ -277,6 +287,7 @@ class _EvaluatePageState extends State<EvaluatePage> {
       sampleRate: 16000,
       numChannels: 1,
       bitRate: 16000,
+      audioSource: AudioSource.microphone,
     );
 
     setState(() {
@@ -286,7 +297,26 @@ class _EvaluatePageState extends State<EvaluatePage> {
   }
 
   Future<void> _stopRecording() async {
-    await _recorder.stopRecorder();
+    final savedPath = await _recorder.stopRecorder();
+    final filePath = savedPath ?? _recordedPath;
+
+    if (filePath != null) {
+      final file = File(filePath);
+      if (await file.exists()) {
+        final length = await file.length();
+        if (length < 2048 && mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Rekaman sangat kecil / kosong. Di emulator, pastikan Extended Controls > Microphone aktif dan host mic tidak di-mute.',
+              ),
+            ),
+          );
+        }
+      }
+    }
+
+    if (!mounted) return;
     setState(() => _isRecording = false);
   }
 

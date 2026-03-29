@@ -36,6 +36,16 @@ class _TadarusDetailPageState extends State<TadarusDetailPage> {
   final Map<int, GlobalKey> _ayahKeys = {};
   late final AudioPlayer _player;
 
+  String _toArabicIndicNumber(int number) {
+    const latin = '0123456789';
+    const arabicIndic = '٠١٢٣٤٥٦٧٨٩';
+    final raw = number.toString();
+    return raw.split('').map((c) {
+      final idx = latin.indexOf(c);
+      return idx >= 0 ? arabicIndic[idx] : c;
+    }).join();
+  }
+
   @override
   void initState() {
     super.initState();
@@ -399,20 +409,23 @@ class _TadarusDetailPageState extends State<TadarusDetailPage> {
         children: [
           Row(
             children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                decoration: BoxDecoration(
-                  color: AppColors.accent.withOpacity(0.12),
-                  borderRadius: BorderRadius.circular(999),
-                ),
-                child: Text(
-                  'Ayat ${ayah.ayah}',
-                  style: GoogleFonts.plusJakartaSans(
-                    color: AppColors.accent,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 11,
+              Stack(
+                alignment: Alignment.center,
+                children: [
+                  Icon(
+                    Icons.brightness_7_outlined,
+                    size: 34,
+                    color: AppColors.accent.withOpacity(0.85),
                   ),
-                ),
+                  Text(
+                    _toArabicIndicNumber(ayah.ayah),
+                    style: GoogleFonts.amiri(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.accent,
+                    ),
+                  ),
+                ],
               ),
               const Spacer(),
               IconButton(
