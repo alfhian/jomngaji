@@ -3,16 +3,17 @@ from sqlalchemy.sql import func
 from app.db.base import Base
 
 class TadarusEvaluation(Base):
-    __tablename__ = "tadarus_evaluations"
+    __tablename__ = "learning_evaluations"
 
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, nullable=False)
-    surah = Column(Integer, nullable=False)
-    ayah = Column(Integer, nullable=False)
+    feature_type = Column(Text, nullable=False, default="tadarus")
+    surah = Column(Integer, nullable=True)
+    ayah = Column(Integer, nullable=True)
 
-    score_final = Column(Integer, nullable=False)
-    score_ayat = Column(Integer, nullable=False)
-    score_audio = Column(Integer, nullable=False)
+    score_final = Column(Integer, nullable=True)
+    score_ayat = Column(Integer, nullable=True)
+    score_audio = Column(Integer, nullable=True)
 
     asr_user = Column(Text)
     asr_ref = Column(Text)
@@ -20,7 +21,7 @@ class TadarusEvaluation(Base):
     issues = Column(JSON)
     suggestions = Column(JSON)
 
-    created_at = Column(DateTime, server_default=func.now())
+    evaluated_at = Column(DateTime, server_default=func.now())
     updated_at = Column(
         DateTime,
         server_default=func.now(),
@@ -28,5 +29,5 @@ class TadarusEvaluation(Base):
     )
 
     __table_args__ = (
-        UniqueConstraint("user_id", "surah", "ayah"),
+        UniqueConstraint("user_id", "feature_type", "surah", "ayah"),
     )

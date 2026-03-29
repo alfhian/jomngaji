@@ -1017,9 +1017,9 @@ def _quiz_question_progress(user_id: int, quiz_codes: list[str]) -> tuple[int, i
         quiz_id = row["id"]
         cursor.execute(
             """
-            SELECT MAX(correct) AS best_correct
-            FROM quiz_attempts
-            WHERE user_id=%s AND quiz_id=%s
+            SELECT MAX(correct_answers) AS best_correct
+            FROM learning_assessment_attempts
+            WHERE user_id=%s AND quiz_id=%s AND assessment_kind='quiz'
             """,
             (user_id, quiz_id),
         )
@@ -1061,7 +1061,7 @@ def progress_modules(user_id: int = Depends(get_current_user)):
     unlocked_suku_kata_levels = int((cursor.fetchone() or {}).get("total") or 0)
 
     cursor.execute(
-        "SELECT MAX(final_score) AS best_score FROM iqra_exam_results WHERE user_id=%s",
+        "SELECT MAX(final_score) AS best_score FROM learning_assessment_attempts WHERE user_id=%s AND feature_type='iqra' AND assessment_kind='exam'",
         (user_id,),
     )
     iqra_exam_best = float((cursor.fetchone() or {}).get("best_score") or 0)
