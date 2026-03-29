@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -62,6 +63,86 @@ class _EvaluatePageState extends State<EvaluatePage> {
     } else {
       return "Pelafalan belum cocok ❌ coba dengarkan contoh lalu ulangi perlahan.";
     }
+  }
+
+  static bool _isArabicDiacritic(int codeUnit) {
+    return (codeUnit >= 0x0610 && codeUnit <= 0x061A) ||
+        (codeUnit >= 0x064B && codeUnit <= 0x065F) ||
+        codeUnit == 0x0670 ||
+        codeUnit == 0x06ED ||
+        codeUnit == 0x0640;
+  }
+
+  static bool _isWhitespaceOrMark(String char) {
+    final code = char.codeUnitAt(0);
+    if (char.trim().isEmpty) return true;
+    return _isArabicDiacritic(code);
+  }
+
+  List<TextSpan> _buildAyahHighlightSpans(
+    String originalText,
+    List<PronunciationIssue> issues,
+  ) {
+    final letterIssues = issues.where((e) {
+      return e.location == 'huruf' &&
+          e.startIndex != null &&
+          e.endIndex != null &&
+          (e.endIndex! > e.startIndex!);
+    }).toList();
+
+    if (letterIssues.isEmpty) {
+      return [
+        TextSpan(
+          text: originalText,
+          style: GoogleFonts.amiri(
+            fontSize: 30,
+            height: 1.9,
+            color: const Color(0xFF0F172A),
+          ),
+        ),
+      ];
+    }
+
+    final normalizedToOriginal = <int>[];
+    for (int i = 0; i < originalText.length; i++) {
+      final ch = originalText[i];
+      if (_isWhitespaceOrMark(ch)) continue;
+      normalizedToOriginal.add(i);
+    }
+
+    final highlightedIndexes = <int>{};
+    for (final issue in letterIssues) {
+      final start = issue.startIndex!;
+      final endExclusive = issue.endIndex!;
+      if (start < 0 || normalizedToOriginal.isEmpty) continue;
+      final safeStart = math.min(start, normalizedToOriginal.length - 1);
+      final safeEnd = math.min(
+        math.max(endExclusive - 1, safeStart),
+        normalizedToOriginal.length - 1,
+      );
+      for (int idx = safeStart; idx <= safeEnd; idx++) {
+        highlightedIndexes.add(normalizedToOriginal[idx]);
+      }
+    }
+
+    final spans = <TextSpan>[];
+    for (int i = 0; i < originalText.length; i++) {
+      final ch = originalText[i];
+      final isHighlighted = highlightedIndexes.contains(i);
+      spans.add(
+        TextSpan(
+          text: ch,
+          style: GoogleFonts.amiri(
+            fontSize: 30,
+            height: 1.9,
+            color: isHighlighted ? Colors.redAccent : const Color(0xFF0F172A),
+            fontWeight: isHighlighted ? FontWeight.w700 : FontWeight.w500,
+            backgroundColor: isHighlighted ? Colors.red.withOpacity(0.12) : null,
+          ),
+        ),
+      );
+    }
+    return spans;
   }
 
 
@@ -434,6 +515,7 @@ class _EvaluatePageState extends State<EvaluatePage> {
 
   void _showResult(EvaluationResult r) {
     final score = r.score.clamp(0, 100);
+    final ayahText = widget.surah.ayahs[_currentAyahIndex].text;
 
     Color scoreColor;
     String label;
@@ -569,6 +651,53 @@ class _EvaluatePageState extends State<EvaluatePage> {
                       color: Colors.grey.shade700,
                     ),
                   ),
+
+                  if (r.issueDetails.any((e) => e.location == 'huruf')) ...[
+                    const SizedBox(height: 16),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF8FAFC),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Detail Kesalahan Per Huruf',
+                            style: GoogleFonts.poppins(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.redAccent,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Directionality(
+                            textDirection: TextDirection.rtl,
+                            child: RichText(
+                              textAlign: TextAlign.right,
+                              text: TextSpan(
+                                children: _buildAyahHighlightSpans(
+                                  ayahText,
+                                  r.issueDetails,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Huruf berwarna merah menandakan bagian yang perlu diperbaiki.',
+                            style: GoogleFonts.poppins(
+                              fontSize: 11.5,
+                              color: Colors.grey.shade700,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
 
                   // ===== ERROR LIST =====
                   if (r.errors.isNotEmpty) ...[
