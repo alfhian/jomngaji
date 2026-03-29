@@ -1003,7 +1003,9 @@ def _quiz_question_progress(user_id: int, quiz_codes: list[str]) -> tuple[int, i
         f"""
         SELECT q.id, q.quiz_code, COUNT(qq.id) AS total_questions
         FROM quizzes q
-        LEFT JOIN quiz_questions qq ON qq.quiz_id = q.id
+        LEFT JOIN learning_quiz_questions qq
+            ON qq.quiz_id = q.id
+           AND qq.question_group_type = 'quiz'
         WHERE q.quiz_code IN ({placeholders})
         GROUP BY q.id, q.quiz_code
         """,

@@ -6,6 +6,7 @@
 -- This script has two tracks:
 -- 1) Evaluation unification (hijaiyah/tajwid/tilawah/tahfidz/tadarus -> learning_evaluations)
 -- 2) Attempt/result unification (quiz_attempts + *_exam_results + suku_kata_progress -> learning_assessment_attempts)
+-- 3) Question-bank unification (quiz_questions/quiz_options + suku_kata_questions -> learning_quiz_questions / learning_quiz_options)
 --
 -- IMPORTANT:
 -- - Run each section explicitly (UP or DOWN), do not run whole file at once.
@@ -174,6 +175,71 @@ SELECT
 FROM `tahfidz_exam_results`;
 
 -- ------------------------------------------------------------
+-- [UP-3B] Create unified question bank tables
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `learning_quiz_questions` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `feature_type` ENUM('iqra','tajwid','tilawah','tahfidz','tadarus','general') NOT NULL DEFAULT 'general',
+  `question_group_type` ENUM('quiz','suku_kata') NOT NULL,
+  `quiz_id` BIGINT UNSIGNED DEFAULT NULL,
+  `level_id` BIGINT UNSIGNED DEFAULT NULL,
+  `question_text` TEXT DEFAULT NULL,
+  `correct_answer` VARCHAR(255) DEFAULT NULL,
+  `latin` VARCHAR(100) DEFAULT NULL,
+  `arabic` VARCHAR(100) DEFAULT NULL,
+  `legacy_question_id` BIGINT UNSIGNED DEFAULT NULL,
+  `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_lqq_group` (`question_group_type`,`quiz_id`,`level_id`),
+  KEY `idx_lqq_legacy` (`legacy_question_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE IF NOT EXISTS `learning_quiz_options` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `question_id` BIGINT UNSIGNED NOT NULL,
+  `option_text` VARCHAR(255) NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_lqo_question` (`question_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+INSERT INTO `learning_quiz_questions`
+(`feature_type`,`question_group_type`,`quiz_id`,`question_text`,`correct_answer`,`legacy_question_id`,`created_at`)
+SELECT
+  CASE
+    WHEN q.`quiz_type` IN ('iqra','tajwid','tilawah','tahfidz','tadarus') THEN q.`quiz_type`
+    ELSE 'general'
+  END,
+  'quiz',
+  qq.`quiz_id`,
+  qq.`question_text`,
+  qq.`correct_answer`,
+  qq.`id`,
+  NOW()
+FROM `quiz_questions` qq
+LEFT JOIN `quizzes` q ON q.`id` = qq.`quiz_id`;
+
+INSERT INTO `learning_quiz_options` (`question_id`,`option_text`)
+SELECT
+  lqq.`id`,
+  qo.`option_text`
+FROM `quiz_options` qo
+JOIN `learning_quiz_questions` lqq
+  ON lqq.`legacy_question_id` = qo.`question_id`
+ AND lqq.`question_group_type` = 'quiz';
+
+INSERT INTO `learning_quiz_questions`
+(`feature_type`,`question_group_type`,`level_id`,`latin`,`arabic`,`legacy_question_id`,`created_at`)
+SELECT
+  'iqra',
+  'suku_kata',
+  skq.`level_id`,
+  skq.`latin`,
+  skq.`arabic`,
+  skq.`id`,
+  NOW()
+FROM `suku_kata_questions` skq;
+
+-- ------------------------------------------------------------
 -- [UP-4] (Optional) Drop legacy tables AFTER app code fully migrated
 -- ------------------------------------------------------------
 -- DROP TABLE IF EXISTS `tajwid_evaluations`;
@@ -188,6 +254,9 @@ FROM `tahfidz_exam_results`;
 -- DROP TABLE IF EXISTS `tajwid_exam_results`;
 -- DROP TABLE IF EXISTS `tilawah_exam_results`;
 -- DROP TABLE IF EXISTS `tahfidz_exam_results`;
+-- DROP TABLE IF EXISTS `quiz_questions`;
+-- DROP TABLE IF EXISTS `quiz_options`;
+-- DROP TABLE IF EXISTS `suku_kata_questions`;
 
 
 -- ============================================================
@@ -370,6 +439,27 @@ CREATE TABLE IF NOT EXISTS `iqra_exam_results` (
 CREATE TABLE IF NOT EXISTS `tajwid_exam_results` LIKE `iqra_exam_results`;
 CREATE TABLE IF NOT EXISTS `tilawah_exam_results` LIKE `iqra_exam_results`;
 CREATE TABLE IF NOT EXISTS `tahfidz_exam_results` LIKE `iqra_exam_results`;
+CREATE TABLE IF NOT EXISTS `quiz_questions` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `quiz_id` INT DEFAULT NULL,
+  `question_text` TEXT NOT NULL,
+  `correct_answer` VARCHAR(100) NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+CREATE TABLE IF NOT EXISTS `quiz_options` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `question_id` INT DEFAULT NULL,
+  `option_text` VARCHAR(100) NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+CREATE TABLE IF NOT EXISTS `suku_kata_questions` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `level_id` INT NOT NULL,
+  `huruf` VARCHAR(5) DEFAULT NULL,
+  `arabic` VARCHAR(10) NOT NULL,
+  `latin` VARCHAR(10) NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 TRUNCATE TABLE `quiz_attempts`;
 INSERT INTO `quiz_attempts`
@@ -393,6 +483,34 @@ WHERE
   AND `feature_type`='iqra'
   AND `quiz_code` LIKE 'suku_kata_level_%'
 GROUP BY `user_id`, CAST(SUBSTRING_INDEX(`quiz_code`, '_', -1) AS UNSIGNED);
+
+TRUNCATE TABLE `quiz_questions`;
+INSERT INTO `quiz_questions` (`id`,`quiz_id`,`question_text`,`correct_answer`)
+SELECT
+  COALESCE(`legacy_question_id`, `id`),
+  `quiz_id`,
+  COALESCE(`question_text`, ''),
+  COALESCE(`correct_answer`, '')
+FROM `learning_quiz_questions`
+WHERE `question_group_type`='quiz';
+
+TRUNCATE TABLE `quiz_options`;
+INSERT INTO `quiz_options` (`question_id`,`option_text`)
+SELECT
+  COALESCE(lqq.`legacy_question_id`, lqq.`id`) AS question_id,
+  lqo.`option_text`
+FROM `learning_quiz_options` lqo
+JOIN `learning_quiz_questions` lqq ON lqq.`id` = lqo.`question_id`
+WHERE lqq.`question_group_type`='quiz';
+
+TRUNCATE TABLE `suku_kata_questions`;
+INSERT INTO `suku_kata_questions` (`level_id`,`arabic`,`latin`)
+SELECT
+  COALESCE(`level_id`, 0),
+  COALESCE(`arabic`, ''),
+  COALESCE(`latin`, '')
+FROM `learning_quiz_questions`
+WHERE `question_group_type`='suku_kata';
 
 TRUNCATE TABLE `iqra_exam_results`;
 INSERT INTO `iqra_exam_results`
@@ -430,4 +548,6 @@ WHERE `assessment_kind`='exam' AND `feature_type`='tahfidz';
 -- [DOWN-3] Drop unified tables
 -- ------------------------------------------------------------
 DROP TABLE IF EXISTS `learning_assessment_attempts`;
+DROP TABLE IF EXISTS `learning_quiz_options`;
+DROP TABLE IF EXISTS `learning_quiz_questions`;
 DROP TABLE IF EXISTS `learning_evaluations`;

@@ -103,8 +103,9 @@ def fetch_suku_kata_questions(level_id: int, user_id: int):
     cursor.execute(
         """
         SELECT id, latin, arabic
-        FROM suku_kata_questions
+        FROM learning_quiz_questions
         WHERE level_id = %s
+          AND question_group_type = 'suku_kata'
         ORDER BY id
         """,
         (level_id,),

@@ -1,6 +1,8 @@
 from app.services.auth_service import get_db
 
 ATTEMPTS_TABLE = "learning_assessment_attempts"
+QUESTIONS_TABLE = "learning_quiz_questions"
+OPTIONS_TABLE = "learning_quiz_options"
 
 
 # =========================================
@@ -32,8 +34,9 @@ def get_questions_by_quiz_id(quiz_id: int):
     cursor.execute(
         """
         SELECT id, question_text
-        FROM quiz_questions
+        FROM learning_quiz_questions
         WHERE quiz_id = %s
+          AND question_group_type = 'quiz'
         ORDER BY id ASC
         """,
         (quiz_id,),
@@ -56,7 +59,7 @@ def get_options_by_question_id(question_id: int):
     cursor.execute(
         """
         SELECT option_text
-        FROM quiz_options
+        FROM learning_quiz_options
         WHERE question_id = %s
         """,
         (question_id,),
@@ -77,7 +80,7 @@ def get_question_by_id(question_id: int):
     cursor = db.cursor(dictionary=True)
 
     cursor.execute(
-        "SELECT * FROM quiz_questions WHERE id = %s",
+        "SELECT * FROM learning_quiz_questions WHERE id = %s AND question_group_type = 'quiz'",
         (question_id,),
     )
 
