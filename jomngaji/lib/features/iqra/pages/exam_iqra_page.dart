@@ -456,26 +456,20 @@ class _ExamIqraPageState extends State<ExamIqraPage> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            'Midturn Test',
+                            'Exam Iqra',
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 14,
-                              fontWeight: FontWeight.w700,
+                              fontWeight: FontWeight.w600,
                               color: AppColors.textSecondary,
                             ),
                           ),
-                          Row(
-                            children: [
-                              const Icon(Icons.timer_outlined, size: 14, color: Colors.redAccent),
-                              const SizedBox(width: 4),
-                              Text(
-                                '23 Second',
-                                style: GoogleFonts.plusJakartaSans(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w700,
-                                  color: Colors.redAccent,
-                                ),
-                              ),
-                            ],
+                          Text(
+                            'Pilihan & Praktek',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w500,
+                              color: AppColors.textPlaceholder,
+                            ),
                           ),
                         ],
                       ),

@@ -452,13 +452,21 @@ class _ExamTilawahPageState extends State<ExamTilawahPage> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text('Midturn Test', style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w700)),
-                          Row(
-                            children: [
-                              const Icon(Icons.timer_outlined, size: 14, color: Colors.redAccent),
-                              const SizedBox(width: 4),
-                              Text('23 Second', style: GoogleFonts.poppins(fontSize: 11, color: Colors.redAccent)),
-                            ],
+                          Text(
+                            'Exam Tilawah',
+                            style: GoogleFonts.poppins(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.black87,
+                            ),
+                          ),
+                          Text(
+                            'Pilihan & Praktek',
+                            style: GoogleFonts.poppins(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.black45,
+                            ),
                           ),
                         ],
                       ),
