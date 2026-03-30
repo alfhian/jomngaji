@@ -10,7 +10,7 @@ from auth import create_access_token, get_current_user
 
 import os
 import logging
-import httpx
+from urllib.request import Request, urlopen
 
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
 _raw_google_client_ids = os.getenv("GOOGLE_CLIENT_IDS", "")
@@ -128,6 +128,8 @@ from app.services.doa_api_service import (
     get_doa_item,
     validate_audio_proxy_url,
 )
+from app.services.dzikir_service import get_dzikir_items, get_dzikir_periods, get_dzikir_detail
+from app.services.ikhtiar_service import list_ikhtiar_items, get_ikhtiar_item
 
 from app.services.auth_service import (
     register_user,
@@ -561,29 +563,50 @@ def proxy_doa_audio(url: str = Query(..., description="URL audio doa yang akan d
         raise HTTPException(status_code=400, detail=str(e))
 
     try:
-        with httpx.stream(
-            "GET",
-            url,
-            timeout=30.0,
-            follow_redirects=True,
-            headers={"User-Agent": "jomngaji-backend/1.0"},
-        ) as resp:
-            if resp.status_code >= 400:
-                raise HTTPException(
-                    status_code=502,
-                    detail=f"Gagal mengambil audio dari sumber (status {resp.status_code})",
-                )
-
-            media_type = resp.headers.get("content-type", "audio/mpeg")
-            return StreamingResponse(
-                resp.iter_bytes(),
-                media_type=media_type,
-                headers={"Cache-Control": "public, max-age=3600"},
-            )
+        req = Request(url, headers={"User-Agent": "jomngaji-backend/1.0"})
+        upstream = urlopen(req, timeout=30)
+        media_type = upstream.headers.get("content-type", "audio/mpeg")
+        return StreamingResponse(
+            upstream,
+            media_type=media_type,
+            headers={"Cache-Control": "public, max-age=3600"},
+        )
     except HTTPException:
         raise
     except Exception as e:
         raise HTTPException(status_code=502, detail=f"Gagal proxy audio doa: {e}")
+
+
+@app.get("/dzikir/periods")
+def list_dzikir_periods():
+    return {"items": get_dzikir_periods()}
+
+
+@app.get("/dzikir")
+def list_dzikir(period: str = Query("pagi")):
+    return {"period": period, "items": get_dzikir_items(period)}
+
+
+@app.get("/dzikir/{item_id}")
+def dzikir_detail(item_id: str):
+    item = get_dzikir_detail(item_id)
+    if not item:
+        raise HTTPException(status_code=404, detail="Dzikir tidak ditemukan")
+    return item
+
+
+@app.get("/ikhtiar")
+def list_ikhtiar(category: str | None = Query(None)):
+    items = list_ikhtiar_items(category)
+    return {"count": len(items), "items": items}
+
+
+@app.get("/ikhtiar/{item_id}")
+def ikhtiar_detail(item_id: str):
+    item = get_ikhtiar_item(item_id)
+    if not item:
+        raise HTTPException(status_code=404, detail="Ikhtiar tidak ditemukan")
+    return item
 
 
 # =========================
@@ -1003,7 +1026,9 @@ def _quiz_question_progress(user_id: int, quiz_codes: list[str]) -> tuple[int, i
         f"""
         SELECT q.id, q.quiz_code, COUNT(qq.id) AS total_questions
         FROM quizzes q
-        LEFT JOIN quiz_questions qq ON qq.quiz_id = q.id
+        LEFT JOIN learning_quiz_questions qq
+            ON qq.quiz_id = q.id
+           AND qq.question_group_type = 'quiz'
         WHERE q.quiz_code IN ({placeholders})
         GROUP BY q.id, q.quiz_code
         """,
@@ -1017,9 +1042,9 @@ def _quiz_question_progress(user_id: int, quiz_codes: list[str]) -> tuple[int, i
         quiz_id = row["id"]
         cursor.execute(
             """
-            SELECT MAX(correct) AS best_correct
-            FROM quiz_attempts
-            WHERE user_id=%s AND quiz_id=%s
+            SELECT MAX(correct_answers) AS best_correct
+            FROM learning_assessment_attempts
+            WHERE user_id=%s AND quiz_id=%s AND assessment_kind='quiz'
             """,
             (user_id, quiz_id),
         )
@@ -1061,28 +1086,28 @@ def progress_modules(user_id: int = Depends(get_current_user)):
     unlocked_suku_kata_levels = int((cursor.fetchone() or {}).get("total") or 0)
 
     cursor.execute(
-        "SELECT MAX(final_score) AS best_score FROM iqra_exam_results WHERE user_id=%s",
+        "SELECT MAX(final_score) AS best_score FROM learning_assessment_attempts WHERE user_id=%s AND feature_type='iqra' AND assessment_kind='exam'",
         (user_id,),
     )
     iqra_exam_best = float((cursor.fetchone() or {}).get("best_score") or 0)
     iqra_exam_passed = 1 if iqra_exam_best >= 60 else 0
 
     cursor.execute(
-        "SELECT MAX(score_final) AS best_score FROM tajwid_evaluations WHERE user_id=%s",
+        "SELECT MAX(score_final) AS best_score FROM learning_evaluations WHERE user_id=%s AND feature_type='tajwid'",
         (user_id,),
     )
     tajwid_exam_best = float((cursor.fetchone() or {}).get("best_score") or 0)
     tajwid_exam_passed = 1 if tajwid_exam_best >= 60 else 0
 
     cursor.execute(
-        "SELECT MAX(score_final) AS best_score FROM tilawah_evaluations WHERE user_id=%s",
+        "SELECT MAX(score_final) AS best_score FROM learning_evaluations WHERE user_id=%s AND feature_type='tilawah'",
         (user_id,),
     )
     tilawah_exam_best = float((cursor.fetchone() or {}).get("best_score") or 0)
     tilawah_exam_passed = 1 if tilawah_exam_best >= 60 else 0
 
     cursor.execute(
-        "SELECT MAX(score_final) AS best_score FROM tahfidz_evaluations WHERE user_id=%s",
+        "SELECT MAX(score_final) AS best_score FROM learning_evaluations WHERE user_id=%s AND feature_type='tahfidz'",
         (user_id,),
     )
     tahfidz_exam_best = float((cursor.fetchone() or {}).get("best_score") or 0)

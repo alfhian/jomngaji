@@ -7,6 +7,7 @@ import 'package:http/http.dart' as http;
 import 'package:just_audio/just_audio.dart';
 
 import '../../../core/config/api_config.dart';
+import '../../../core/theme/app_design_tokens.dart';
 import '../../../core/widgets/custom_gradient_appbar.dart';
 import '../../../models/surah.dart';
 import '../../auth/services/auth_service.dart';
@@ -34,6 +35,16 @@ class _TadarusDetailPageState extends State<TadarusDetailPage> {
 
   final Map<int, GlobalKey> _ayahKeys = {};
   late final AudioPlayer _player;
+
+  String _toArabicIndicNumber(int number) {
+    const latin = '0123456789';
+    const arabicIndic = '٠١٢٣٤٥٦٧٨٩';
+    final raw = number.toString();
+    return raw.split('').map((c) {
+      final idx = latin.indexOf(c);
+      return idx >= 0 ? arabicIndic[idx] : c;
+    }).join();
+  }
 
   @override
   void initState() {
@@ -240,18 +251,23 @@ class _TadarusDetailPageState extends State<TadarusDetailPage> {
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF4F7FC),
+      backgroundColor: AppColors.scaffold,
       appBar: const CustomGradientAppBar(title: 'Tadarus AI'),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => _onEvaluateAyah(surah!.ayahs[_currentAyahIndex]),
+        backgroundColor: const Color(0xFF2FC06D),
+        child: const Icon(Icons.mic, color: Colors.white),
+      ),
+      bottomNavigationBar: _bottomPlaybackBar(),
       body: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
         child: Column(
           children: [
             _headerCard(surah!),
             const SizedBox(height: 14),
-            _playerControls(),
-            const SizedBox(height: 14),
             Expanded(
               child: ListView.builder(
+                padding: const EdgeInsets.only(bottom: 120),
                 itemCount: surah!.ayahs.length,
                 itemBuilder: (context, index) {
                   final ayah = surah!.ayahs[index];
@@ -271,31 +287,49 @@ class _TadarusDetailPageState extends State<TadarusDetailPage> {
     );
   }
 
-  Widget _playerControls() {
+  Widget _bottomPlaybackBar() {
     final isPlayingCurrent = _playingIndex == _currentAyahIndex && _player.playing;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
       decoration: BoxDecoration(
-        color: const Color(0xFF0F172A),
-        borderRadius: BorderRadius.circular(18),
+        color: Colors.white,
+        border: Border(top: BorderSide(color: Colors.black.withOpacity(0.08))),
       ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          _controlButton(
-            icon: Icons.skip_previous_rounded,
-            onTap: _playPreviousAyah,
+          Expanded(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  surah?.name ?? '-',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 16,
+                  ),
+                ),
+                Text(
+                  'Ayat ${_currentAyahIndex + 1}',
+                  style: GoogleFonts.plusJakartaSans(
+                    color: AppColors.textSecondary,
+                    fontSize: 13,
+                  ),
+                ),
+              ],
+            ),
           ),
+          _controlButton(icon: Icons.skip_previous_rounded, onTap: _playPreviousAyah),
+          const SizedBox(width: 4),
           _controlButton(
             icon: isPlayingCurrent ? Icons.pause_rounded : Icons.play_arrow_rounded,
             onTap: () => _playAyahAudio(_currentAyahIndex),
             isPrimary: true,
           ),
-          _controlButton(
-            icon: Icons.stop_rounded,
-            onTap: _stopAudio,
-          ),
+          const SizedBox(width: 4),
+          _controlButton(icon: Icons.stop_rounded, onTap: _stopAudio),
+          const SizedBox(width: 4),
           _controlButton(
             icon: Icons.skip_next_rounded,
             onTap: _playNextAyah,
@@ -317,12 +351,12 @@ class _TadarusDetailPageState extends State<TadarusDetailPage> {
         width: isPrimary ? 56 : 46,
         height: isPrimary ? 56 : 46,
         decoration: BoxDecoration(
-          color: isPrimary ? const Color(0xFF42C88A) : Colors.white12,
+          color: isPrimary ? const Color(0xFF42C88A) : const Color(0xFFE8EDF1),
           borderRadius: BorderRadius.circular(16),
         ),
         child: Icon(
           icon,
-          color: Colors.white,
+          color: isPrimary ? Colors.white : const Color(0xFF2F3A45),
           size: isPrimary ? 30 : 24,
         ),
       ),
@@ -334,28 +368,28 @@ class _TadarusDetailPageState extends State<TadarusDetailPage> {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFFE9FFF3), Color(0xFFDFF6FF)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFBDEFD6)),
+        gradient: AppGradients.accent,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        boxShadow: AppShadows.medium,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
             surah.name,
-            style: GoogleFonts.poppins(
+            style: GoogleFonts.plusJakartaSans(
               fontSize: 18,
-              fontWeight: FontWeight.w700,
+              fontWeight: FontWeight.w800,
+              color: Colors.white,
             ),
           ),
           const SizedBox(height: 6),
           Text(
             'Surah ke-${surah.number}, ${surah.ayahs.length} ayat',
-            style: GoogleFonts.poppins(fontSize: 13, color: const Color(0xFF334155)),
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 13,
+              color: Colors.white.withOpacity(0.9),
+            ),
           ),
           const SizedBox(height: 10),
           ClipRRect(
@@ -363,14 +397,18 @@ class _TadarusDetailPageState extends State<TadarusDetailPage> {
             child: LinearProgressIndicator(
               value: progressValue,
               minHeight: 9,
-              backgroundColor: Colors.grey.shade300,
-              color: const Color(0xFF42C88A),
+              backgroundColor: Colors.white.withOpacity(0.35),
+              color: Colors.white,
             ),
           ),
           const SizedBox(height: 6),
           Text(
             '${(progressValue * 100).toStringAsFixed(0)}% selesai',
-            style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600),
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: Colors.white,
+            ),
           ),
         ],
       ),
@@ -382,37 +420,24 @@ class _TadarusDetailPageState extends State<TadarusDetailPage> {
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isActive ? const Color(0xFFE8FFF4) : Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        color: isActive ? const Color(0xFFF2FAFF) : Colors.white,
+        borderRadius: BorderRadius.circular(AppRadius.md),
         border: Border.all(
-          color: isActive ? const Color(0xFF86E0B3) : const Color(0xFFE2E8F0),
+          color: isActive ? AppColors.accent.withOpacity(0.35) : AppColors.border.withOpacity(0.6),
         ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        boxShadow: AppShadows.soft,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF0F172A),
-                  borderRadius: BorderRadius.circular(999),
-                ),
-                child: Text(
-                  'Ayat ${ayah.ayah}',
-                  style: GoogleFonts.poppins(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 12,
-                  ),
+              Text(
+                _toArabicIndicNumber(ayah.ayah),
+                style: GoogleFonts.amiri(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.accent,
                 ),
               ),
               const Spacer(),
@@ -421,7 +446,7 @@ class _TadarusDetailPageState extends State<TadarusDetailPage> {
                 icon: Icon(
                   isActive && _player.playing ? Icons.pause_circle : Icons.play_circle,
                   size: 30,
-                  color: const Color(0xFF2FBF84),
+                  color: AppColors.accent,
                 ),
               ),
             ],
@@ -446,9 +471,10 @@ class _TadarusDetailPageState extends State<TadarusDetailPage> {
             const SizedBox(height: 10),
             Text(
               ayah.transliteration!,
-              style: GoogleFonts.notoSerif(
+              style: GoogleFonts.plusJakartaSans(
                 fontStyle: FontStyle.italic,
-                color: Colors.black87,
+                color: AppColors.accent,
+                fontWeight: FontWeight.w600,
               ),
             ),
           ],
@@ -456,8 +482,8 @@ class _TadarusDetailPageState extends State<TadarusDetailPage> {
             const SizedBox(height: 8),
             Text(
               ayah.translation!,
-              style: GoogleFonts.poppins(
-                color: const Color(0xFF334155),
+              style: GoogleFonts.plusJakartaSans(
+                color: AppColors.textSecondary,
                 height: 1.5,
               ),
             ),
@@ -465,13 +491,13 @@ class _TadarusDetailPageState extends State<TadarusDetailPage> {
           const SizedBox(height: 14),
           Align(
             alignment: Alignment.centerRight,
-            child: ElevatedButton.icon(
+            child: OutlinedButton.icon(
               onPressed: () => _onEvaluateAyah(ayah),
               icon: const Icon(Icons.record_voice_over),
               label: const Text('Rekam & Nilai Ayat Ini'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF2FBF84),
-                foregroundColor: Colors.white,
+              style: OutlinedButton.styleFrom(
+                foregroundColor: const Color(0xFF2A8B60),
+                side: const BorderSide(color: Color(0xFF7FC3A2)),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),

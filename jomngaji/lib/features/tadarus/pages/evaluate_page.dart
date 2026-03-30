@@ -14,6 +14,7 @@ import '../../../models/surah.dart';
 import '../../../models/evaluation_result.dart';
 import '../../../services/evaluation_api.dart';
 import '../../../core/widgets/custom_gradient_appbar.dart';
+import 'tadarus_evaluation_result_page.dart';
 
 class EvaluatePage extends StatefulWidget {
   final Surah surah;
@@ -64,7 +65,6 @@ class _EvaluatePageState extends State<EvaluatePage> {
     }
   }
 
-
   @override
   void initState() {
     super.initState();
@@ -97,10 +97,16 @@ class _EvaluatePageState extends State<EvaluatePage> {
   }
 
   Future<void> _initRecorder() async {
-    await Permission.microphone.request();
-    await Permission.storage.request();
-
-    if (!await Permission.microphone.isGranted) return;
+    final micStatus = await Permission.microphone.request();
+    if (!micStatus.isGranted) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Izin mikrofon belum diberikan. Aktifkan izin mikrofon untuk merekam.'),
+        ),
+      );
+      return;
+    }
 
     await _recorder.openRecorder();
     setState(() => _recorderReady = true);
@@ -182,7 +188,11 @@ class _EvaluatePageState extends State<EvaluatePage> {
 
   // ================= RECORD =================
   Future<void> _startRecording() async {
-    if (!_recorderReady || _isRecording) return;
+    if (_isRecording) return;
+    if (!_recorderReady) {
+      await _initRecorder();
+      if (!_recorderReady) return;
+    }
 
     await _player.stop();
 
@@ -196,6 +206,7 @@ class _EvaluatePageState extends State<EvaluatePage> {
       sampleRate: 16000,
       numChannels: 1,
       bitRate: 16000,
+      audioSource: AudioSource.microphone,
     );
 
     setState(() {
@@ -205,7 +216,26 @@ class _EvaluatePageState extends State<EvaluatePage> {
   }
 
   Future<void> _stopRecording() async {
-    await _recorder.stopRecorder();
+    final savedPath = await _recorder.stopRecorder();
+    final filePath = savedPath ?? _recordedPath;
+
+    if (filePath != null) {
+      final file = File(filePath);
+      if (await file.exists()) {
+        final length = await file.length();
+        if (length < 2048 && mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Rekaman sangat kecil / kosong. Di emulator, pastikan Extended Controls > Microphone aktif dan host mic tidak di-mute.',
+              ),
+            ),
+          );
+        }
+      }
+    }
+
+    if (!mounted) return;
     setState(() => _isRecording = false);
   }
 
@@ -227,7 +257,7 @@ class _EvaluatePageState extends State<EvaluatePage> {
       );
 
       final result = EvaluationResult.fromJson(json);
-      _showResult(result);
+      await _showResult(result);
     } finally {
       setState(() => _isEvaluating = false);
     }
@@ -432,212 +462,27 @@ class _EvaluatePageState extends State<EvaluatePage> {
     );
   }
 
-  void _showResult(EvaluationResult r) {
-    final score = r.score.clamp(0, 100);
-
-    Color scoreColor;
-    String label;
-    String emoji;
-
-    if (score >= 90) {
-      scoreColor = const Color(0xFF42C88A);
-      label = "MasyaAllah!";
-      emoji = "🌟";
-    } else if (score >= 75) {
-      scoreColor = const Color(0xFF5FB3F3);
-      label = "Bagus!";
-      emoji = "👍";
-    } else if (score >= 50) {
-      scoreColor = Colors.orange;
-      label = "Cukup Baik";
-      emoji = "🙂";
-    } else {
-      scoreColor = Colors.redAccent;
-      label = "Perlu Latihan";
-      emoji = "⚠️";
-    }
-
+  Future<void> _showResult(EvaluationResult r) async {
+    final ayah = widget.surah.ayahs[_currentAyahIndex];
     SystemSound.play(SystemSoundType.alert);
-
-    showGeneralDialog(
-      context: context,
-      barrierDismissible: true,
-      barrierLabel: "score",
-      barrierColor: Colors.black54,
-      transitionDuration: const Duration(milliseconds: 280),
-      pageBuilder: (_, __, ___) {
-        return Center(
-          child: Material(
-            color: Colors.transparent,
-            child: Container(
-              width: MediaQuery.of(context).size.width * 0.85,
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(22),
-                boxShadow: const [
-                  BoxShadow(
-                    blurRadius: 30,
-                    color: Colors.black26,
-                  ),
-                ],
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    "$emoji  $label",
-                    style: GoogleFonts.poppins(
-                      fontSize: 21,
-                      fontWeight: FontWeight.w700,
-                      color: scoreColor,
-                    ),
-                  ),
-
-                  const SizedBox(height: 22),
-
-                  // ===== SCORE RING (FIXED & LEBIH LEGA) =====
-                  SizedBox(
-                    width: 150,
-                    height: 150,
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        // Glow (lebih besar dari ring)
-                        Container(
-                          width: 150,
-                          height: 150,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            gradient: RadialGradient(
-                              colors: [
-                                scoreColor.withOpacity(0.25),
-                                Colors.transparent,
-                              ],
-                            ),
-                          ),
-                        ),
-
-                        // Progress ring (lebih kecil)
-                        SizedBox(
-                          width: 130,
-                          height: 130,
-                          child: CircularProgressIndicator(
-                            value: score / 100,
-                            strokeWidth: 12,
-                            backgroundColor: Colors.grey.shade200,
-                            valueColor:
-                                AlwaysStoppedAnimation<Color>(scoreColor),
-                          ),
-                        ),
-
-                        // Score text (AMAN, tidak ketutup)
-                        Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              "$score",
-                              style: GoogleFonts.poppins(
-                                fontSize: 40,
-                                fontWeight: FontWeight.bold,
-                                color: scoreColor,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              "Skor",
-                              style: GoogleFonts.poppins(
-                                fontSize: 12,
-                                color: Colors.grey.shade600,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  // ===== DESKRIPSI =====
-                  Text(
-                    _scoreDescription(score),
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.poppins(
-                      fontSize: 14,
-                      height: 1.6,
-                      color: Colors.grey.shade700,
-                    ),
-                  ),
-
-                  // ===== ERROR LIST =====
-                  if (r.errors.isNotEmpty) ...[
-                    const SizedBox(height: 16),
-                    ...r.errors.map(
-                      (e) => Padding(
-                        padding: const EdgeInsets.only(top: 4),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(
-                              Icons.error_outline,
-                              size: 16,
-                              color: Colors.redAccent,
-                            ),
-                            const SizedBox(width: 6),
-                            Flexible(
-                              child: Text(
-                                e,
-                                textAlign: TextAlign.center,
-                                style: GoogleFonts.poppins(
-                                  fontSize: 13,
-                                  color: Colors.redAccent,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-
-                  const SizedBox(height: 26),
-
-                  SizedBox(
-                    width: double.infinity,
-                    height: 44,
-                    child: ElevatedButton(
-                      onPressed: () => Navigator.pop(context),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: scoreColor,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                      ),
-                      child: Text(
-                        "Tutup",
-                        style: GoogleFonts.poppins(
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
-      },
-      transitionBuilder: (_, anim, __, child) {
-        return Transform.scale(
-          scale: Curves.easeOutBack.transform(anim.value),
-          child: Opacity(
-            opacity: anim.value,
-            child: child,
-          ),
-        );
-      },
+    final action = await Navigator.push<String>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => TadarusEvaluationResultPage(
+          result: r,
+          ayahText: ayah.text,
+          currentAyah: ayah.ayah,
+          totalAyah: widget.surah.ayahs.length,
+        ),
+      ),
     );
+
+    if (!mounted) return;
+    if (action == 'next') {
+      _nextAyah();
+      setState(() => _recordedPath = null);
+    } else if (action == 'retry') {
+      setState(() => _recordedPath = null);
+    }
   }
 }

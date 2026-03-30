@@ -1,6 +1,8 @@
 import json
 from app.services.auth_service import get_db
 
+FEATURE_TYPE = "tadarus"
+EVALUATIONS_TABLE = "learning_evaluations"
 
 # ======================================================
 # GET AYAT YANG SUDAH DINILAI
@@ -10,13 +12,13 @@ def get_evaluated_ayahs(user_id: int, surah: int) -> list[int]:
     cursor = db.cursor(dictionary=True)
 
     cursor.execute(
-        """
+        f"""
         SELECT ayah
-        FROM tadarus_evaluations
-        WHERE user_id = %s AND surah = %s
+        FROM {EVALUATIONS_TABLE}
+        WHERE user_id = %s AND surah = %s AND feature_type = %s
         ORDER BY ayah
         """,
-        (user_id, surah),
+        (user_id, surah, FEATURE_TYPE),
     )
 
     rows = cursor.fetchall()
@@ -57,12 +59,12 @@ def upsert_evaluation(
     # CEK DATA EXISTING
     # =========================
     cursor.execute(
-        """
+        f"""
         SELECT id, score_final
-        FROM tadarus_evaluations
-        WHERE user_id = %s AND surah = %s AND ayah = %s
+        FROM {EVALUATIONS_TABLE}
+        WHERE user_id = %s AND surah = %s AND ayah = %s AND feature_type = %s
         """,
-        (user_id, surah, ayah),
+        (user_id, surah, ayah, FEATURE_TYPE),
     )
 
     record = cursor.fetchone()
@@ -80,8 +82,8 @@ def upsert_evaluation(
             return False
 
         cursor.execute(
-            """
-            UPDATE tadarus_evaluations
+            f"""
+            UPDATE {EVALUATIONS_TABLE}
             SET
                 score_final = %s,
                 score_ayat = %s,
@@ -110,10 +112,11 @@ def upsert_evaluation(
     # =========================
     else:
         cursor.execute(
-            """
-            INSERT INTO tadarus_evaluations
+            f"""
+            INSERT INTO {EVALUATIONS_TABLE}
             (
                 user_id,
+                feature_type,
                 surah,
                 ayah,
                 score_final,
@@ -125,10 +128,11 @@ def upsert_evaluation(
                 suggestions,
                 evaluated_at
             )
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW())
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW())
             """,
             (
                 user_id,
+                FEATURE_TYPE,
                 surah,
                 ayah,
                 score_final,

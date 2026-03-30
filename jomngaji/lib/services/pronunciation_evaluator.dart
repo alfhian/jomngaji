@@ -10,7 +10,9 @@ class PronunciationEvaluator {
       return EvaluationResult(
         score: 0,
         transcript: "",
-        feedback: "Gagal transkripsi audio.", errors: [],
+        feedback: "Gagal transkripsi audio.",
+        errors: [],
+        issueDetails: const [],
       );
     }
 
@@ -24,6 +26,7 @@ class PronunciationEvaluator {
           ? "Bagus! Lanjutkan."
           : "Masih ada kesalahan, coba ulangi.",
       errors: errors,
+      issueDetails: const [],
     );
   }
 

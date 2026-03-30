@@ -1,5 +1,9 @@
 from app.services.auth_service import get_db
 
+ATTEMPTS_TABLE = "learning_assessment_attempts"
+QUESTIONS_TABLE = "learning_quiz_questions"
+OPTIONS_TABLE = "learning_quiz_options"
+
 
 # =========================================
 # GET QUIZ BY CODE
@@ -30,8 +34,9 @@ def get_questions_by_quiz_id(quiz_id: int):
     cursor.execute(
         """
         SELECT id, question_text
-        FROM quiz_questions
+        FROM learning_quiz_questions
         WHERE quiz_id = %s
+          AND question_group_type = 'quiz'
         ORDER BY id ASC
         """,
         (quiz_id,),
@@ -54,7 +59,7 @@ def get_options_by_question_id(question_id: int):
     cursor.execute(
         """
         SELECT option_text
-        FROM quiz_options
+        FROM learning_quiz_options
         WHERE question_id = %s
         """,
         (question_id,),
@@ -75,7 +80,7 @@ def get_question_by_id(question_id: int):
     cursor = db.cursor(dictionary=True)
 
     cursor.execute(
-        "SELECT * FROM quiz_questions WHERE id = %s",
+        "SELECT * FROM learning_quiz_questions WHERE id = %s AND question_group_type = 'quiz'",
         (question_id,),
     )
 
@@ -101,12 +106,43 @@ def save_quiz_attempt(
     cursor = db.cursor()
 
     cursor.execute(
-        """
-        INSERT INTO quiz_attempts
-            (user_id, quiz_id, correct, total, score, xp, created_at)
-        VALUES (%s, %s, %s, %s, %s, %s, NOW())
+        f"""
+        INSERT INTO {ATTEMPTS_TABLE}
+            (
+                user_id,
+                feature_type,
+                assessment_kind,
+                quiz_id,
+                quiz_code,
+                total_questions,
+                correct_answers,
+                score,
+                final_score,
+                xp_earned,
+                attempted_at,
+                created_at
+            )
+        SELECT
+            %s,
+            CASE
+                WHEN q.quiz_type IN ('iqra','tajwid','tilawah','tahfidz','tadarus')
+                THEN q.quiz_type
+                ELSE 'general'
+            END,
+            'quiz',
+            q.id,
+            q.quiz_code,
+            %s,
+            %s,
+            %s,
+            %s,
+            %s,
+            NOW(),
+            NOW()
+        FROM quizzes q
+        WHERE q.id = %s
         """,
-        (user_id, quiz_id, correct, total, score, xp),
+        (user_id, total, correct, score, score, xp, quiz_id),
     )
 
     db.commit()
@@ -119,11 +155,16 @@ def get_quiz_progress_by_quiz_id(user_id: int, quiz_id: int):
     cursor = db.cursor(dictionary=True)
 
     cursor.execute(
-        """
-        SELECT correct, total, score, xp, created_at
-        FROM quiz_attempts
-        WHERE user_id = %s AND quiz_id = %s
-        ORDER BY created_at DESC
+        f"""
+        SELECT
+            correct_answers AS correct,
+            total_questions AS total,
+            score,
+            xp_earned AS xp,
+            attempted_at AS created_at
+        FROM {ATTEMPTS_TABLE}
+        WHERE user_id = %s AND quiz_id = %s AND assessment_kind = 'quiz'
+        ORDER BY attempted_at DESC
         LIMIT 1
         """,
         (user_id, quiz_id),
@@ -140,10 +181,10 @@ def get_best_quiz_score(user_id: int, quiz_id: int):
     cursor = db.cursor(dictionary=True)
 
     cursor.execute(
-        """
+        f"""
         SELECT MAX(score) AS best_score
-        FROM quiz_attempts
-        WHERE user_id = %s AND quiz_id = %s
+        FROM {ATTEMPTS_TABLE}
+        WHERE user_id = %s AND quiz_id = %s AND assessment_kind = 'quiz'
         """,
         (user_id, quiz_id),
     )

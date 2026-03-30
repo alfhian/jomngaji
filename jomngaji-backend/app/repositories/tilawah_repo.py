@@ -1,6 +1,9 @@
 from app.services.auth_service import get_db
 import json
 
+FEATURE_TYPE = "tilawah"
+EVALUATIONS_TABLE = "learning_evaluations"
+
 def save_tilawah_evaluation(
     user_id: int,
     lesson_id: int,
@@ -13,12 +16,12 @@ def save_tilawah_evaluation(
     cursor = db.cursor()
 
     cursor.execute(
-        """
-        INSERT INTO tilawah_evaluations
-            (user_id, lesson_id, transcript, score_final, feedback, issues, evaluated_at, updated_at)
-        VALUES (%s, %s, %s, %s, %s, %s, NOW(), NOW())
+        f"""
+        INSERT INTO {EVALUATIONS_TABLE}
+            (user_id, feature_type, lesson_id, transcript, score_final, feedback, issues, evaluated_at, updated_at)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, NOW(), NOW())
         """,
-        (user_id, lesson_id, transcript, score_final, feedback, json.dumps(issues, ensure_ascii=False)),
+        (user_id, FEATURE_TYPE, lesson_id, transcript, score_final, feedback, json.dumps(issues, ensure_ascii=False)),
     )
 
     db.commit()
@@ -31,13 +34,14 @@ def get_last_tilawah_evaluation(user_id: int, lesson_id: int):
     cursor = db.cursor(dictionary=True)
 
     cursor.execute(
-        """
-        SELECT * FROM tilawah_evaluations
+        f"""
+        SELECT * FROM {EVALUATIONS_TABLE}
         WHERE user_id = %s AND lesson_id = %s
+          AND feature_type = %s
         ORDER BY evaluated_at DESC
         LIMIT 1
         """,
-        (user_id, lesson_id),
+        (user_id, lesson_id, FEATURE_TYPE),
     )
 
     row = cursor.fetchone()
@@ -52,15 +56,15 @@ def get_tilawah_progress(user_id: int, quiz_code: str, pass_threshold: int = 50)
 
     # ambil attempt terakhir (untuk detail)
     cursor.execute(
-        """
+        f"""
         SELECT te.score_final
-        FROM tilawah_evaluations te
+        FROM {EVALUATIONS_TABLE} te
         JOIN quizzes q ON q.id = te.lesson_id
-        WHERE te.user_id = %s AND q.quiz_code = %s
+        WHERE te.user_id = %s AND q.quiz_code = %s AND te.feature_type = %s
         ORDER BY te.evaluated_at DESC
         LIMIT 1
         """,
-        (user_id, quiz_code),
+        (user_id, quiz_code, FEATURE_TYPE),
     )
     last_row = cursor.fetchone()
     cursor.close()
@@ -89,13 +93,13 @@ def get_best_tilawah_score(user_id: int, quiz_code: str):
     cursor = db.cursor(dictionary=True)
 
     cursor.execute(
-        """
+        f"""
         SELECT MAX(te.score_final) AS best_score
-        FROM tilawah_evaluations te
+        FROM {EVALUATIONS_TABLE} te
         JOIN quizzes q ON q.id = te.lesson_id
-        WHERE te.user_id = %s AND q.quiz_code = %s
+        WHERE te.user_id = %s AND q.quiz_code = %s AND te.feature_type = %s
         """,
-        (user_id, quiz_code),
+        (user_id, quiz_code, FEATURE_TYPE),
     )
     row = cursor.fetchone()
     cursor.close()
@@ -112,12 +116,12 @@ def get_average_tilawah_score(user_id: int) -> float:
     cursor = db.cursor(dictionary=True)
 
     cursor.execute(
-        """
+        f"""
         SELECT AVG(score_final) AS avg_score
-        FROM tilawah_evaluations
-        WHERE user_id = %s
+        FROM {EVALUATIONS_TABLE}
+        WHERE user_id = %s AND feature_type = %s
         """,
-        (user_id,),
+        (user_id, FEATURE_TYPE),
     )
     row = cursor.fetchone()
     cursor.close()

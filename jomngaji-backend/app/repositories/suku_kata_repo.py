@@ -2,6 +2,8 @@ from app.services.auth_service import get_db
 from fastapi import HTTPException
 from app.services.premium_service import is_user_premium
 
+ATTEMPTS_TABLE = "learning_assessment_attempts"
+
 # =========================
 # EXISTING (TIDAK DIUBAH)
 # =========================
@@ -27,8 +29,8 @@ def fetch_suku_kata_levels(user_id: int):
                 ELSE 0
             END AS unlocked,
 
-            COALESCE(p.completed_questions, 0) AS completed_questions,
-            COALESCE(p.average_score, 0) AS average_score
+            CASE WHEN COALESCE(p.has_attempt, 0) = 1 THEN l.total_questions ELSE 0 END AS completed_questions,
+            COALESCE(p.best_score, 0) AS average_score
 
         FROM suku_kata_levels l
 
@@ -38,8 +40,20 @@ def fetch_suku_kata_levels(user_id: int):
         LEFT JOIN suku_kata_level_unlocks u
             ON u.level_id = l.id AND u.user_id = %s
 
-        LEFT JOIN suku_kata_progress p
-            ON p.level_id = l.id AND p.user_id = %s
+        LEFT JOIN (
+            SELECT
+                CAST(SUBSTRING_INDEX(quiz_code, '_', -1) AS UNSIGNED) AS level_id,
+                CASE WHEN COUNT(*) > 0 THEN 1 ELSE 0 END AS has_attempt,
+                ROUND(MAX(score), 2) AS best_score
+            FROM learning_assessment_attempts
+            WHERE
+                user_id = %s
+                AND assessment_kind = 'quiz'
+                AND feature_type = 'iqra'
+                AND quiz_code LIKE 'suku_kata_level_%'
+            GROUP BY CAST(SUBSTRING_INDEX(quiz_code, '_', -1) AS UNSIGNED)
+        ) p
+            ON p.level_id = l.id
 
         ORDER BY l.order_index;
         """,
@@ -89,8 +103,9 @@ def fetch_suku_kata_questions(level_id: int, user_id: int):
     cursor.execute(
         """
         SELECT id, latin, arabic
-        FROM suku_kata_questions
+        FROM learning_quiz_questions
         WHERE level_id = %s
+          AND question_group_type = 'suku_kata'
         ORDER BY id
         """,
         (level_id,),
@@ -132,15 +147,73 @@ def upsert_suku_kata_progress(
     cursor = db.cursor()
 
     cursor.execute(
-        """
-        INSERT INTO suku_kata_progress
-        (user_id, level_id, completed_questions, average_score)
-        VALUES (%s, %s, %s, %s)
-        ON DUPLICATE KEY UPDATE
-            completed_questions = VALUES(completed_questions),
-            average_score = VALUES(average_score)
+        f"""
+        INSERT INTO {ATTEMPTS_TABLE}
+        (
+            user_id,
+            feature_type,
+            assessment_kind,
+            quiz_id,
+            quiz_code,
+            total_questions,
+            correct_answers,
+            score,
+            final_score,
+            xp_earned,
+            attempted_at,
+            created_at
+        )
+        SELECT
+            %s,
+            'iqra',
+            'quiz',
+            q.id,
+            CONCAT('suku_kata_level_', %s),
+            %s,
+            %s,
+            %s,
+            %s,
+            0,
+            NOW(),
+            NOW()
+        FROM quizzes q
+        WHERE q.id = (
+            SELECT id FROM quizzes WHERE quiz_code = CONCAT('suku_kata_level_', %s) LIMIT 1
+        )
+        UNION ALL
+        SELECT
+            %s,
+            'iqra',
+            'quiz',
+            NULL,
+            CONCAT('suku_kata_level_', %s),
+            %s,
+            %s,
+            %s,
+            %s,
+            0,
+            NOW(),
+            NOW()
+        WHERE NOT EXISTS (
+            SELECT 1 FROM quizzes WHERE quiz_code = CONCAT('suku_kata_level_', %s)
+        )
         """,
-        (user_id, level_id, completed_questions, score),
+        (
+            user_id,
+            level_id,
+            completed_questions,
+            completed_questions,
+            score,
+            score,
+            level_id,
+            user_id,
+            level_id,
+            completed_questions,
+            completed_questions,
+            score,
+            score,
+            level_id,
+        ),
     )
 
     db.commit()

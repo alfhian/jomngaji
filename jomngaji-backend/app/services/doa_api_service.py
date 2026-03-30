@@ -2,11 +2,11 @@ from __future__ import annotations
 
 import os
 import time
+import json
 from dataclasses import dataclass
 from typing import Any
 from urllib.parse import urlparse
-
-import httpx
+from urllib.request import Request, urlopen
 
 
 DEFAULT_DOA_SOURCE_URL = "https://www.hisnmuslim.com/api/en/husn_en.json"
@@ -138,10 +138,9 @@ def fetch_doa_items(*, force_refresh: bool = False, source_url: str | None = Non
         return _DOA_CACHE["items"]
 
     url = _resolve_source_url(source_url)
-    with httpx.Client(timeout=20.0, follow_redirects=True) as client:
-        resp = client.get(url, headers={"User-Agent": "jomngaji-backend/1.0"})
-        resp.raise_for_status()
-        payload = resp.json()
+    req = Request(url, headers={"User-Agent": "jomngaji-backend/1.0"})
+    with urlopen(req, timeout=20) as resp:
+        payload = json.loads(resp.read().decode("utf-8"))
 
     normalized = [item.to_dict() for item in _normalize_items(payload)]
     _DOA_CACHE["items"] = normalized
@@ -171,4 +170,3 @@ def validate_audio_proxy_url(url: str) -> None:
     }
     if host not in allowed_hosts:
         raise ValueError("Host audio tidak diizinkan untuk proxy.")
-

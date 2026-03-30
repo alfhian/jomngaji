@@ -7,6 +7,7 @@ import 'package:http/http.dart' as http;
 import 'package:just_audio/just_audio.dart';
 
 import '../../../core/config/api_config.dart';
+import '../../../core/theme/app_design_tokens.dart';
 import '../../../core/widgets/custom_gradient_appbar.dart';
 import '../../../core/widgets/premium_upgrade_dialog.dart';
 import '../../../models/surah.dart';
@@ -176,27 +177,25 @@ class _TadarusMenuPageState extends State<TadarusMenuPage> {
     try {
       final headers = await AuthService.authHeaders();
       final data = await loadQuranDataset();
-
-      final List<Surah> result = [];
-
-      for (final s in data) {
-        double progress = 0.0;
-
-        try {
-          final res = await http.get(
-            Uri.parse(ApiConfig.endpoint('/tadarus/progress?surah=${s.number}')),
-            headers: headers,
-          );
-
-          if (res.statusCode == 200) {
-            final json = jsonDecode(res.body);
-            final completed = (json['completed_ayah'] ?? 0).toDouble();
-            progress = s.ayahCount > 0 ? completed / s.ayahCount : 0.0;
-          }
-        } catch (_) {}
-
-        result.add(s.copyWith(progress: progress));
-      }
+      final List<Surah> result = await Future.wait(
+        data.map((s) async {
+          double progress = 0.0;
+          try {
+            final res = await http
+                .get(
+                  Uri.parse(ApiConfig.endpoint('/tadarus/progress?surah=${s.number}')),
+                  headers: headers,
+                )
+                .timeout(const Duration(seconds: 5));
+            if (res.statusCode == 200) {
+              final json = jsonDecode(res.body);
+              final completed = (json['completed_ayah'] ?? 0).toDouble();
+              progress = s.ayahCount > 0 ? completed / s.ayahCount : 0.0;
+            }
+          } catch (_) {}
+          return s.copyWith(progress: progress);
+        }),
+      );
 
       _allSurahs = result;
       _filteredSurahs = result;
@@ -328,7 +327,7 @@ class _TadarusMenuPageState extends State<TadarusMenuPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF4F7FC),
+      backgroundColor: AppColors.scaffold,
       extendBody: true,
       appBar: CustomGradientAppBar(
         title: 'Tadarus',
@@ -341,19 +340,19 @@ class _TadarusMenuPageState extends State<TadarusMenuPage> {
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
               children: [
                 _progressCard(),
-                const SizedBox(height: 14),
-                _searchRow(),
-                const SizedBox(height: 14),
-                _previewPlayerCard(),
-                const SizedBox(height: 14),
-                _lastActivityCard(),
                 const SizedBox(height: 16),
+                _searchRow(),
+                const SizedBox(height: 16),
+                _previewPlayerCard(),
+                const SizedBox(height: 16),
+                _lastActivityCard(),
+                const SizedBox(height: 24),
                 Text(
                   'Daftar Surah',
-                  style: GoogleFonts.poppins(
+                  style: GoogleFonts.plusJakartaSans(
                     fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                    color: const Color(0xFF0F172A),
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 10),
@@ -370,13 +369,9 @@ class _TadarusMenuPageState extends State<TadarusMenuPage> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFFE9FFF3), Color(0xFFDFF6FF)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFBDEFD6)),
+        gradient: AppGradients.accent,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        boxShadow: AppShadows.medium,
       ),
       child: Row(
         children: [
@@ -398,18 +393,18 @@ class _TadarusMenuPageState extends State<TadarusMenuPage> {
               children: [
                 Text(
                   'Lanjutkan Khatam Al-Qur’an',
-                  style: GoogleFonts.poppins(
+                  style: GoogleFonts.plusJakartaSans(
                     fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                    color: const Color(0xFF0F172A),
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   '$_completedAyahGlobal / $_totalAyahGlobal ayat selesai',
-                  style: GoogleFonts.poppins(
+                  style: GoogleFonts.plusJakartaSans(
                     fontSize: 12,
-                    color: const Color(0xFF334155),
+                    color: Colors.white.withOpacity(0.9),
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -422,16 +417,17 @@ class _TadarusMenuPageState extends State<TadarusMenuPage> {
                           value: _globalProgress,
                           minHeight: 8,
                           backgroundColor: Colors.grey.shade300,
-                          color: const Color(0xFF2FBF84),
+                          color: Colors.white,
                         ),
                       ),
                     ),
                     const SizedBox(width: 8),
                     Text(
                       '$percentText%',
-                      style: GoogleFonts.poppins(
+                      style: GoogleFonts.plusJakartaSans(
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
+                        color: Colors.white,
                       ),
                     ),
                   ],
@@ -439,10 +435,10 @@ class _TadarusMenuPageState extends State<TadarusMenuPage> {
                 const SizedBox(height: 6),
                 Text(
                   _checkpointLabel,
-                  style: GoogleFonts.poppins(
+                  style: GoogleFonts.plusJakartaSans(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    color: const Color(0xFF0E9F6E),
+                    color: Colors.white.withOpacity(0.92),
                   ),
                 ),
               ],
@@ -458,7 +454,7 @@ class _TadarusMenuPageState extends State<TadarusMenuPage> {
       controller: _searchCtrl,
       decoration: InputDecoration(
         hintText: 'Cari Surah',
-        hintStyle: GoogleFonts.poppins(fontSize: 14),
+        hintStyle: GoogleFonts.plusJakartaSans(fontSize: 14),
         prefixIcon: const Icon(Icons.search_rounded),
         suffixIcon: _searchCtrl.text.isNotEmpty
             ? IconButton(
@@ -473,8 +469,16 @@ class _TadarusMenuPageState extends State<TadarusMenuPage> {
         fillColor: Colors.white,
         contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide.none,
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          borderSide: BorderSide(color: AppColors.border.withOpacity(0.6)),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          borderSide: BorderSide(color: AppColors.border.withOpacity(0.6)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          borderSide: const BorderSide(color: AppColors.accent),
         ),
       ),
     );
@@ -495,7 +499,7 @@ class _TadarusMenuPageState extends State<TadarusMenuPage> {
         children: [
           Text(
             'Quick Audio Preview',
-            style: GoogleFonts.poppins(
+            style: GoogleFonts.plusJakartaSans(
               color: Colors.white,
               fontWeight: FontWeight.w700,
               fontSize: 14,
@@ -506,7 +510,7 @@ class _TadarusMenuPageState extends State<TadarusMenuPage> {
             surah == null
                 ? 'Tidak ada surah pada hasil pencarian.'
                 : '${surah.number}. ${surah.name} • Ayat awal',
-            style: GoogleFonts.poppins(
+            style: GoogleFonts.plusJakartaSans(
               color: Colors.white.withOpacity(0.8),
               fontSize: 12,
             ),
@@ -572,21 +576,20 @@ class _TadarusMenuPageState extends State<TadarusMenuPage> {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8, offset: const Offset(0, 4)),
-        ],
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        boxShadow: AppShadows.soft,
+        border: Border.all(color: AppColors.border.withOpacity(0.5)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             'Aktivitas Terakhir',
-            style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w600),
+            style: GoogleFonts.plusJakartaSans(fontSize: 15, fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 8),
-          Text('Terakhir Dibaca: $_lastRead', style: GoogleFonts.poppins(fontSize: 13)),
-          Text('Terakhir Dilafalkan: $_lastRecited', style: GoogleFonts.poppins(fontSize: 13)),
+          Text('Terakhir Dibaca: $_lastRead', style: GoogleFonts.plusJakartaSans(fontSize: 13)),
+          Text('Terakhir Dilafalkan: $_lastRecited', style: GoogleFonts.plusJakartaSans(fontSize: 13)),
         ],
       ),
     );
@@ -597,7 +600,7 @@ class _TadarusMenuPageState extends State<TadarusMenuPage> {
       return Center(
         child: Text(
           'Surah tidak ditemukan.',
-          style: GoogleFonts.poppins(color: Colors.black54),
+          style: GoogleFonts.plusJakartaSans(color: AppColors.textSecondary),
         ),
       );
     }
@@ -635,14 +638,9 @@ class _TadarusMenuPageState extends State<TadarusMenuPage> {
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.04),
-                  blurRadius: 10,
-                  offset: const Offset(0, 5),
-                ),
-              ],
+              borderRadius: BorderRadius.circular(AppRadius.md),
+              boxShadow: AppShadows.soft,
+              border: Border.all(color: AppColors.border.withOpacity(0.5)),
             ),
             child: Row(
               children: [
@@ -656,9 +654,9 @@ class _TadarusMenuPageState extends State<TadarusMenuPage> {
                   alignment: Alignment.center,
                   child: Text(
                     '${s.number}',
-                    style: GoogleFonts.poppins(
+                    style: GoogleFonts.plusJakartaSans(
                       fontWeight: FontWeight.w700,
-                      color: const Color(0xFF0E9F6E),
+                      color: AppColors.accent,
                     ),
                   ),
                 ),
@@ -669,12 +667,12 @@ class _TadarusMenuPageState extends State<TadarusMenuPage> {
                     children: [
                       Text(
                         s.name,
-                        style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w700),
+                        style: GoogleFonts.plusJakartaSans(fontSize: 15, fontWeight: FontWeight.w800),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         '${s.ayahCount} Ayat',
-                        style: GoogleFonts.poppins(fontSize: 12, color: Colors.black54),
+                        style: GoogleFonts.plusJakartaSans(fontSize: 12, color: AppColors.textSecondary),
                       ),
                       const SizedBox(height: 8),
                       ClipRRect(
@@ -702,7 +700,7 @@ class _TadarusMenuPageState extends State<TadarusMenuPage> {
                         ),
                         child: Text(
                           'PRO',
-                          style: GoogleFonts.poppins(
+                          style: GoogleFonts.plusJakartaSans(
                             fontSize: 10,
                             fontWeight: FontWeight.w700,
                           ),
@@ -717,7 +715,11 @@ class _TadarusMenuPageState extends State<TadarusMenuPage> {
                     ),
                     Text(
                       '$percent%',
-                      style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.black54),
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textSecondary,
+                      ),
                     ),
                   ],
                 ),

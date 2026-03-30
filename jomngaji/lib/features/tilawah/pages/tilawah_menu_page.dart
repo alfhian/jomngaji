@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 
+import '../../../core/theme/app_design_tokens.dart';
 import '../../../core/widgets/custom_gradient_appbar.dart';
 import '../../../core/widgets/premium_upgrade_dialog.dart';
 import '../../../features/auth/services/auth_service.dart';
@@ -17,88 +18,108 @@ class TilawahMenuPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.scaffold,
       appBar: const CustomGradientAppBar(title: 'Tilawah Dasar'),
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color(0xFFF8FBFF), Color(0xFFF1F7FF)],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
+      body: ListView(
+        padding: const EdgeInsets.all(24),
+        children: [
+          _heroCard(),
+          const SizedBox(height: 32),
+          Text(
+            'Kurikulum Belajar',
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 17,
+              fontWeight: FontWeight.w800,
+              color: AppColors.textPrimary,
+            ),
           ),
-        ),
-        child: ListView(
-          padding: const EdgeInsets.all(20),
-          children: [
-            _heroCard(),
-            const SizedBox(height: 18),
-            _levelItem(
-              context,
-              color: const Color(0xFFEAF3FF),
-              iconColor: const Color(0xFF2563EB),
-              title: 'Tingkatan 1 — Pemula',
-              subtitle: 'Fokus kelancaran dasar tilawah dan adab membaca.',
-              icon: Icons.looks_one_rounded,
-              description:
-                  'Mulai dengan bacaan pendek, tempo pelan, dan fokus makhraj dasar.',
-              levelTag: 'Pemula',
-              quizCode: 'tilawah_level_1',
-              lessonId: 1,
-            ),
-            _levelItem(
-              context,
-              color: const Color(0xFFECFDF3),
-              iconColor: const Color(0xFF16A34A),
-              title: 'Tingkatan 2 — Menengah',
-              subtitle: 'Perkuat tartil, waqaf-ibtida, dan kestabilan ritme.',
-              icon: Icons.looks_two_rounded,
-              description:
-                  'Latihan ayat lebih panjang dengan konsistensi hukum tajwid.',
-              levelTag: 'Menengah',
-              quizCode: 'tilawah_level_2',
-              lessonId: 2,
-            ),
-            _levelItem(
-              context,
-              color: const Color(0xFFFFFBEB),
-              iconColor: const Color(0xFFF59E0B),
-              title: 'Tingkatan 3 — Mahir',
-              subtitle: 'Uji ketepatan bacaan dan kepercayaan diri tilawah.',
-              icon: Icons.looks_3_rounded,
-              description:
-                  'Simulasi tilawah lengkap dengan evaluasi pengucapan lanjutan.',
-              levelTag: 'Mahir',
-              quizCode: 'tilawah_level_3',
-              lessonId: 3,
-            ),
-            _examItem(context),
-          ],
-        ),
+          const SizedBox(height: 16),
+          _levelItem(
+            context,
+            color: AppColors.accent,
+            title: 'Tingkatan 1 — Pemula',
+            subtitle: 'Fokus kelancaran dasar tilawah dan adab membaca.',
+            icon: Icons.looks_one_rounded,
+            description:
+                'Mulai dengan bacaan pendek, tempo pelan, dan fokus makhraj dasar.',
+            levelTag: 'Pemula',
+            quizCode: 'tilawah_level_1',
+            lessonId: 1,
+          ),
+          _levelItem(
+            context,
+            color: AppColors.secondary,
+            title: 'Tingkatan 2 — Menengah',
+            subtitle: 'Perkuat tartil, waqaf-ibtida, dan kestabilan ritme.',
+            icon: Icons.looks_two_rounded,
+            description:
+                'Latihan ayat lebih panjang dengan konsistensi hukum tajwid.',
+            levelTag: 'Menengah',
+            quizCode: 'tilawah_level_2',
+            lessonId: 2,
+          ),
+          _levelItem(
+            context,
+            color: Colors.orange,
+            title: 'Tingkatan 3 — Mahir',
+            subtitle: 'Uji ketepatan bacaan dan kepercayaan diri tilawah.',
+            icon: Icons.looks_3_rounded,
+            description:
+                'Simulasi tilawah lengkap dengan evaluasi pengucapan lanjutan.',
+            levelTag: 'Mahir',
+            quizCode: 'tilawah_level_3',
+            lessonId: 3,
+          ),
+          _examItem(context),
+        ],
       ),
     );
   }
 
   Widget _heroCard() {
     return Container(
-      padding: const EdgeInsets.all(18),
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(22),
-        gradient: const LinearGradient(
-          colors: [Color(0xFF155EEF), Color(0xFF0EA5E9)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        gradient: AppGradients.accent,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        boxShadow: AppShadows.medium,
       ),
-      child: const Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Text(
-            'Belajar Tilawah Bertahap',
-            style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Belajar Tilawah\nBertahap ✨',
+                  style: GoogleFonts.plusJakartaSans(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                    height: 1.3,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Pilih level belajar untuk memperkuat tartil dan irama bacaan.',
+                  style: GoogleFonts.plusJakartaSans(
+                    color: Colors.white.withOpacity(0.85),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
           ),
-          SizedBox(height: 6),
-          Text(
-            'Pilih 3 tingkatan pembelajaran tilawah. Di setiap tingkat tersedia latihan soal interaktif dan praktek bacaan tilawah.',
-            style: TextStyle(color: Colors.white, fontSize: 13, height: 1.45),
+          const SizedBox(width: 12),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.2),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.auto_stories_rounded, color: Colors.white, size: 32),
           ),
         ],
       ),
@@ -108,7 +129,6 @@ class TilawahMenuPage extends StatelessWidget {
   Widget _levelItem(
     BuildContext context, {
     required Color color,
-    required Color iconColor,
     required String title,
     required String subtitle,
     required IconData icon,
@@ -135,52 +155,72 @@ class TilawahMenuPage extends StatelessWidget {
         ),
       ),
       child: Container(
-        margin: const EdgeInsets.only(bottom: 14),
-        padding: const EdgeInsets.all(16),
+        margin: const EdgeInsets.only(bottom: 16),
+        padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: color,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: const [
-            BoxShadow(color: Color(0x12000000), blurRadius: 12, offset: Offset(0, 5)),
-          ],
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          boxShadow: AppShadows.soft,
+          border: Border.all(color: AppColors.border.withOpacity(0.5)),
         ),
         child: Row(
           children: [
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: iconColor.withOpacity(0.14),
-                borderRadius: BorderRadius.circular(14),
+                color: color.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(AppRadius.sm),
               ),
-              child: Icon(icon, size: 24, color: iconColor),
+              child: Icon(icon, size: 26, color: color),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 16),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    title,
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                  Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          title,
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: AppColors.gold.withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: const Text(
+                          'PRO',
+                          style: TextStyle(
+                            color: AppColors.gold,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 9,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 4),
                   Text(
                     subtitle,
-                    style: const TextStyle(fontSize: 13, color: Color(0xFF475569), height: 1.4),
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 12,
+                      color: AppColors.textSecondary,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ],
               ),
             ),
-            Container(
-              margin: const EdgeInsets.only(right: 8),
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-              decoration: BoxDecoration(
-                color: Colors.amber.shade100,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Text('PRO', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700)),
-            ),
-            Icon(Icons.arrow_forward_ios_rounded, size: 16, color: iconColor),
+            const Icon(Icons.chevron_right_rounded, color: AppColors.textPlaceholder),
           ],
         ),
       ),
@@ -195,43 +235,70 @@ class TilawahMenuPage extends StatelessWidget {
         onAllowed: () => Navigator.pushNamed(context, AppRoutes.examTilawah),
       ),
       child: Container(
-        margin: const EdgeInsets.only(top: 4, bottom: 14),
-        padding: const EdgeInsets.all(16),
+        margin: const EdgeInsets.only(bottom: 16),
+        padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: const Color(0xFFFFF1F2),
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: const [
-            BoxShadow(color: Color(0x12000000), blurRadius: 12, offset: Offset(0, 5)),
-          ],
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          boxShadow: AppShadows.soft,
+          border: Border.all(color: AppColors.border.withOpacity(0.5)),
         ),
         child: Row(
           children: [
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: const Color(0xFFE11D48).withOpacity(0.14),
-                borderRadius: BorderRadius.circular(14),
+                color: Colors.purple.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(AppRadius.sm),
               ),
-              child: const Icon(Icons.verified_rounded, size: 24, color: Color(0xFFE11D48)),
+              child: const Icon(Icons.verified_rounded, size: 26, color: Colors.purple),
             ),
-            const SizedBox(width: 12),
-            const Expanded(
+            const SizedBox(width: 16),
+            Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Tes Akhir Tilawah',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                  Row(
+                    children: [
+                      Text(
+                        'Tes Akhir Tilawah',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: AppColors.gold.withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: const Text(
+                          'PRO',
+                          style: TextStyle(
+                            color: AppColors.gold,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 9,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                  SizedBox(height: 4),
+                  const SizedBox(height: 4),
                   Text(
                     'Selesaikan ujian pilihan ganda dan pengucapan untuk menutup semua level.',
-                    style: TextStyle(fontSize: 13, color: Color(0xFF475569), height: 1.4),
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 12,
+                      color: AppColors.textSecondary,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ],
               ),
             ),
-            const Icon(Icons.arrow_forward_ios_rounded, size: 16, color: Color(0xFFE11D48)),
+            const Icon(Icons.chevron_right_rounded, color: AppColors.textPlaceholder),
           ],
         ),
       ),
@@ -305,113 +372,67 @@ class _TilawahLevelPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      extendBodyBehindAppBar: true,
-      appBar: null,
+      backgroundColor: AppColors.scaffold,
+      appBar: CustomGradientAppBar(title: title),
       body: ListView(
+        padding: const EdgeInsets.all(24),
         children: [
-          _heroSection(context),
-          const SizedBox(height: 20),
+          _heroSection(),
+          const SizedBox(height: 24),
           _descriptionSection(),
-          const SizedBox(height: 22),
+          const SizedBox(height: 16),
           _progressSection(),
-          const SizedBox(height: 25),
+          const SizedBox(height: 20),
           _exerciseList(context),
-          const SizedBox(height: 30),
         ],
       ),
     );
   }
 
-  Widget _heroSection(BuildContext context) {
+  Widget _heroSection() {
     return Container(
       decoration: BoxDecoration(
-        borderRadius: const BorderRadius.only(
-          bottomLeft: Radius.circular(32),
-          bottomRight: Radius.circular(32),
-        ),
-        image: const DecorationImage(
-          image: AssetImage("assets/images/hijaiyah_banner_2.png"),
-          fit: BoxFit.cover,
-        ),
+        gradient: AppGradients.accent,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        boxShadow: AppShadows.medium,
       ),
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: const BorderRadius.only(
-            bottomLeft: Radius.circular(32),
-            bottomRight: Radius.circular(32),
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: GoogleFonts.plusJakartaSans(
+              color: Colors.white,
+              fontSize: 22,
+              fontWeight: FontWeight.w800,
+            ),
           ),
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Colors.black.withOpacity(0.05),
-              Colors.black.withOpacity(0.40),
-            ],
+          const SizedBox(height: 8),
+          Text(
+            description,
+            style: GoogleFonts.plusJakartaSans(
+              color: Colors.white.withOpacity(0.9),
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+            ),
           ),
-        ),
-        padding: const EdgeInsets.fromLTRB(20, 60, 20, 40),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            GestureDetector(
-              onTap: () => Navigator.pop(context),
-              child: Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.25),
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      blurRadius: 6,
-                    ),
-                  ],
-                ),
-                child: const Icon(Icons.arrow_back, color: Colors.white, size: 20),
-              ),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(999),
             ),
-            const SizedBox(height: 28),
-            Text(
-              "Latihan Tilawah",
-              style: GoogleFonts.poppins(
-                color: Colors.white.withOpacity(0.9),
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              title,
-              style: GoogleFonts.poppins(
+            child: Text(
+              levelTag,
+              style: GoogleFonts.plusJakartaSans(
                 color: Colors.white,
-                fontSize: 28,
-                height: 1.25,
-                fontWeight: FontWeight.w800,
+                fontWeight: FontWeight.w700,
               ),
             ),
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.12),
-                    blurRadius: 6,
-                  ),
-                ],
-              ),
-              child: Text(
-                levelTag,
-                style: GoogleFonts.poppins(
-                  color: Colors.orange.shade700,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -424,12 +445,12 @@ class _TilawahLevelPage extends StatelessWidget {
         children: [
           Text(
             description,
-            style: GoogleFonts.poppins(fontSize: 14, color: Colors.black87),
+            style: GoogleFonts.plusJakartaSans(fontSize: 14, color: Colors.black87),
           ),
           const SizedBox(height: 4),
           Text(
             "2 Aktivitas latihan",
-            style: GoogleFonts.poppins(fontSize: 13, color: Colors.black54),
+            style: GoogleFonts.plusJakartaSans(fontSize: 13, color: Colors.black54),
           ),
         ],
       ),
@@ -448,7 +469,7 @@ class _TilawahLevelPage extends StatelessWidget {
             children: [
               Text(
                 "Progress",
-                style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w600),
+                style: GoogleFonts.plusJakartaSans(fontSize: 15, fontWeight: FontWeight.w600),
               ),
               const SizedBox(height: 10),
               ClipRRect(
@@ -463,7 +484,7 @@ class _TilawahLevelPage extends StatelessWidget {
               const SizedBox(height: 4),
               Text(
                 "${(progressValue * 100).toInt()}% selesai",
-                style: GoogleFonts.poppins(fontSize: 12, color: Colors.black54),
+                style: GoogleFonts.plusJakartaSans(fontSize: 12, color: Colors.black54),
               ),
             ],
           );
@@ -545,11 +566,10 @@ class _TilawahLevelPage extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 14),
         padding: const EdgeInsets.all(18),
         decoration: BoxDecoration(
-          color: unlocked ? color : Colors.white,
-          borderRadius: BorderRadius.circular(22),
-          border: Border.all(
-            color: unlocked ? Colors.transparent : Colors.grey.shade300,
-          ),
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          boxShadow: AppShadows.soft,
+          border: Border.all(color: AppColors.border.withOpacity(0.5)),
         ),
         child: Row(
           children: [
@@ -557,7 +577,7 @@ class _TilawahLevelPage extends StatelessWidget {
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: iconColor.withOpacity(0.1),
-                shape: BoxShape.circle,
+                borderRadius: BorderRadius.circular(AppRadius.sm),
               ),
               child: Icon(icon, size: 26, color: iconColor),
             ),
@@ -568,7 +588,7 @@ class _TilawahLevelPage extends StatelessWidget {
                 children: [
                   Text(
                     title,
-                    style: GoogleFonts.poppins(
+                    style: GoogleFonts.plusJakartaSans(
                       fontWeight: FontWeight.w700,
                       fontSize: 14,
                     ),
@@ -576,9 +596,9 @@ class _TilawahLevelPage extends StatelessWidget {
                   const SizedBox(height: 3),
                   Text(
                     subtitle,
-                    style: GoogleFonts.poppins(
+                    style: GoogleFonts.plusJakartaSans(
                       fontSize: 13,
-                      color: Colors.black87,
+                      color: AppColors.textSecondary,
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -588,11 +608,11 @@ class _TilawahLevelPage extends StatelessWidget {
             ),
             Container(
               padding: const EdgeInsets.all(8),
-              decoration: const BoxDecoration(
-                color: Color(0xFF50D1A0),
-                shape: BoxShape.circle,
+              decoration: BoxDecoration(
+                color: AppColors.accent.withOpacity(0.12),
+                borderRadius: BorderRadius.circular(999),
               ),
-              child: const Icon(Icons.play_arrow_rounded, color: Colors.white),
+              child: const Icon(Icons.play_arrow_rounded, color: AppColors.accent),
             ),
           ],
         ),

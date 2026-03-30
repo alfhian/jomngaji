@@ -1,8 +1,60 @@
+class PronunciationIssue {
+  final String category;
+  final String code;
+  final String location;
+  final int? startIndex;
+  final int? endIndex;
+  final String expected;
+  final String actual;
+  final String message;
+
+  const PronunciationIssue({
+    required this.category,
+    required this.code,
+    required this.location,
+    required this.message,
+    this.startIndex,
+    this.endIndex,
+    this.expected = '',
+    this.actual = '',
+  });
+
+  factory PronunciationIssue.fromDynamic(dynamic raw) {
+    if (raw is Map<String, dynamic>) {
+      int? parseIndex(dynamic value) {
+        if (value is int) return value;
+        if (value is double) return value.toInt();
+        if (value is String) return int.tryParse(value);
+        return null;
+      }
+
+      return PronunciationIssue(
+        category: raw['category']?.toString() ?? '',
+        code: raw['code']?.toString() ?? '',
+        location: raw['location']?.toString() ?? '',
+        message: raw['message']?.toString() ?? '',
+        startIndex: parseIndex(raw['start_index']),
+        endIndex: parseIndex(raw['end_index']),
+        expected: raw['expected']?.toString() ?? '',
+        actual: raw['actual']?.toString() ?? '',
+      );
+    }
+
+    return PronunciationIssue(
+      category: '',
+      code: '',
+      location: '',
+      message: raw?.toString() ?? '',
+    );
+  }
+}
+
 class EvaluationResult {
   final int score;                 // 0–100 (scores.final)
   final String transcript;         // hasil ASR
   final String feedback;           // saran utama
   final List<String> errors;       // issues
+  final List<PronunciationIssue> issueDetails;
 
   // Optional detail scores (bonus)
   final int? ayatScore;
@@ -13,6 +65,7 @@ class EvaluationResult {
     required this.transcript,
     required this.feedback,
     required this.errors,
+    required this.issueDetails,
     this.ayatScore,
     this.audioScore,
   });
@@ -54,18 +107,17 @@ class EvaluationResult {
     // ERRORS / ISSUES
     // =============================
     final rawErrors = json['issues'] ?? json['errors'] ?? const <dynamic>[];
-
-    final errors = (rawErrors as List<dynamic>)
-        .map((e) => e is Map && e.containsKey('message')
-            ? e['message'].toString()
-            : e.toString())
+    final issueDetails = (rawErrors as List<dynamic>)
+        .map((e) => PronunciationIssue.fromDynamic(e))
         .toList();
+    final errors = issueDetails.map((e) => e.message).where((m) => m.isNotEmpty).toList();
 
     return EvaluationResult(
       score: score,
       transcript: transcript,
       feedback: feedback,
       errors: errors,
+      issueDetails: issueDetails,
       ayatScore: parseScore(scores['ayat']),
       audioScore: parseScore(scores['audio']),
     );
@@ -76,6 +128,20 @@ class EvaluationResult {
         'transcript': transcript,
         'feedback': feedback,
         'errors': errors,
+        'issue_details': issueDetails
+            .map(
+              (e) => {
+                'category': e.category,
+                'code': e.code,
+                'location': e.location,
+                'start_index': e.startIndex,
+                'end_index': e.endIndex,
+                'expected': e.expected,
+                'actual': e.actual,
+                'message': e.message,
+              },
+            )
+            .toList(),
         'ayat_score': ayatScore,
         'audio_score': audioScore,
       };

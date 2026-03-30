@@ -1,5 +1,6 @@
 from app.services.auth_service import get_db
 
+ATTEMPTS_TABLE = "learning_assessment_attempts"
 
 def save_exam_attempt(
     user_id: int,
@@ -13,10 +14,21 @@ def save_exam_attempt(
     cursor = db.cursor()
 
     cursor.execute(
-        """
-        INSERT INTO iqra_exam_results
-        (user_id, total_questions, correct_answers, score, final_score, xp_earned, created_at)
-        VALUES (%s,%s,%s,%s,%s,%s,NOW())
+        f"""
+        INSERT INTO {ATTEMPTS_TABLE}
+        (
+            user_id,
+            feature_type,
+            assessment_kind,
+            total_questions,
+            correct_answers,
+            score,
+            final_score,
+            xp_earned,
+            attempted_at,
+            created_at
+        )
+        VALUES (%s, 'iqra', 'exam', %s, %s, %s, %s, %s, NOW(), NOW())
         """,
         (
             user_id,
@@ -38,11 +50,11 @@ def get_last_exam(user_id: int):
     cursor = db.cursor(dictionary=True)
 
     cursor.execute(
-        """
+        f"""
         SELECT *
-        FROM iqra_exam_results
-        WHERE user_id = %s
-        ORDER BY created_at DESC
+        FROM {ATTEMPTS_TABLE}
+        WHERE user_id = %s AND assessment_kind = 'exam' AND feature_type = 'iqra'
+        ORDER BY attempted_at DESC
         LIMIT 1
         """,
         (user_id,),
@@ -60,10 +72,10 @@ def get_best_exam_score(user_id: int):
     cursor = db.cursor(dictionary=True)
 
     cursor.execute(
-        """
+        f"""
         SELECT MAX(score) AS best_score
-        FROM iqra_exam_results
-        WHERE user_id = %s
+        FROM {ATTEMPTS_TABLE}
+        WHERE user_id = %s AND assessment_kind = 'exam' AND feature_type = 'iqra'
         """,
         (user_id,),
     )

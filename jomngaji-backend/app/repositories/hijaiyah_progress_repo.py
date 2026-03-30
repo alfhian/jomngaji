@@ -3,6 +3,8 @@ from datetime import datetime
 from app.services.auth_service import get_db
 
 PASSING_SCORE = 50
+EVALUATIONS_TABLE = "learning_evaluations"
+FEATURE_TYPE = "iqra"
 
 
 # =========================================================
@@ -58,31 +60,35 @@ def save_hijaiyah_evaluation(
     cursor = db.cursor()
 
     cursor.execute(
-        """
-        INSERT INTO hijaiyah_evaluations
+        f"""
+        INSERT INTO {EVALUATIONS_TABLE}
             (
                 user_id,
+                feature_type,
                 lesson_id,
-                hijaiyah,
                 transcript,
                 score_final,
                 score_audio,
                 score_ayat,
                 feedback,
-                issues
+                issues,
+                asr_ref,
+                evaluated_at,
+                updated_at
             )
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), NOW())
         """,
         (
             user_id,
+            FEATURE_TYPE,
             lesson_id,
-            hijaiyah,
             transcript,
             score_final,
             score_audio,
             score_ayat,
             feedback,
             json.dumps(issues) if issues else None,
+            hijaiyah,
         ),
     )
 
@@ -255,14 +261,14 @@ def get_last_hijaiyah_activity(user_id: int):
     cursor = db.cursor(dictionary=True)
 
     cursor.execute(
-        """
-        SELECT hijaiyah
-        FROM hijaiyah_evaluations
-        WHERE user_id = %s
+        f"""
+        SELECT asr_ref AS hijaiyah
+        FROM {EVALUATIONS_TABLE}
+        WHERE user_id = %s AND feature_type = %s
         ORDER BY evaluated_at DESC
         LIMIT 1
         """,
-        (user_id,),
+        (user_id, FEATURE_TYPE),
     )
 
     row = cursor.fetchone()

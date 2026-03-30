@@ -456,29 +456,34 @@ class _ExamIqraPageState extends State<ExamIqraPage> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            'Soal ${_currentIndex + 1} dari ${_questions.length}',
+                            'Exam Iqra',
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 14,
-                              fontWeight: FontWeight.w700,
+                              fontWeight: FontWeight.w600,
                               color: AppColors.textSecondary,
                             ),
                           ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: AppColors.gold.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(AppRadius.full),
-                            ),
-                            child: Text(
-                              _q.type == _ExamType.mcq ? 'Pilihan Ganda' : 'Pengucapan',
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w800,
-                                color: AppColors.gold,
-                              ),
+                          Text(
+                            'Pilihan & Praktek',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w500,
+                              color: AppColors.textPlaceholder,
                             ),
                           ),
                         ],
+                      ),
+                      const SizedBox(height: 6),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          'Soal ${_currentIndex + 1} dari ${_questions.length}',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textPlaceholder,
+                          ),
+                        ),
                       ),
                       const SizedBox(height: 16),
                       ClipRRect(
@@ -508,6 +513,16 @@ class _ExamIqraPageState extends State<ExamIqraPage> {
                   ),
                   child: Column(
                     children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(AppRadius.md),
+                        child: Image.asset(
+                          'assets/images/ujian-mengaji.png',
+                          height: 120,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
                       Text(
                         _q.prompt,
                         style: GoogleFonts.plusJakartaSans(

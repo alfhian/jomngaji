@@ -438,13 +438,35 @@ class _ExamTajwidPageState extends State<ExamTajwidPage> {
             child: Column(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.9),
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: Column(
                     children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Exam Tajwid',
+                            style: GoogleFonts.poppins(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.black87,
+                            ),
+                          ),
+                          Text(
+                            'Pilihan & Praktek',
+                            style: GoogleFonts.poppins(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.black45,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
                       LinearProgressIndicator(
                         value: progress,
                         minHeight: 8,
@@ -463,7 +485,7 @@ class _ExamTajwidPageState extends State<ExamTajwidPage> {
                 const SizedBox(height: 16),
                 Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.all(18),
+                  padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.92),
                     borderRadius: BorderRadius.circular(20),
@@ -477,6 +499,16 @@ class _ExamTajwidPageState extends State<ExamTajwidPage> {
                   ),
                   child: Column(
                     children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(14),
+                        child: Image.asset(
+                          'assets/images/ujian-mengaji.png',
+                          height: 120,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
                       Text(
                         _q.prompt,
                         style: GoogleFonts.poppins(fontWeight: FontWeight.w700),
@@ -486,9 +518,9 @@ class _ExamTajwidPageState extends State<ExamTajwidPage> {
                         _q.arabic,
                         textAlign: TextAlign.center,
                         style: const TextStyle(
-                          fontSize: 42,
-                          color: Color(0xFF42C88A),
-                          fontWeight: FontWeight.bold,
+                          fontSize: 40,
+                          color: Color(0xFF53B58A),
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ],
@@ -510,6 +542,21 @@ class _ExamTajwidPageState extends State<ExamTajwidPage> {
                 Expanded(
                   child: _q.type == _ExamType.mcq ? _buildMcqBody() : _buildPronBody(),
                 ),
+                const SizedBox(height: 8),
+                if (_q.type == _ExamType.mcq)
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton(
+                      onPressed: _selectedOption == null ? null : () {},
+                      style: FilledButton.styleFrom(
+                        backgroundColor: const Color(0xFFE5E7EB),
+                        foregroundColor: Colors.black54,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      ),
+                      child: const Text('Submit'),
+                    ),
+                  ),
               ],
             ),
           ),
@@ -538,15 +585,24 @@ class _ExamTajwidPageState extends State<ExamTajwidPage> {
                 color: selected ? const Color(0xFF42C88A) : Colors.grey.shade300,
               ),
             ),
-            child: Center(
-              child: Text(
-                opt,
-                style: GoogleFonts.poppins(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                  color: const Color(0xFF2F9E6E),
+            child: Row(
+              children: [
+                Icon(
+                  selected ? Icons.check_circle : Icons.radio_button_unchecked,
+                  color: selected ? const Color(0xFF42C88A) : Colors.grey,
                 ),
-              ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    opt,
+                    style: GoogleFonts.poppins(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: const Color(0xFF2F9E6E),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         );

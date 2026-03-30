@@ -4,9 +4,12 @@ import '../../../core/config/api_config.dart';
 import '../../../models/surah.dart';
 
 final String baseUrl = ApiConfig.endpoint('/quran');
+List<Surah>? _surahDatasetCache;
+final Map<int, Surah> _surahDetailCache = {};
 
 // Ambil daftar surah
 Future<List<Surah>> loadQuranDataset() async {
+  if (_surahDatasetCache != null) return _surahDatasetCache!;
   final res = await http.get(Uri.parse("$baseUrl/surahs"));
   if (res.statusCode != 200) {
     throw Exception("Failed to load surahs: ${res.statusCode}");
@@ -15,7 +18,9 @@ Future<List<Surah>> loadQuranDataset() async {
   final dynamic raw = jsonDecode(res.body);
 
   if (raw is List) {
-    return raw.map<Surah>((s) => Surah.fromJson(s as Map<String, dynamic>)).toList();
+    final parsed = raw.map<Surah>((s) => Surah.fromJson(s as Map<String, dynamic>)).toList();
+    _surahDatasetCache = parsed;
+    return parsed;
   }
 
   throw Exception("Unexpected /quran/surahs response shape: ${raw.runtimeType}");
@@ -23,6 +28,8 @@ Future<List<Surah>> loadQuranDataset() async {
 
 // Ambil detail surah
 Future<Surah> loadSurahDetail(int number) async {
+  final cached = _surahDetailCache[number];
+  if (cached != null) return cached;
   final res = await http.get(Uri.parse("$baseUrl/surah/$number"));
   if (res.statusCode != 200) {
     throw Exception("Failed to load surah $number: ${res.statusCode}");
@@ -31,7 +38,9 @@ Future<Surah> loadSurahDetail(int number) async {
   final dynamic raw = jsonDecode(res.body);
 
   if (raw is Map<String, dynamic>) {
-    return Surah.fromJson(raw);
+    final parsed = Surah.fromJson(raw);
+    _surahDetailCache[number] = parsed;
+    return parsed;
   }
 
   throw Exception("Unexpected /quran/surah/$number response shape: ${raw.runtimeType}");
