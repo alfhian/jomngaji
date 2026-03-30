@@ -253,16 +253,21 @@ class _TadarusDetailPageState extends State<TadarusDetailPage> {
     return Scaffold(
       backgroundColor: AppColors.scaffold,
       appBar: const CustomGradientAppBar(title: 'Tadarus AI'),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => _onEvaluateAyah(surah!.ayahs[_currentAyahIndex]),
+        backgroundColor: const Color(0xFF2FC06D),
+        child: const Icon(Icons.mic, color: Colors.white),
+      ),
+      bottomNavigationBar: _bottomPlaybackBar(),
       body: Padding(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
         child: Column(
           children: [
             _headerCard(surah!),
             const SizedBox(height: 14),
-            _playerControls(),
-            const SizedBox(height: 14),
             Expanded(
               child: ListView.builder(
+                padding: const EdgeInsets.only(bottom: 120),
                 itemCount: surah!.ayahs.length,
                 itemBuilder: (context, index) {
                   final ayah = surah!.ayahs[index];
@@ -282,31 +287,46 @@ class _TadarusDetailPageState extends State<TadarusDetailPage> {
     );
   }
 
-  Widget _playerControls() {
+  Widget _bottomPlaybackBar() {
     final isPlayingCurrent = _playingIndex == _currentAyahIndex && _player.playing;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
       decoration: BoxDecoration(
-        color: const Color(0xFF0F172A),
-        borderRadius: BorderRadius.circular(18),
+        color: Colors.white,
+        border: Border(top: BorderSide(color: Colors.black.withOpacity(0.08))),
       ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          _controlButton(
-            icon: Icons.skip_previous_rounded,
-            onTap: _playPreviousAyah,
+          Expanded(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  surah?.name ?? '-',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 16,
+                  ),
+                ),
+                Text(
+                  'Ayat ${_currentAyahIndex + 1}',
+                  style: GoogleFonts.plusJakartaSans(
+                    color: AppColors.textSecondary,
+                    fontSize: 13,
+                  ),
+                ),
+              ],
+            ),
           ),
+          _controlButton(icon: Icons.skip_previous_rounded, onTap: _playPreviousAyah),
           _controlButton(
             icon: isPlayingCurrent ? Icons.pause_rounded : Icons.play_arrow_rounded,
             onTap: () => _playAyahAudio(_currentAyahIndex),
             isPrimary: true,
           ),
-          _controlButton(
-            icon: Icons.stop_rounded,
-            onTap: _stopAudio,
-          ),
+          _controlButton(icon: Icons.stop_rounded, onTap: _stopAudio),
           _controlButton(
             icon: Icons.skip_next_rounded,
             onTap: _playNextAyah,
@@ -328,12 +348,12 @@ class _TadarusDetailPageState extends State<TadarusDetailPage> {
         width: isPrimary ? 56 : 46,
         height: isPrimary ? 56 : 46,
         decoration: BoxDecoration(
-          color: isPrimary ? const Color(0xFF42C88A) : Colors.white12,
+          color: isPrimary ? const Color(0xFF42C88A) : const Color(0xFFE8EDF1),
           borderRadius: BorderRadius.circular(16),
         ),
         child: Icon(
           icon,
-          color: Colors.white,
+          color: isPrimary ? Colors.white : const Color(0xFF2F3A45),
           size: isPrimary ? 30 : 24,
         ),
       ),
@@ -468,13 +488,13 @@ class _TadarusDetailPageState extends State<TadarusDetailPage> {
           const SizedBox(height: 14),
           Align(
             alignment: Alignment.centerRight,
-            child: ElevatedButton.icon(
+            child: OutlinedButton.icon(
               onPressed: () => _onEvaluateAyah(ayah),
               icon: const Icon(Icons.record_voice_over),
               label: const Text('Rekam & Nilai Ayat Ini'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF2FBF84),
-                foregroundColor: Colors.white,
+              style: OutlinedButton.styleFrom(
+                foregroundColor: const Color(0xFF2A8B60),
+                side: const BorderSide(color: Color(0xFF7FC3A2)),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
