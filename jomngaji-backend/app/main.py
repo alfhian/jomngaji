@@ -128,7 +128,8 @@ from app.services.doa_api_service import (
     get_doa_item,
     validate_audio_proxy_url,
 )
-from app.services.dzikir_service import get_dzikir_items, get_dzikir_periods
+from app.services.dzikir_service import get_dzikir_items, get_dzikir_periods, get_dzikir_detail
+from app.services.ikhtiar_service import list_ikhtiar_items, get_ikhtiar_item
 
 from app.services.auth_service import (
     register_user,
@@ -584,6 +585,28 @@ def list_dzikir_periods():
 @app.get("/dzikir")
 def list_dzikir(period: str = Query("pagi")):
     return {"period": period, "items": get_dzikir_items(period)}
+
+
+@app.get("/dzikir/{item_id}")
+def dzikir_detail(item_id: str):
+    item = get_dzikir_detail(item_id)
+    if not item:
+        raise HTTPException(status_code=404, detail="Dzikir tidak ditemukan")
+    return item
+
+
+@app.get("/ikhtiar")
+def list_ikhtiar(category: str | None = Query(None)):
+    items = list_ikhtiar_items(category)
+    return {"count": len(items), "items": items}
+
+
+@app.get("/ikhtiar/{item_id}")
+def ikhtiar_detail(item_id: str):
+    item = get_ikhtiar_item(item_id)
+    if not item:
+        raise HTTPException(status_code=404, detail="Ikhtiar tidak ditemukan")
+    return item
 
 
 # =========================

@@ -8,9 +8,10 @@ import '../../../core/theme/app_design_tokens.dart';
 import '../../../features/auth/services/auth_service.dart';
 import '../../home/widgets/app_bottom_nav.dart';
 import '../data/doa_catalog.dart';
+import 'dzikir_detail_page.dart';
 import 'doa_category_list_page.dart';
 import 'favorite_doa_page.dart';
-import 'ikhtiar_detail_page.dart';
+import 'ikhtiar_page.dart';
 
 class DoaMenuPage extends StatefulWidget {
   const DoaMenuPage({super.key});
@@ -61,8 +62,8 @@ class _DoaMenuPageState extends State<DoaMenuPage> with SingleTickerProviderStat
       if (mounted) {
         setState(() {
           _dzikirItems = const [
-            _DzikirItem(title: 'Ayat Kursi', subtitle: 'QS. Al-Baqarah ayat 255', repeat: 'Dibaca 1x'),
-            _DzikirItem(title: 'Al-Ikhlas', subtitle: 'QS. Al-Ikhlas ayat 1-4', repeat: 'Dibaca 3x'),
+            _DzikirItem(id: 'ayat_kursi', title: 'Ayat Kursi', subtitle: 'QS. Al-Baqarah ayat 255', repeat: 'Dibaca 1x'),
+            _DzikirItem(id: 'al_ikhlas', title: 'Al-Ikhlas', subtitle: 'QS. Al-Ikhlas ayat 1-4', repeat: 'Dibaca 3x'),
           ];
         });
       }
@@ -113,7 +114,13 @@ class _DoaMenuPageState extends State<DoaMenuPage> with SingleTickerProviderStat
 
   Widget _topHeader() {
     return Container(
-      color: const Color(0xFF46A37F),
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Color(0xFF0E1322), Color(0xFF132744)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      ),
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
       child: Row(
         children: [
@@ -141,7 +148,7 @@ class _DoaMenuPageState extends State<DoaMenuPage> with SingleTickerProviderStat
 
   Widget _searchBar() {
     return Container(
-      color: const Color(0xFF46A37F),
+      color: const Color(0xFFF2F4F6),
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
       child: Container(
         height: 48,
@@ -166,47 +173,7 @@ class _DoaMenuPageState extends State<DoaMenuPage> with SingleTickerProviderStat
   }
 
   Widget _ikhtiarTab() {
-    return ListView.builder(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 100),
-      itemCount: DoaCatalog.ikhtiar.length,
-      itemBuilder: (context, index) {
-        final item = DoaCatalog.ikhtiar[index];
-        final done = IkhtiarDoneStore.isDone(item.id);
-        return InkWell(
-          onTap: () {
-            Navigator.push(context, MaterialPageRoute(builder: (_) => IkhtiarDetailPage(item: item))).then((_) {
-              if (mounted) setState(() {});
-            });
-          },
-          borderRadius: BorderRadius.circular(16),
-          child: Container(
-            margin: const EdgeInsets.only(bottom: 12),
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFFB6D9CB)),
-            ),
-            child: Row(
-              children: [
-                CircleAvatar(
-                  radius: 19,
-                  backgroundColor: const Color(0xFFE9F6F0),
-                  child: Icon(done ? Icons.check_rounded : Icons.emoji_events_outlined, color: const Color(0xFF3B906F)),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(item.title, style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, fontSize: 16)),
-                ),
-                if (done) const Icon(Icons.done_all_rounded, color: Color(0xFF3B906F)),
-                const SizedBox(width: 4),
-                const Icon(Icons.chevron_right_rounded, color: Color(0xFF84A79A)),
-              ],
-            ),
-          ),
-        );
-      },
-    );
+    return const IkhtiarPage();
   }
 
   Widget _doaCategoriesTab() {
@@ -316,7 +283,26 @@ class _DoaMenuPageState extends State<DoaMenuPage> with SingleTickerProviderStat
               ? const Center(child: Padding(padding: EdgeInsets.all(24), child: CircularProgressIndicator()))
               : Column(
                   children: _dzikirItems
-                      .map((item) => Container(
+                      .asMap()
+                      .entries
+                      .map((entry) {
+                        final idx = entry.key;
+                        final item = entry.value;
+                        return InkWell(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => DzikirDetailPage(
+                                  itemId: item.id,
+                                  periodLabel: chips[_dzikirTab],
+                                  index: idx,
+                                  total: _dzikirItems.length,
+                                ),
+                              ),
+                            );
+                          },
+                          child: Container(
                             margin: const EdgeInsets.only(bottom: 12),
                             padding: const EdgeInsets.all(14),
                             decoration: BoxDecoration(
@@ -375,7 +361,9 @@ class _DoaMenuPageState extends State<DoaMenuPage> with SingleTickerProviderStat
                                 ),
                               ],
                             ),
-                          ))
+                          ),
+                        );
+                      })
                       .toList(),
                 ),
         ),
@@ -392,14 +380,16 @@ class _DoaCategoryUi {
 }
 
 class _DzikirItem {
+  final String id;
   final String title;
   final String subtitle;
   final String repeat;
 
-  const _DzikirItem({required this.title, required this.subtitle, required this.repeat});
+  const _DzikirItem({required this.id, required this.title, required this.subtitle, required this.repeat});
 
   factory _DzikirItem.fromJson(Map<String, dynamic> json) {
     return _DzikirItem(
+      id: (json['id'] ?? '').toString(),
       title: (json['title'] ?? '').toString(),
       subtitle: (json['subtitle'] ?? '').toString(),
       repeat: (json['repeat'] ?? '').toString(),

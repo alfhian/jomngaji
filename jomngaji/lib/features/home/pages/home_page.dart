@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/localization/app_localization.dart';
 import '../../../core/theme/app_design_tokens.dart';
 import '../../../core/widgets/section_title.dart';
+import '../../../features/doa/data/doa_data.dart';
 import '../../../routes/app_routes.dart';
 import '../widgets/app_bottom_nav.dart';
 import '../widgets/category_list.dart';
@@ -54,7 +55,7 @@ class HomePage extends StatelessWidget {
                     showSeeAll: false,
                   ),
                   const SizedBox(height: 14),
-                  _doaTodayCard(),
+                  _doaTodayCard(context),
                   const SizedBox(height: 24),
                   const TadarusCard(),
                   const SizedBox(height: 24),
@@ -173,42 +174,49 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  Widget _doaTodayCard() {
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        boxShadow: AppShadows.soft,
-      ),
-      child: Row(
-        children: [
-          ClipRRect(
-            borderRadius: const BorderRadius.horizontal(left: Radius.circular(AppRadius.md)),
-            child: Image.asset(
-              'assets/images/background-mengaji.png',
-              width: 130,
-              height: 110,
-              fit: BoxFit.cover,
-            ),
-          ),
-          const SizedBox(width: 12),
-          const Expanded(
-            child: Padding(
-              padding: EdgeInsets.only(right: 10),
-              child: Text(
-                'Doa Memohon Perlindungan dari Orang Zalim',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  height: 1.35,
-                ),
-                maxLines: 3,
-                overflow: TextOverflow.ellipsis,
+  Widget _doaTodayCard(BuildContext context) {
+    final now = DateTime.now();
+    final idx = (now.year + now.month + now.day + now.hour) % doaList.length;
+    final doa = doaList[idx];
+    return InkWell(
+      onTap: () => Navigator.pushNamed(context, AppRoutes.doaDetail, arguments: doa),
+      borderRadius: BorderRadius.circular(AppRadius.md),
+      child: Container(
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          boxShadow: AppShadows.soft,
+        ),
+        child: Row(
+          children: [
+            ClipRRect(
+              borderRadius: const BorderRadius.horizontal(left: Radius.circular(AppRadius.md)),
+              child: Image.asset(
+                'assets/images/background-mengaji.png',
+                width: 130,
+                height: 110,
+                fit: BoxFit.cover,
               ),
             ),
-          ),
-        ],
+            const SizedBox(width: 12),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.only(right: 10),
+                child: Text(
+                  doa.title,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    height: 1.35,
+                  ),
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -19,6 +19,23 @@ _DZIKIR_BY_PERIOD: dict[str, list[dict[str, Any]]] = {
     ],
 }
 
+_DZIKIR_DETAIL: dict[str, dict[str, Any]] = {
+    "ayat_kursi": {
+        "title": "Ayat Kursi",
+        "subtitle": "QS. Al-Baqarah ayat 255",
+        "repeat": "Dibaca 1x",
+        "arabic": "اللَّهُ لَا إِلَهَ إِلَّا هُوَ الْحَيُّ الْقَيُّومُ",
+        "translation": "Allah, tidak ada Tuhan melainkan Dia, Yang Hidup kekal lagi terus menerus mengurus makhluk-Nya.",
+    },
+    "al_ikhlas": {
+        "title": "Al-Ikhlas",
+        "subtitle": "QS. Al-Ikhlas ayat 1-4",
+        "repeat": "Dibaca 3x",
+        "arabic": "قُلْ هُوَ اللَّهُ أَحَدٌ",
+        "translation": "Katakanlah: Dialah Allah, Yang Maha Esa.",
+    },
+}
+
 
 def get_dzikir_periods() -> list[dict[str, str]]:
     return [
@@ -30,3 +47,7 @@ def get_dzikir_periods() -> list[dict[str, str]]:
 
 def get_dzikir_items(period: str) -> list[dict[str, Any]]:
     return _DZIKIR_BY_PERIOD.get(period, _DZIKIR_BY_PERIOD["pagi"])
+
+
+def get_dzikir_detail(item_id: str) -> dict[str, Any] | None:
+    return _DZIKIR_DETAIL.get(item_id)
