@@ -69,6 +69,7 @@ import '../models/surah.dart';
 // Doa
 import '../features/doa/pages/doa_menu_page.dart';
 import '../features/doa/pages/doa_detail_page.dart';
+import '../features/doa/pages/favorite_doa_page.dart';
 import '../models/doa.dart';
 
 
@@ -141,6 +142,7 @@ class AppRoutes {
   // Doa
   static const doaMenu = "/doa-menu";
   static const doaDetail = "/doa-detail";
+  static const doaFavorite = "/doa-favorite";
 
   // ========== ROUTING ==========
   static Map<String, WidgetBuilder> routes = {
@@ -216,6 +218,7 @@ class AppRoutes {
 
     // Doa
     doaMenu: (_) => const DoaMenuPage(),
+    doaFavorite: (_) => const FavoriteDoaPage(),
   };
 
   // ========== ROUTE DYNAMIC ==========

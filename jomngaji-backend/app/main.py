@@ -128,6 +128,7 @@ from app.services.doa_api_service import (
     get_doa_item,
     validate_audio_proxy_url,
 )
+from app.services.dzikir_service import get_dzikir_items, get_dzikir_periods
 
 from app.services.auth_service import (
     register_user,
@@ -573,6 +574,16 @@ def proxy_doa_audio(url: str = Query(..., description="URL audio doa yang akan d
         raise
     except Exception as e:
         raise HTTPException(status_code=502, detail=f"Gagal proxy audio doa: {e}")
+
+
+@app.get("/dzikir/periods")
+def list_dzikir_periods():
+    return {"items": get_dzikir_periods()}
+
+
+@app.get("/dzikir")
+def list_dzikir(period: str = Query("pagi")):
+    return {"period": period, "items": get_dzikir_items(period)}
 
 
 # =========================

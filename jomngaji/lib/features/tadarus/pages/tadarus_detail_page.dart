@@ -321,12 +321,15 @@ class _TadarusDetailPageState extends State<TadarusDetailPage> {
             ),
           ),
           _controlButton(icon: Icons.skip_previous_rounded, onTap: _playPreviousAyah),
+          const SizedBox(width: 4),
           _controlButton(
             icon: isPlayingCurrent ? Icons.pause_rounded : Icons.play_arrow_rounded,
             onTap: () => _playAyahAudio(_currentAyahIndex),
             isPrimary: true,
           ),
+          const SizedBox(width: 4),
           _controlButton(icon: Icons.stop_rounded, onTap: _stopAudio),
+          const SizedBox(width: 4),
           _controlButton(
             icon: Icons.skip_next_rounded,
             onTap: _playNextAyah,

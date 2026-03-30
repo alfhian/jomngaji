@@ -1,11 +1,16 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:http/http.dart' as http;
 
 import '../../../core/theme/app_design_tokens.dart';
-import '../../../models/doa.dart';
-import '../../../routes/app_routes.dart';
+import '../../../features/auth/services/auth_service.dart';
 import '../../home/widgets/app_bottom_nav.dart';
-import '../data/doa_data.dart';
+import '../data/doa_catalog.dart';
+import 'doa_category_list_page.dart';
+import 'favorite_doa_page.dart';
+import 'ikhtiar_detail_page.dart';
 
 class DoaMenuPage extends StatefulWidget {
   const DoaMenuPage({super.key});
@@ -17,31 +22,53 @@ class DoaMenuPage extends StatefulWidget {
 class _DoaMenuPageState extends State<DoaMenuPage> with SingleTickerProviderStateMixin {
   late final TabController _tabController;
   int _dzikirTab = 0;
+  List<_DzikirItem> _dzikirItems = const [];
+  bool _loadingDzikir = true;
 
-  final List<_DoaCategory> _categories = const [
-    _DoaCategory('Ramadan', Color(0xFF3E9A70)),
-    _DoaCategory('Aktivitas', Color(0xFFF49A1F)),
-    _DoaCategory('Bepergian', Color(0xFF3466D5)),
-    _DoaCategory('Keselamatan', Color(0xFFF75555)),
-    _DoaCategory('Kesulitan', Color(0xFFB87FA4)),
-    _DoaCategory('Kondisi Khusus', Color(0xFF43C974)),
-    _DoaCategory('Makan dan Minum', Color(0xFFEFB600)),
-    _DoaCategory('Masjid', Color(0xFF1892DE)),
-    _DoaCategory('Pengampunan', Color(0xFFE86AA4)),
-    _DoaCategory('Penguatan Iman', Color(0xFF65B3BC)),
-  ];
-
-  final List<_DzikirItem> _dzikirItems = const [
-    _DzikirItem(title: 'Ayat Kursi', subtitle: 'QS. Al-Baqarah ayat 255', repeat: 'Dibaca 1x'),
-    _DzikirItem(title: 'Al-Ikhlas', subtitle: 'QS. Al-Ikhlas ayat 1-4', repeat: 'Dibaca 3x'),
-    _DzikirItem(title: 'Al-Falaq', subtitle: 'QS. Al-Falaq ayat 1-5', repeat: 'Dibaca 3x'),
-    _DzikirItem(title: 'An-Nas', subtitle: 'QS. An-Nas ayat 1-6', repeat: 'Dibaca 3x'),
+  final List<_DoaCategoryUi> _categories = const [
+    _DoaCategoryUi('ramadan', 'Ramadan', Color(0xFF3E9A70)),
+    _DoaCategoryUi('aktivitas', 'Aktivitas', Color(0xFFF49A1F)),
+    _DoaCategoryUi('bepergian', 'Bepergian', Color(0xFF3466D5)),
+    _DoaCategoryUi('keselamatan', 'Keselamatan', Color(0xFFF75555)),
+    _DoaCategoryUi('masjid', 'Masjid', Color(0xFF1892DE)),
+    _DoaCategoryUi('pengampunan', 'Pengampunan', Color(0xFFE86AA4)),
   ];
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+    _loadDzikir();
+  }
+
+  Future<void> _loadDzikir() async {
+    setState(() => _loadingDzikir = true);
+    const tabs = ['pagi', 'petang', 'setelah_sholat'];
+    final period = tabs[_dzikirTab];
+    try {
+      final headers = await AuthService.authHeaders();
+      final res = await http.get(Uri.parse('${AuthService.baseUrl}/dzikir?period=$period'), headers: headers);
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body) as Map<String, dynamic>;
+        final items = (data['items'] as List<dynamic>? ?? [])
+            .map((e) => _DzikirItem.fromJson(e as Map<String, dynamic>))
+            .toList();
+        if (mounted) {
+          setState(() => _dzikirItems = items);
+        }
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _dzikirItems = const [
+            _DzikirItem(title: 'Ayat Kursi', subtitle: 'QS. Al-Baqarah ayat 255', repeat: 'Dibaca 1x'),
+            _DzikirItem(title: 'Al-Ikhlas', subtitle: 'QS. Al-Ikhlas ayat 1-4', repeat: 'Dibaca 3x'),
+          ];
+        });
+      }
+    } finally {
+      if (mounted) setState(() => _loadingDzikir = false);
+    }
   }
 
   @override
@@ -59,13 +86,13 @@ class _DoaMenuPageState extends State<DoaMenuPage> with SingleTickerProviderStat
       body: SafeArea(
         child: Column(
           children: [
-            _topBar(),
+            _topHeader(),
+            _searchBar(),
             TabBar(
               controller: _tabController,
               indicatorColor: const Color(0xFF3F9D7D),
               labelColor: const Color(0xFF3C8E73),
               unselectedLabelColor: AppColors.textSecondary,
-              onTap: (_) => setState(() {}),
               tabs: const [
                 Tab(text: 'Ikhtiar'),
                 Tab(text: 'Doa'),
@@ -75,11 +102,7 @@ class _DoaMenuPageState extends State<DoaMenuPage> with SingleTickerProviderStat
             Expanded(
               child: TabBarView(
                 controller: _tabController,
-                children: [
-                  _ikhtiarTab(),
-                  _doaCategoriesTab(),
-                  _dzikirTabView(),
-                ],
+                children: [_ikhtiarTab(), _doaCategoriesTab(), _dzikirTabView()],
               ),
             ),
           ],
@@ -88,49 +111,56 @@ class _DoaMenuPageState extends State<DoaMenuPage> with SingleTickerProviderStat
     );
   }
 
-  Widget _topBar() {
+  Widget _topHeader() {
     return Container(
       color: const Color(0xFF46A37F),
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
       child: Row(
         children: [
-          Container(
-            width: 48,
-            height: 48,
-            decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+          CircleAvatar(
+            radius: 24,
+            backgroundColor: Colors.white,
             child: IconButton(
               onPressed: () => Navigator.maybePop(context),
               icon: const Icon(Icons.arrow_back_rounded, color: Color(0xFF437E62)),
             ),
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Container(
-              height: 48,
-              padding: const EdgeInsets.symmetric(horizontal: 14),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(28),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.search_rounded, color: Color(0xFF689D86)),
-                  const SizedBox(width: 10),
-                  Text(
-                    'Cari Ikhtiar, Doa, atau Dzikir',
-                    style: GoogleFonts.plusJakartaSans(
-                      color: const Color(0xFF95A59D),
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
+          const Spacer(),
+          IconButton(
+            onPressed: () {
+              Navigator.push(context, MaterialPageRoute(builder: (_) => const FavoriteDoaPage())).then((_) {
+                if (mounted) setState(() {});
+              });
+            },
+            icon: const Icon(Icons.star_rounded, color: Color(0xFFFEE034), size: 34),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _searchBar() {
+    return Container(
+      color: const Color(0xFF46A37F),
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
+      child: Container(
+        height: 48,
+        padding: const EdgeInsets.symmetric(horizontal: 14),
+        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(28)),
+        child: Row(
+          children: [
+            const Icon(Icons.search_rounded, color: Color(0xFF689D86)),
+            const SizedBox(width: 10),
+            Text(
+              'Cari Ikhtiar, Doa, atau Dzikir',
+              style: GoogleFonts.plusJakartaSans(
+                color: const Color(0xFF95A59D),
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
               ),
             ),
-          ),
-          const SizedBox(width: 10),
-          const Icon(Icons.star_rounded, color: Color(0xFFFEE034), size: 34),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -138,53 +168,44 @@ class _DoaMenuPageState extends State<DoaMenuPage> with SingleTickerProviderStat
   Widget _ikhtiarTab() {
     return ListView.builder(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 100),
-      itemCount: doaList.length,
+      itemCount: DoaCatalog.ikhtiar.length,
       itemBuilder: (context, index) {
-        final doa = doaList[index];
-        return _ikhtiarCard(doa, index);
-      },
-    );
-  }
-
-  Widget _ikhtiarCard(Doa doa, int index) {
-    return InkWell(
-      onTap: () => Navigator.pushNamed(context, AppRoutes.doaDetail, arguments: doa),
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: Colors.white,
+        final item = DoaCatalog.ikhtiar[index];
+        final done = IkhtiarDoneStore.isDone(item.id);
+        return InkWell(
+          onTap: () {
+            Navigator.push(context, MaterialPageRoute(builder: (_) => IkhtiarDetailPage(item: item))).then((_) {
+              if (mounted) setState(() {});
+            });
+          },
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFFB6D9CB)),
-        ),
-        child: Row(
-          children: [
-            CircleAvatar(
-              radius: 20,
-              backgroundColor: const Color(0xFFE9F6F0),
-              child: Text(
-                '${index + 1}',
-                style: GoogleFonts.plusJakartaSans(
-                  color: const Color(0xFF3B906F),
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
+          child: Container(
+            margin: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: const Color(0xFFB6D9CB)),
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                doa.title,
-                style: GoogleFonts.plusJakartaSans(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 16,
+            child: Row(
+              children: [
+                CircleAvatar(
+                  radius: 19,
+                  backgroundColor: const Color(0xFFE9F6F0),
+                  child: Icon(done ? Icons.check_rounded : Icons.emoji_events_outlined, color: const Color(0xFF3B906F)),
                 ),
-              ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(item.title, style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, fontSize: 16)),
+                ),
+                if (done) const Icon(Icons.done_all_rounded, color: Color(0xFF3B906F)),
+                const SizedBox(width: 4),
+                const Icon(Icons.chevron_right_rounded, color: Color(0xFF84A79A)),
+              ],
             ),
-            const Icon(Icons.chevron_right_rounded, color: Color(0xFF84A79A)),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 
@@ -194,38 +215,48 @@ class _DoaMenuPageState extends State<DoaMenuPage> with SingleTickerProviderStat
       itemCount: _categories.length,
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
-        childAspectRatio: 1.22,
+        childAspectRatio: 1.25,
         crossAxisSpacing: 12,
         mainAxisSpacing: 12,
       ),
       itemBuilder: (_, i) {
-        final category = _categories[i];
+        final ui = _categories[i];
+        final category = DoaCatalog.categories.firstWhere((e) => e.id == ui.id);
         return InkWell(
-          onTap: () => Navigator.pushNamed(context, AppRoutes.doaDetail, arguments: doaList.first),
-          borderRadius: BorderRadius.circular(16),
+          onTap: () {
+            Navigator.push(context, MaterialPageRoute(builder: (_) => DoaCategoryListPage(category: category))).then((_) {
+              if (mounted) setState(() {});
+            });
+          },
+          borderRadius: BorderRadius.circular(18),
           child: Ink(
-            decoration: BoxDecoration(
-              color: category.color,
-              borderRadius: BorderRadius.circular(16),
-            ),
             padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [ui.color.withOpacity(0.9), ui.color],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(18),
+              boxShadow: [BoxShadow(color: ui.color.withOpacity(0.25), blurRadius: 14, offset: const Offset(0, 5))],
+            ),
             child: Stack(
               children: [
                 Text(
-                  category.title,
+                  ui.title,
                   style: GoogleFonts.plusJakartaSans(
                     color: Colors.white,
                     fontWeight: FontWeight.w800,
-                    fontSize: 16,
+                    fontSize: 22,
                   ),
                 ),
                 Positioned(
-                  right: -8,
-                  bottom: -8,
+                  right: 0,
+                  bottom: 0,
                   child: CircleAvatar(
-                    radius: 30,
-                    backgroundColor: Colors.black.withOpacity(0.12),
-                    child: const Icon(Icons.pan_tool_alt_rounded, color: Colors.white, size: 32),
+                    radius: 24,
+                    backgroundColor: Colors.black.withOpacity(0.14),
+                    child: const Icon(Icons.pan_tool_alt_rounded, color: Colors.white, size: 26),
                   ),
                 ),
               ],
@@ -251,14 +282,13 @@ class _DoaMenuPageState extends State<DoaMenuPage> with SingleTickerProviderStat
               return ChoiceChip(
                 label: Text(chips[i]),
                 selected: active,
-                onSelected: (_) => setState(() => _dzikirTab = i),
+                onSelected: (_) {
+                  setState(() => _dzikirTab = i);
+                  _loadDzikir();
+                },
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
                 selectedColor: const Color(0xFFDCF1E8),
                 backgroundColor: const Color(0xFFEFF2FA),
-                labelStyle: GoogleFonts.plusJakartaSans(
-                  color: active ? const Color(0xFF3D8C70) : const Color(0xFF76818D),
-                  fontWeight: FontWeight.w600,
-                ),
               );
             },
             separatorBuilder: (_, __) => const SizedBox(width: 8),
@@ -282,86 +312,97 @@ class _DoaMenuPageState extends State<DoaMenuPage> with SingleTickerProviderStat
         Container(
           color: const Color(0xFFDFF0E9),
           padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
-          child: Column(
-            children: List.generate(_dzikirItems.length, (i) {
-              final item = _dzikirItems[i];
-              return Container(
-                margin: const EdgeInsets.only(bottom: 12),
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: const Color(0xFF78B49D)),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 10,
-                      height: 10,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFF3C9B78),
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            item.title,
-                            style: GoogleFonts.plusJakartaSans(
-                              fontWeight: FontWeight.w800,
-                              fontSize: 16,
-                              color: const Color(0xFF2E7B61),
+          child: _loadingDzikir
+              ? const Center(child: Padding(padding: EdgeInsets.all(24), child: CircularProgressIndicator()))
+              : Column(
+                  children: _dzikirItems
+                      .map((item) => Container(
+                            margin: const EdgeInsets.only(bottom: 12),
+                            padding: const EdgeInsets.all(14),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(color: const Color(0xFF78B49D)),
                             ),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            item.subtitle,
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 14,
-                              color: const Color(0xFF4A7364),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 10,
+                                  height: 10,
+                                  decoration: const BoxDecoration(
+                                    color: Color(0xFF3C9B78),
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        item.title,
+                                        style: GoogleFonts.plusJakartaSans(
+                                          fontWeight: FontWeight.w800,
+                                          fontSize: 16,
+                                          color: const Color(0xFF2E7B61),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 6),
+                                      Text(
+                                        item.subtitle,
+                                        style: GoogleFonts.plusJakartaSans(
+                                          fontSize: 14,
+                                          color: const Color(0xFF4A7364),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFE6F4ED),
+                                    borderRadius: BorderRadius.circular(20),
+                                    border: Border.all(color: const Color(0xFFC4E0D4)),
+                                  ),
+                                  child: Text(
+                                    item.repeat,
+                                    style: GoogleFonts.plusJakartaSans(
+                                      fontWeight: FontWeight.w600,
+                                      color: const Color(0xFF4F8D76),
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFE6F4ED),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: const Color(0xFFC4E0D4)),
-                      ),
-                      child: Text(
-                        item.repeat,
-                        style: GoogleFonts.plusJakartaSans(
-                          fontWeight: FontWeight.w600,
-                          color: const Color(0xFF4F8D76),
-                        ),
-                      ),
-                    ),
-                  ],
+                          ))
+                      .toList(),
                 ),
-              );
-            }),
-          ),
         ),
       ],
     );
   }
 }
 
-class _DoaCategory {
+class _DoaCategoryUi {
+  final String id;
   final String title;
   final Color color;
-  const _DoaCategory(this.title, this.color);
+  const _DoaCategoryUi(this.id, this.title, this.color);
 }
 
 class _DzikirItem {
   final String title;
   final String subtitle;
   final String repeat;
+
   const _DzikirItem({required this.title, required this.subtitle, required this.repeat});
+
+  factory _DzikirItem.fromJson(Map<String, dynamic> json) {
+    return _DzikirItem(
+      title: (json['title'] ?? '').toString(),
+      subtitle: (json['subtitle'] ?? '').toString(),
+      repeat: (json['repeat'] ?? '').toString(),
+    );
+  }
 }
